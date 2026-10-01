@@ -10,14 +10,13 @@
 
 ## Integrantes y Roles
 
-| Integrante | Rol | Responsabilidad principal
-|
+| Integrante | Rol | Responsabilidad principal |
 | --- | --- | --- |
-| Camila Baccarini | R1 — Líder / Edge-WAN | EDGE: eBGP ×2, redistribución, BGP MD5, firewall
-| Patricio Borda | R2 — Proveedores (ISP) | ISP-1/ISP-2: default-originate, eBGP, hardening
-| Ian Vidmar | R3 — Core | CORE-1/CORE-2: OSPF, core–core, OSPF MD5
-| Juan Atencio | R4 — Distribución | DIST-1/DIST-2: VRRP (auth), OSPF, gateways
-| Integrante 5 | R5 — Hosts / QA / Operación | Hosts, ejecuta los drills, backlog, change log, backups y runbooks
+| Camila Baccarini | R1 — Líder / Edge-WAN | EDGE: eBGP ×2, redistribución, BGP MD5, firewall |
+| Patricio Borda | R2 — Proveedores (ISP) | ISP-1/ISP-2: default-originate, eBGP, hardening |
+| Ian Vidmar | R3 — Core | CORE-1/CORE-2: OSPF, core–core, OSPF MD5 |
+| Juan Atencio | R4 — Distribución | DIST-1/DIST-2: VRRP (auth), OSPF, gateways |
+| Integrante 5 | R5 — Hosts / QA / Operación | Hosts, ejecuta los drills, backlog, change log, backups y runbooks |
 
 ---
 
