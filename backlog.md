@@ -10,7 +10,7 @@
 
 ---
 
-## Epic F0 — Diseño y Gestión de Cambio · _vence vie 02/10_ · [~] EN CURSO (Aplicando correcciones)
+## Epic F0 — Diseño y Gestión de Cambio · _vence vie 02/10_ · [x]
 
 ### IPAM / Direccionamiento
 

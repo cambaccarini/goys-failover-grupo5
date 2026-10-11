@@ -9,11 +9,8 @@
 
 ## 1. Integrantes y Matriz de Roles
 
-> **Nota de Organización del Equipo:**  
-> La nómina original de la cursada listaba 3 integrantes para el Grupo 5 (Baccarini, Borda, Vidmar). Juan Ignacio Atencio Barrenechea se incorporó formalmente como 4° integrante en el rol **R4**.  
-> **No existe un 5° integrante en el grupo.** El rol ficticio/placeholder **R5 ha sido eliminado por completo**, y la totalidad de sus cargas operativas (Gestión de Hosts, QA Técnico, Backups, Change Log, Observabilidad y Ejecución de Drills) han sido redistribuidas de manera justificada y equitativa entre los cuatro ingenieros.
 
-| Integrante | Rol | Email de Contacto / Git | Responsabilidad de Infraestructura | Responsabilidades Operativas Asumidas (Ex-R5) |
+| Integrante | Rol | Email de Contacto / Git | Responsabilidad de Infraestructura | Responsabilidades Operativas Asumidas |
 | :--- | :---: | :--- | :--- | :--- |
 | **Camila Baccarini** | **R1** | `cambaccarini01@gmail.com` | **Líder / Edge-WAN:** Router EDGE (AS 65000), dual-homing eBGP con ISP-1 e ISP-2, redistribución y filtrado OSPF↔BGP, BGP TCP-MD5, Firewall perimetral y NAT. | Gobernanza del repositorio Git, consolidación del Change Log general del proyecto y elaboración del Runbook para Drill 3 (BGP Failover ante caída de ISP). |
 | **Alesandro Patricio Borda** | **R2** | `PATOEDA@HOTMAIL.COM` | **Proveedores (ISP):** Routers ISP-1 (AS 65001) e ISP-2 (AS 65002), inyección de rutas por defecto (`default-originate`), peering eBGP hacia EDGE, simulación de Loopbacks públicas. | Política integral y ejecución de Backups (`/export` scripts `.rsc` y backups binarios `.backup`), pruebas de restauración ante desastres y Runbook para Drill 4 (`check-gateway` / Failover estático). |
@@ -147,7 +144,7 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 
 | Fase / Hito | Alcance Principal | Fecha de Entrega | Estado |
 | :--- | :--- | :---: | :---: |
-| **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **En Revisión / Re-entrega Aprobada** |
+| **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Re-entrega presentado / En revisión** |
 | **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | En Curso |
 | **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Vie 16/10/2026 | Planificado |
 | **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Vie 16/10/2026 | Planificado |

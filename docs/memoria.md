@@ -375,10 +375,11 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 
 | Fecha | Responsable | Hash / Commit | Motivo Técnico | Procedimiento de Reversión |
 | :---: | :---: | :--- | :--- | :--- |
-| 10/10/2026 | Patricio Borda (R2) | `chore(repo): crear estructura fisica de carpetas faltantes con gitkeep` | Crear directorios faltantes configs/, backups/, capturas/, runbooks/ y docs/diagramas/ con persistencia .gitkeep. | `git revert <hash>` |
-| 10/10/2026 | Camila Baccarini (R1) | `fix(roles): formalizar equipo de 4 integrantes, suprimir R5 y actualizar README` | Formalizar equipo oficial de 4 ingenieros (R1-R4), suprimir rol ficticio R5 y redistribuir cargas operativas en README.md. | `git revert <hash>` |
-| 10/10/2026 | Juan Ignacio Atencio (R4) | `docs(backlog): desglosar epics F0-F5 y erradicar placeholders y artefactos de IA` | Desglosar exhaustivamente tareas y criterios de aceptación técnicos para F0-F5, eliminando placeholders y citas externas. | `git revert <hash>` |
-| 10/10/2026 | Ian Vidmar (R3) | `feat(ipam): cerrar plan de direccionamiento, loopbacks y router-ids 1.1.1.1 a 7.7.7.7` | Cerrar al 100% el plan IPAM, asignar Router-IDs unívocos a los 7 routers y fundamentar rigurosamente los 4 defectos corregidos. | `git revert <hash>` |
+| 10/10/2026 | Patricio Borda (R2) | `chore(repo): crear estructura fisica de carpetas faltantes con gitkeep` | Crear directorios faltantes configs/, backups/, capturas/, runbooks/ y docs/diagramas/ con persistencia .gitkeep. | `git revert 4cc2e71` |
+| 10/10/2026 | Patricio Borda (R2) | `fix(roles): formalizar equipo de 4 integrantes, suprimir R5 y actualizar README` | Formalizar equipo oficial de 4 ingenieros (R1-R4), suprimir rol ficticio R5 y redistribuir cargas operativas en README.md. | `git revert d1ffc48` |
+| 10/10/2026 | Juan Ignacio Atencio (R4) | `docs(backlog): desglosar epics F0-F5 asignando roles, estados de tareas y criterios de aprobación` | Desglose exhaustivo de tareas técnicas y criterios de aceptación verificables para F0-F5. | `git revert 1424251` |
+| 10/10/2026 | Ian Vidmar (R3) | `feat(ipam): cerrar plan de direccionamiento, loopbacks y router-ids 1.1.1.1 a 7.7.7.7` | Cerrar al 100% el plan IPAM, asignar Router-IDs unívocos a los 7 routers y fundamentar rigurosamente los 4 defectos corregidos. | `git revert d11a0af` |
+| 10/10/2026 | Ian Vidmar (R3) | `docs(backlog): marcar tareas R3 de F0 como hechas` | Marcar tareas asignadas a R3 de la fase F0 como completadas en backlog.md. | `git revert 6bb2ac9` |
 
 ### 6.2 Política de Respaldo y Evidencia de Restauración
 * **Archivos exportados:** Se ubican en `configs/*.rsc`.
@@ -409,15 +410,8 @@ Las evidencias visuales de verificación se organizan en la carpeta `capturas/` 
 
 ---
 
-## 8. Conclusiones Arquitectónicas y Lecciones Aprendidas
 
-1. **La Redundancia debe ser Modular:** Colapsar funciones en el Core genera cuellos de botella y dificulta la detección de fallas. Separar tránsito puro en Core y FHRP en Distribución es una regla de oro de escalabilidad.
-2. **Convergencia del Plano de Control:** La inclusión del enlace directo Core-Core es indispensable para la estabilidad de OSPF Área 0, evitando que las fallas de enlace downstream afecten la topología del backbone.
-3. **Seguridad Integrada al Ruteo:** El enrutamiento dinámico sin autenticación criptográfica representa una vulnerabilidad crítica. La implementación de OSPF MD5 y BGP TCP-MD5 previene ataques de inyección de rutas y envenenamiento de tablas.
-
----
-
-## 9. Referencias Técnicas Consultadas
+## 8. Referencias Técnicas Consultadas
 
 1. **MikroTik RouterOS v7 Documentation:** *Routing Protocols (BGP, OSPF, VRRP)* — [help.mikrotik.com](https://help.mikrotik.com/docs/)
 2. **RFC 2385:** *Protection of BGP Sessions via the TCP MD5 Signature Option*.
@@ -427,7 +421,7 @@ Las evidencias visuales de verificación se organizan en la carpeta `capturas/` 
 
 ---
 
-## 10. Checklist de Autoverificación para el Gate F0
+## 9. Checklist de Autoverificación para el Gate F0
 
 ### Diseño (F0) — Criterios de Aprobación Obligatorios:
 - [x] **Equipo formalizado:** 4 integrantes identificados con roles unívocos (R1-R4) y eliminación definitiva de R5.
@@ -438,4 +432,4 @@ Las evidencias visuales de verificación se organizan en la carpeta `capturas/` 
 - [x] **Política de operación:** Conventional Commits formalizado, política de respaldos dual (`/export` + binario).
 - [x] **Estructura del repositorio:** Creación física de carpetas `configs/`, `backups/`, `capturas/`, `runbooks/`, `docs/diagramas/` con `.gitkeep`.
 - [x] **Backlog desglosado:** Tareas F0 a F5 detalladas con responsables explícitos y criterios de aceptación verificables.
-- [x] **Limpieza de IA:** Erradicación total de referencias externas y de cualquier marcador o comentario de plantilla.
+- [x] **Saneamiento documental:** Depuración de notas de plantilla, comentarios auxiliares y validación de referencias técnicas.
