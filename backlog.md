@@ -15,20 +15,20 @@
 ### IPAM / Direccionamiento
 
 - [x] [R1] Diseñar esquema IPAM para enlaces WAN (10.100.1.0/30 e 10.200.1.0/30) y asignación de Router-IDs/Loopbacks /32 de EDGE (3.3.3.3) y Proveedores ISP-1 (1.1.1.1) e ISP-2 (2.2.2.2). Criterio: direccionamiento jerárquico justificado y documentado en tabla IPAM sin solapamiento.
-- [ ] [R3] Diseñar direccionamiento /30 para enlaces de tránsito interno: backbone Core-Core (10.20.1.0/30), Edge-Core (10.10.1.0/30, 10.10.2.0/30) y Core-Distribución (10.30.1.0/30 a 10.30.4.0/30), con Loopbacks de CORE-1 (4.4.4.4) y CORE-2 (5.5.5.5). Criterio: matriz completa de interfaces físicas y cálculo de subredes punto a punto.
+- [x] [R3] Diseñar direccionamiento /30 para enlaces de tránsito interno: backbone Core-Core (10.20.1.0/30), Edge-Core (10.10.1.0/30, 10.10.2.0/30) y Core-Distribución (10.30.1.0/30 a 10.30.4.0/30), con Loopbacks de CORE-1 (4.4.4.4) y CORE-2 (5.5.5.5). Criterio: matriz completa de interfaces físicas y cálculo de subredes punto a punto.
 - [x] [R4] Diseñar subredes /24 para VLAN 10 (Usuarios: 192.168.10.0/24) y VLAN 20 (Servidores: 192.168.20.0/24), definiendo IPs virtuales VRRP (192.168.10.1 y 192.168.20.1) y Loopbacks de DIST-1 (6.6.6.6) y DIST-2 (7.7.7.7). Criterio: esquema VRRP con prioridades 150/100 y sin solapamiento.
 
 ### Corrección del Diagrama Original (4 Defectos Fundamentados)
 
 - [x] [R1] Analizar y documentar la corrección del SPOF en el Borde perimetral mediante dual-homing eBGP con ISP-1 e ISP-2 y enlaces duales hacia Core. Criterio: justificación técnica de alta disponibilidad en memoria.md.
-- [ ] [R3] Analizar y documentar el defecto de ausencia de enlace Core-Core, fundamentando la adición del enlace físico dedicado 10.20.1.0/30 para OSPF Área 0. Criterio: justificación sobre prevención de trombone routing y aceleración de flooding de LSAs Tipo 1.
+- [x] [R3] Analizar y documentar el defecto de ausencia de enlace Core-Core, fundamentando la adición del enlace físico dedicado 10.20.1.0/30 para OSPF Área 0. Criterio: justificación sobre prevención de trombone routing y aceleración de flooding de LSAs Tipo 1.
 - [x] [R4] Analizar y documentar el defecto de mala ubicación de FHRP en el Core, justificando el traslado de VRRP a la capa de Distribución para preservar al Core como tránsito puro. Criterio: diseño activo/activo de primer salto documentado.
 - [x] [R2] Analizar y documentar la corrección del solapamiento y dispersión de subredes del diagrama original mediante particionamiento jerárquico determinista. Criterio: justificación de estructura de bloques en memoria.md.
 
 ### Política de Seguridad
 
 - [x] [R1] Definir matriz de hardening perimetral, servicios inseguros a deshabilitar (Telnet, HTTP, FTP, API, MAC-Server) y esquema RBAC (usuario admin local y usuario monitor de solo lectura). Criterio: lista de servicios a apagar y política de credenciales seguras.
-- [ ] [R3] Definir política de autenticación criptográfica en protocolos de enrutamiento: OSPF v2 con MD5 en interfaces de tránsito y BGP con TCP-MD5. Criterio: parámetros de cifrado y política de claves robustas en memoria.md.
+- [x] [R3] Definir política de autenticación criptográfica en protocolos de enrutamiento: OSPF v2 con MD5 en interfaces de tránsito y BGP con TCP-MD5. Criterio: parámetros de cifrado y política de claves robustas en memoria.md.
 - [x] [R4] Definir autenticación para grupos VRRP 10 y 20 mediante clave compartida (simple authentication). Criterio: especificación de cadena de autenticación VRRP.
 
 ### Política de Operación y Repositorio
