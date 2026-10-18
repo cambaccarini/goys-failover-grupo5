@@ -5,7 +5,7 @@
 **Grupo:** 5  
 **Fecha de Entrega F0 (Re-entrega):** 10/10/2026  
 **Fecha de Entrega Final (F5):** 23/10/2026  
-**Entorno de Simulación:** GNS3 · MikroTik CHR (RouterOS v7)  
+**Entorno de Simulación:** GNS3 · MikroTik CHR (RouterOS v7)
 
 ---
 
@@ -15,12 +15,12 @@
 > La nómina administrativa original asignaba 3 integrantes al Grupo 5 (Baccarini, Borda, Vidmar). Juan Ignacio Atencio Barrenechea se incorporó formalmente a la comisión en el rol **R4**.  
 > **El grupo está compuesto exclusivamente por 4 integrantes.** El rol auxiliar **R5 fue eliminado formalmente**, redistribuyendo el 100% de sus responsabilidades (Gestión de Hosts, Aseguramiento de Calidad / QA, Respaldos, Change Log, Observabilidad y Ejecución de Drills) de forma equitativa entre R1, R2, R3 y R4.
 
-| Integrante | Rol | Email Institucional / Git | Módulo de Infraestructura | Responsabilidades Operativas (Ex-R5) |
-| :--- | :---: | :--- | :--- | :--- |
-| **Camila Baccarini** | **R1** | `cambaccarini01@gmail.com` | **Líder / Borde-WAN:** Router EDGE (AS 65000), dual-homing eBGP con ISP-1 e ISP-2, redistribución controlada OSPF↔BGP, BGP TCP-MD5, Firewall perimetral y NAT. | Gobernanza del repositorio Git, control de calidad documental y elaboración del Runbook para Drill 3 (BGP Failover por caída de ISP). |
-| **Alesandro Patricio Borda** | **R2** | `PATOEDA@HOTMAIL.COM` | **Proveedores (ISP):** Routers ISP-1 (AS 65001) e ISP-2 (AS 65002), inyección de default route (`default-originate`), eBGP peerings hacia EDGE, Loopbacks públicas simuladas. | Política integral y ejecución de Backups (`/export` y respaldos binarios), verificación de restauración y Runbook para Drill 4 (`check-gateway` / Failover estático). |
-| **Ian Vidmar** | **R3** | `ividmar@alu.frlp.utn.edu.ar` | **Core / Backbone:** Routers CORE-1 y CORE-2, OSPF v2 Área 0 backbone en tránsito puro, enlace dedicado `core-core`, autenticación OSPF criptográfica con MD5. | Aseguramiento de Calidad (QA) de configuraciones, monitoreo y telemetría de red (SNMP / syslog de eventos de adyacencia) y Runbook para Drill 2 (Corte de enlace interno OSPF). |
-| **Juan Ignacio Atencio Barrenechea** | **R4** | `juanignacioatenciobarrenechea@alu.frlp.utn.edu.ar` | **Distribución & FHRP:** Routers DIST-1 y DIST-2, VRRP v2/v3 activo/activo (*load-sharing* entre VLAN 10 y VLAN 20), autenticación VRRP simple y adyacencias OSPF uplink. | Despliegue, configuración y pruebas de equipos terminales (PC-USER en VLAN 10 y SRV en VLAN 20), validación de conectividad de primer salto y Runbooks para Drill 1 (Caída de Master VRRP) y Drill 5 (Load-sharing VRRP). |
+| Integrante                           |  Rol   | Email Institucional / Git                           | Módulo de Infraestructura                                                                                                                                                     | Responsabilidades Operativas (Ex-R5)                                                                                                                                                                                      |
+| :----------------------------------- | :----: | :-------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Camila Baccarini**                 | **R1** | `cambaccarini01@gmail.com`                          | **Líder / Borde-WAN:** Router EDGE (AS 65000), dual-homing eBGP con ISP-1 e ISP-2, redistribución controlada OSPF↔BGP, BGP TCP-MD5, Firewall perimetral y NAT.                | Gobernanza del repositorio Git, control de calidad documental y elaboración del Runbook para Drill 3 (BGP Failover por caída de ISP).                                                                                     |
+| **Alesandro Patricio Borda**         | **R2** | `PATOEDA@HOTMAIL.COM`                               | **Proveedores (ISP):** Routers ISP-1 (AS 65001) e ISP-2 (AS 65002), inyección de default route (`default-originate`), eBGP peerings hacia EDGE, Loopbacks públicas simuladas. | Política integral y ejecución de Backups (`/export` y respaldos binarios), verificación de restauración y Runbook para Drill 4 (`check-gateway` / Failover estático).                                                     |
+| **Ian Vidmar**                       | **R3** | `ividmar@alu.frlp.utn.edu.ar`                       | **Core / Backbone:** Routers CORE-1 y CORE-2, OSPF v2 Área 0 backbone en tránsito puro, enlace dedicado `core-core`, autenticación OSPF criptográfica con MD5.                | Aseguramiento de Calidad (QA) de configuraciones, monitoreo y telemetría de red (SNMP / syslog de eventos de adyacencia) y Runbook para Drill 2 (Corte de enlace interno OSPF).                                           |
+| **Juan Ignacio Atencio Barrenechea** | **R4** | `juanignacioatenciobarrenechea@alu.frlp.utn.edu.ar` | **Distribución & FHRP:** Routers DIST-1 y DIST-2, VRRP v2/v3 activo/activo (_load-sharing_ entre VLAN 10 y VLAN 20), autenticación VRRP simple y adyacencias OSPF uplink.     | Despliegue, configuración y pruebas de equipos terminales (PC-USER en VLAN 10 y SRV en VLAN 20), validación de conectividad de primer salto y Runbooks para Drill 1 (Caída de Master VRRP) y Drill 5 (Load-sharing VRRP). |
 
 ---
 
@@ -28,7 +28,7 @@
 
 ### 1.1 Corrección Crítica de Defectos del Diagrama Original
 
-A partir del análisis exhaustivo del diagrama de referencia *"Enterprise Network Design (Cisco)"*, el equipo detectó cuatro fallas graves de diseño que comprometen la resiliencia, escalabilidad y seguridad de la infraestructura. A continuación se detallan los defectos y las soluciones de ingeniería adoptadas para nuestra topología de 7 nodos CHR:
+A partir del análisis exhaustivo del diagrama de referencia _"Enterprise Network Design (Cisco)"_, el equipo detectó cuatro fallas graves de diseño que comprometen la resiliencia, escalabilidad y seguridad de la infraestructura. A continuación se detallan los defectos y las soluciones de ingeniería adoptadas para nuestra topología de 7 nodos CHR:
 
 ```
 +---------------------------------------------------------------------------------------------------+
@@ -44,31 +44,35 @@ A partir del análisis exhaustivo del diagrama de referencia *"Enterprise Networ
 ```
 
 #### Defecto 1: Punto Único de Falla (SPOF) en el Borde Perimetral
-* **Diagnóstico Crítico:** El diagrama original implementa un único appliance de firewall/edge recibiendo las acometidas de los proveedores. Cualquier incidente físico, saturación de CPU por ataque DoS, falla de fuente o reinicio por actualización en ese nodo deja a toda la organización desconectada, anulando la supuesta redundancia de contar con múltiples enlaces hacia Internet.
-* **Solución e Implementación en el Laboratorio:** En un entorno enterprise de producción, la solución estándar exige un clúster de Firewalls en Alta Disponibilidad (Active/Standby o Active/Active mediante protocolos de sincronización de tablas de estado como CARP o clúster propietario). En nuestro laboratorio sobre MikroTik CHR, documentamos este trade-off arquitectónico y mitigamos el riesgo en la capa de software:
+
+- **Diagnóstico Crítico:** El diagrama original implementa un único appliance de firewall/edge recibiendo las acometidas de los proveedores. Cualquier incidente físico, saturación de CPU por ataque DoS, falla de fuente o reinicio por actualización en ese nodo deja a toda la organización desconectada, anulando la supuesta redundancia de contar con múltiples enlaces hacia Internet.
+- **Solución e Implementación en el Laboratorio:** En un entorno enterprise de producción, la solución estándar exige un clúster de Firewalls en Alta Disponibilidad (Active/Standby o Active/Active mediante protocolos de sincronización de tablas de estado como CARP o clúster propietario). En nuestro laboratorio sobre MikroTik CHR, documentamos este trade-off arquitectónico y mitigamos el riesgo en la capa de software:
   1. El router `EDGE` establece dos sesiones eBGP independientes con `ISP-1` (AS 65001) e `ISP-2` (AS 65002) sobre interfaces físicas dedicadas (`ether1` y `ether2`).
   2. Hacia el interior, `EDGE` bifurca el tránsito hacia el núcleo mediante dos enlaces punto a punto independientes: `ether3` hacia `CORE-1` (`10.10.1.0/30`) y `ether4` hacia `CORE-2` (`10.10.2.0/30`).
   3. De esta forma, el borde garantiza que una contingencia en un ISP o en uno de los routers de Core no interrumpa el flujo del tráfico, aislando el dominio externo del plano de control interno.
 
 #### Defecto 2: Ausencia de Enlace Físico Directo Core-Core (Inter-Core Link)
-* **Diagnóstico Crítico:** En el diseño original, los routers del núcleo (`CORE-1` y `CORE-2`) no poseían una interconexión directa entre sí. Ante la pérdida de un enlace vertical (por ejemplo, la caída del enlace `EDGE` ↔ `CORE-1`), el tráfico proveniente de la capa de distribución hacia `CORE-1` se ve obligado a descender nuevamente por la distribución para alcanzar `CORE-2` (*trombone routing* / tráfico en zigzag). Esto genera saturación innecesaria en enlaces de acceso/distribución, introduce latencia impredecible y duplica el consumo de buffers en los switches intermedios.
-* **Solución e Implementación en el Laboratorio:** Agregamos un enlace punto a punto `/30` físico dedicado entre ambos routers de Core (`CORE-1` `ether2` `10.20.1.1/30` ↔ `CORE-2` `ether2` `10.20.1.2/30`):
+
+- **Diagnóstico Crítico:** En el diseño original, los routers del núcleo (`CORE-1` y `CORE-2`) no poseían una interconexión directa entre sí. Ante la pérdida de un enlace vertical (por ejemplo, la caída del enlace `EDGE` ↔ `CORE-1`), el tráfico proveniente de la capa de distribución hacia `CORE-1` se ve obligado a descender nuevamente por la distribución para alcanzar `CORE-2` (_trombone routing_ / tráfico en zigzag). Esto genera saturación innecesaria en enlaces de acceso/distribución, introduce latencia impredecible y duplica el consumo de buffers en los switches intermedios.
+- **Solución e Implementación en el Laboratorio:** Agregamos un enlace punto a punto `/30` físico dedicado entre ambos routers de Core (`CORE-1` `ether2` `10.20.1.1/30` ↔ `CORE-2` `ether2` `10.20.1.2/30`):
   1. **Convergencia Acelerada:** Permite el intercambio y flooding directo de LSAs Tipo 1 (Router LSA) en OSPF v2 Área 0 sin requerir saltos intermedios.
   2. **Tránsito Horizontal Óptimo:** Si `CORE-1` pierde conectividad con el borde, conmuta el tráfico hacia `CORE-2` en un único salto interno de Capa 3 a velocidad de interfaz.
   3. **Resiliencia ante Partición del Backbone:** Previene que el Área 0 quede dividida lógicamente en caso de fallas concurrentes en la capa de distribución.
 
 #### Defecto 3: Mala Ubicación de la Redundancia de Primer Salto (FHRP en Core)
-* **Diagnóstico Crítico:** El diseño original configuraba pasarelas redundantes (HSRP) directamente en los routers de Core. Esta arquitectura colapsada viola el principio de diseño modular de Cisco y de redes de alta velocidad: obliga al núcleo a mantener interfaces virtuales de Capa 2 (SVIs), procesar tormentas de broadcast ARP, responder a paquetes multicast de clientes y gestionar tablas de estados de host.
-* **Solución e Implementación en el Laboratorio:** Redefinimos al Core como un **Núcleo de Tránsito Puro (Pure Transit Core)** y desplazamos el FHRP a la capa de **Distribución**:
+
+- **Diagnóstico Crítico:** El diseño original configuraba pasarelas redundantes (HSRP) directamente en los routers de Core. Esta arquitectura colapsada viola el principio de diseño modular de Cisco y de redes de alta velocidad: obliga al núcleo a mantener interfaces virtuales de Capa 2 (SVIs), procesar tormentas de broadcast ARP, responder a paquetes multicast de clientes y gestionar tablas de estados de host.
+- **Solución e Implementación en el Laboratorio:** Redefinimos al Core como un **Núcleo de Tránsito Puro (Pure Transit Core)** y desplazamos el FHRP a la capa de **Distribución**:
   1. **Core Desacoplado:** `CORE-1` y `CORE-2` operan exclusivamente con interfaces enrutadas de Capa 3, conmutando paquetes por hardware mediante rutas OSPF de costo balanceado (ECMP), sin tablas ARP de estaciones finales.
-  2. **VRRP Activo/Activo en Distribución:** `DIST-1` y `DIST-2` actúan como puertas de enlace predeterminadas mediante dos grupos VRRP con balanceo de carga (*Load-Sharing*):
+  2. **VRRP Activo/Activo en Distribución:** `DIST-1` y `DIST-2` actúan como puertas de enlace predeterminadas mediante dos grupos VRRP con balanceo de carga (_Load-Sharing_):
      - **Grupo USERS (VRID 10):** `DIST-1` es Master (Prioridad 150) y `DIST-2` es Backup (Prioridad 100) para la subred `192.168.10.0/24` (IP Virtual: `192.168.10.1`).
      - **Grupo SERVERS (VRID 20):** `DIST-2` es Master (Prioridad 150) y `DIST-1` es Backup (Prioridad 100) para la subred `192.168.20.0/24` (IP Virtual: `192.168.20.1`).
   3. Esto maximiza la utilización del hardware disponible: ambos routers de distribución cursan tráfico simultáneamente en condiciones normales.
 
 #### Defecto 4: Solapamiento y Desorganización del Direccionamiento IP
-* **Diagnóstico Crítico:** El diagrama original repetía subredes de manera caótica (por ejemplo, utilizando el rango `192.168.10.0/24` en múltiples segmentos no interconectados) y empleaba máscaras inadecuadas en enlaces punto a punto. Esto imposibilita el enrutamiento dinámico, produce *blackholes* de paquetes e impide la sumarización limpia de rutas.
-* **Solución e Implementación en el Laboratorio:** Se diseñó un plan de direccionamiento IPAM determinista, jerárquico y de cero solapamiento, con máscaras `/30` para enlaces punto a punto y `/24` para segmentos de acceso, estructurado por bloques funcionales.
+
+- **Diagnóstico Crítico:** El diagrama original repetía subredes de manera caótica (por ejemplo, utilizando el rango `192.168.10.0/24` en múltiples segmentos no interconectados) y empleaba máscaras inadecuadas en enlaces punto a punto. Esto imposibilita el enrutamiento dinámico, produce _blackholes_ de paquetes e impide la sumarización limpia de rutas.
+- **Solución e Implementación en el Laboratorio:** Se diseñó un plan de direccionamiento IPAM determinista, jerárquico y de cero solapamiento, con máscaras `/30` para enlaces punto a punto y `/24` para segmentos de acceso, estructurado por bloques funcionales.
 
 ---
 
@@ -94,36 +98,39 @@ El esquema de direccionamiento fue diseñado bajo una estricta jerarquía de sub
 ```
 
 #### 1.2.1 Identificadores de Router (Router-IDs) y Loopbacks (/32)
+
 Cada router de la topología cuenta con una interfaz Loopback virtual configurada con una dirección IP de 32 bits que actúa de manera determinista como su **Router-ID** en los procesos de OSPF y BGP:
 
-| Dispositivo | Capa de Red | Router-ID / Loopback | Máscara | Función Principal en el Laboratorio |
-| :--- | :--- | :---: | :---: | :--- |
-| **ISP-1** | WAN Externa | `1.1.1.1` | `/32` | Proveedor BGP Primario (AS 65001) |
-| **ISP-2** | WAN Externa | `2.2.2.2` | `/32` | Proveedor BGP Secundario (AS 65002) |
-| **EDGE** | Borde Perimetral | `3.3.3.3` | `/32` | BGP Multi-homing (AS 65000) / OSPF Área 0 |
-| **CORE-1** | Núcleo (Core) | `4.4.4.4` | `/32` | OSPF Backbone Área 0 / Tránsito Puro A |
-| **CORE-2** | Núcleo (Core) | `5.5.5.5` | `/32` | OSPF Backbone Área 0 / Tránsito Puro B |
-| **DIST-1** | Distribución | `6.6.6.6` | `/32` | OSPF Área 0 / VRRP Master VLAN 10 |
-| **DIST-2** | Distribución | `7.7.7.7` | `/32` | OSPF Área 0 / VRRP Master VLAN 20 |
+| Dispositivo | Capa de Red      | Router-ID / Loopback | Máscara | Función Principal en el Laboratorio       |
+| :---------- | :--------------- | :------------------: | :-----: | :---------------------------------------- |
+| **ISP-1**   | WAN Externa      |      `1.1.1.1`       |  `/32`  | Proveedor BGP Primario (AS 65001)         |
+| **ISP-2**   | WAN Externa      |      `2.2.2.2`       |  `/32`  | Proveedor BGP Secundario (AS 65002)       |
+| **EDGE**    | Borde Perimetral |      `3.3.3.3`       |  `/32`  | BGP Multi-homing (AS 65000) / OSPF Área 0 |
+| **CORE-1**  | Núcleo (Core)    |      `4.4.4.4`       |  `/32`  | OSPF Backbone Área 0 / Tránsito Puro A    |
+| **CORE-2**  | Núcleo (Core)    |      `5.5.5.5`       |  `/32`  | OSPF Backbone Área 0 / Tránsito Puro B    |
+| **DIST-1**  | Distribución     |      `6.6.6.6`       |  `/32`  | OSPF Área 0 / VRRP Master VLAN 10         |
+| **DIST-2**  | Distribución     |      `7.7.7.7`       |  `/32`  | OSPF Área 0 / VRRP Master VLAN 20         |
 
 #### 1.2.2 Matriz Completa de Enlaces Punto a Punto (/30)
-| Enlace Físico | Red / CIDR | Dispositivo A | Interfaz A | IP A | Dispositivo B | Interfaz B | IP B |
-| :--- | :---: | :--- | :---: | :---: | :--- | :---: | :---: |
-| **ISP-1 ↔ EDGE** | `10.100.1.0/30` | ISP-1 | `ether1` | `10.100.1.1` | EDGE | `ether1` | `10.100.1.2` |
-| **ISP-2 ↔ EDGE** | `10.200.1.0/30` | ISP-2 | `ether1` | `10.200.1.1` | EDGE | `ether2` | `10.200.1.2` |
-| **EDGE ↔ CORE-1** | `10.10.1.0/30` | EDGE | `ether3` | `10.10.1.1` | CORE-1 | `ether1` | `10.10.1.2` |
-| **EDGE ↔ CORE-2** | `10.10.2.0/30` | EDGE | `ether4` | `10.10.2.1` | CORE-2 | `ether1` | `10.10.2.2` |
-| **CORE-1 ↔ CORE-2** | `10.20.1.0/30` | CORE-1 | `ether2` | `10.20.1.1` | CORE-2 | `ether2` | `10.20.1.2` |
-| **CORE-1 ↔ DIST-1** | `10.30.1.0/30` | CORE-1 | `ether3` | `10.30.1.1` | DIST-1 | `ether1` | `10.30.1.2` |
-| **CORE-1 ↔ DIST-2** | `10.30.2.0/30` | CORE-1 | `ether4` | `10.30.2.1` | DIST-2 | `ether1` | `10.30.2.2` |
-| **CORE-2 ↔ DIST-1** | `10.30.3.0/30` | CORE-2 | `ether3` | `10.30.3.1` | DIST-1 | `ether2` | `10.30.3.2` |
-| **CORE-2 ↔ DIST-2** | `10.30.4.0/30` | CORE-2 | `ether4` | `10.30.4.1` | DIST-2 | `ether2` | `10.30.4.2` |
+
+| Enlace Físico       |   Red / CIDR    | Dispositivo A | Interfaz A |     IP A     | Dispositivo B | Interfaz B |     IP B     |
+| :------------------ | :-------------: | :------------ | :--------: | :----------: | :------------ | :--------: | :----------: |
+| **ISP-1 ↔ EDGE**    | `10.100.1.0/30` | ISP-1         |  `ether1`  | `10.100.1.1` | EDGE          |  `ether1`  | `10.100.1.2` |
+| **ISP-2 ↔ EDGE**    | `10.200.1.0/30` | ISP-2         |  `ether1`  | `10.200.1.1` | EDGE          |  `ether2`  | `10.200.1.2` |
+| **EDGE ↔ CORE-1**   | `10.10.1.0/30`  | EDGE          |  `ether3`  | `10.10.1.1`  | CORE-1        |  `ether1`  | `10.10.1.2`  |
+| **EDGE ↔ CORE-2**   | `10.10.2.0/30`  | EDGE          |  `ether4`  | `10.10.2.1`  | CORE-2        |  `ether1`  | `10.10.2.2`  |
+| **CORE-1 ↔ CORE-2** | `10.20.1.0/30`  | CORE-1        |  `ether2`  | `10.20.1.1`  | CORE-2        |  `ether2`  | `10.20.1.2`  |
+| **CORE-1 ↔ DIST-1** | `10.30.1.0/30`  | CORE-1        |  `ether3`  | `10.30.1.1`  | DIST-1        |  `ether1`  | `10.30.1.2`  |
+| **CORE-1 ↔ DIST-2** | `10.30.2.0/30`  | CORE-1        |  `ether4`  | `10.30.2.1`  | DIST-2        |  `ether1`  | `10.30.2.2`  |
+| **CORE-2 ↔ DIST-1** | `10.30.3.0/30`  | CORE-2        |  `ether3`  | `10.30.3.1`  | DIST-1        |  `ether2`  | `10.30.3.2`  |
+| **CORE-2 ↔ DIST-2** | `10.30.4.0/30`  | CORE-2        |  `ether4`  | `10.30.4.1`  | DIST-2        |  `ether2`  | `10.30.4.2`  |
 
 #### 1.2.3 Segmentos de Acceso LAN y Configuración VRRP
-| Segmento / VLAN | ID VLAN | Subred de Red | IP DIST-1 (`vlanX`) | IP DIST-2 (`vlanX`) | IP Virtual VRRP | VRID | Prioridad DIST-1 | Prioridad DIST-2 | Host de Prueba Asignado |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **VLAN-USERS** | `10` | `192.168.10.0/24` | `192.168.10.2/24` | `192.168.10.3/24` | **`192.168.10.1`** | `10` | **150 (Master)** | 100 (Backup) | **PC-USER:** `192.168.10.100/24` (GW: `192.168.10.1`) |
-| **VLAN-SERVERS** | `20` | `192.168.20.0/24` | `192.168.20.2/24` | `192.168.20.3/24` | **`192.168.20.1`** | `20` | 100 (Backup) | **150 (Master)** | **SRV:** `192.168.20.100/24` (GW: `192.168.20.1`) |
+
+| Segmento / VLAN  | ID VLAN |   Subred de Red   | IP DIST-1 (`vlanX`) | IP DIST-2 (`vlanX`) |  IP Virtual VRRP   | VRID | Prioridad DIST-1 | Prioridad DIST-2 | Host de Prueba Asignado                               |
+| :--------------- | :-----: | :---------------: | :-----------------: | :-----------------: | :----------------: | :--: | :--------------: | :--------------: | :---------------------------------------------------- |
+| **VLAN-USERS**   |  `10`   | `192.168.10.0/24` |  `192.168.10.2/24`  |  `192.168.10.3/24`  | **`192.168.10.1`** | `10` | **150 (Master)** |   100 (Backup)   | **PC-USER:** `192.168.10.100/24` (GW: `192.168.10.1`) |
+| **VLAN-SERVERS** |  `20`   | `192.168.20.0/24` |  `192.168.20.2/24`  |  `192.168.20.3/24`  | **`192.168.20.1`** | `20` |   100 (Backup)   | **150 (Master)** | **SRV:** `192.168.20.100/24` (GW: `192.168.20.1`)     |
 
 ---
 
@@ -132,23 +139,26 @@ Cada router de la topología cuenta con una interfaz Loopback virtual configurad
 La política de seguridad establece medidas técnicas de hardening perimetral y autenticación criptográfica en los planos de control y gestión:
 
 #### 1. Usuarios y Control de Acceso Basado en Roles (RBAC)
-* Se eliminan las credenciales de fábrica (`admin` con contraseña vacía).
-* Se crea una cuenta de administración segura local:
+
+- Se eliminan las credenciales de fábrica (`admin` con contraseña vacía).
+- Se crea una cuenta de administración segura local:
   ```routeros
   /user group add name=superadmin policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,snmp,sensitive,api,romon,rest-api
   /user add name=netadmin group=superadmin password="P@ssw0rdSegura2026!GOYS"
   ```
-* Se crea un usuario de auditoría de solo lectura para monitoreo y verificación de estado:
+- Se crea un usuario de auditoría de solo lectura para monitoreo y verificación de estado:
   ```routeros
   /user add name=monitor group=read password="Mon1tor_Read0nly#2026"
   ```
-* Se desactiva o remueve el usuario `admin` por defecto:
+- Se desactiva o remueve el usuario `admin` por defecto:
   ```routeros
   /user remove [find name=admin]
   ```
 
 #### 2. Hardening y Apagado de Servicios Inseguros
+
 Para minimizar la superficie de ataque, se desactivan todos los servicios de administración en texto plano y no esenciales:
+
 ```routeros
 /ip service set telnet disabled=yes
 /ip service set ftp disabled=yes
@@ -158,42 +168,49 @@ Para minimizar la superficie de ataque, se desactivan todos los servicios de adm
 /ip service set ssh disabled=no port=22
 /ip service set winbox disabled=no port=8291
 ```
-* **Supresión de Protocolos de Descubrimiento:** Se desactiva MikroTik Neighbor Discovery Protocol (MNDP) y CDP en interfaces WAN públicas:
+
+- **Supresión de Protocolos de Descubrimiento:** Se desactiva MikroTik Neighbor Discovery Protocol (MNDP) y CDP en interfaces WAN públicas:
   ```routeros
   /ip neighbor discovery-settings set discover-interface-list=none
   ```
 
 #### 3. Autenticación Criptográfica en Protocolos de Ruteo y Redundancia
-* **OSPF v2 (Área 0):** Autenticación criptográfica obligatoria con **MD5** en todas las interfaces de tránsito. Las adyacencias rechazan paquetes hello o LSUs que no coincidan en la firma MD5.
+
+- **OSPF v2 (Área 0):** Autenticación criptográfica obligatoria con **MD5** en todas las interfaces de tránsito. Las adyacencias rechazan paquetes hello o LSUs que no coincidan en la firma MD5.
   ```routeros
   /routing ospf interface-template add area=backbone-v2 auth=md5 auth-key="ClaveOSPF_Area0_MD5!2026"
   ```
-* **BGP (eBGP Multi-Homing):** Protección a nivel de socket TCP mediante la opción **TCP-MD5 Signature** (RFC 2385) entre EDGE e ISPs:
+- **BGP (eBGP Multi-Homing):** Protección a nivel de socket TCP mediante la opción **TCP-MD5 Signature** (RFC 2385) entre EDGE e ISPs:
   ```routeros
   /routing bgp connection add name=peer-isp1 remote.address=10.100.1.1 .as=65001 tcp-md5-key="ClaveBGP_ISP1_TCPMD5#2026"
   /routing bgp connection add name=peer-isp2 remote.address=10.200.1.1 .as=65002 tcp-md5-key="ClaveBGP_ISP2_TCPMD5#2026"
   ```
-* **VRRP v2/v3:** Autenticación por clave compartida (*Simple Authentication*) en los grupos VRID 10 y VRID 20 para evitar que hosts no autorizados en los segmentos LAN inyecten anuncios VRRP con prioridades arbitrarias.
+- **VRRP v2/v3:** Autenticación por clave compartida (_Simple Authentication_) en los grupos VRID 10 y VRID 20 para evitar que hosts no autorizados en los segmentos LAN inyecten anuncios VRRP con prioridades arbitrarias.
 
 ---
 
 ### 1.4 Política de Operación y Gestión de Cambios
 
 #### 1. Convención de Control de Versiones (Git)
+
 Para garantizar la trazabilidad de cada intervención de ingeniería, el repositorio adopta de manera estricta la convención **Conventional Commits**:
+
 ```text
 <tipo>(<alcance>): <descripción técnica concisa en imperativo>
 ```
-* **Tipos permitidos:**
-  * `feat`: Implementación de nuevas configuraciones, protocolos o políticas de red.
-  * `fix`: Corrección de direccionamiento, filtros, rutas o discrepancias de sintaxis.
-  * `docs`: Modificación o ampliación de memoria técnica, backlog o runbooks.
-  * `ops`: Operaciones de respaldo, scripts de automatización o restauración.
-  * `chore`: Creación de estructura de carpetas, `.gitkeep` o tareas administrativas.
-* **Alcances válidos:** `ipam`, `roles`, `backlog`, `memoria`, `vrrp`, `ospf`, `bgp`, `firewall`, `hardening`, `drills`, `backup`.
+
+- **Tipos permitidos:**
+  - `feat`: Implementación de nuevas configuraciones, protocolos o políticas de red.
+  - `fix`: Corrección de direccionamiento, filtros, rutas o discrepancias de sintaxis.
+  - `docs`: Modificación o ampliación de memoria técnica, backlog o runbooks.
+  - `ops`: Operaciones de respaldo, scripts de automatización o restauración.
+  - `chore`: Creación de estructura de carpetas, `.gitkeep` o tareas administrativas.
+- **Alcances válidos:** `ipam`, `roles`, `backlog`, `memoria`, `vrrp`, `ospf`, `bgp`, `firewall`, `hardening`, `drills`, `backup`.
 
 #### 2. Política de Respaldos (Backup y Restore)
+
 La salvaguarda de configuraciones sigue un esquema dual:
+
 1. **Exportación Declarativa en Texto Plano (`/export`):**
    - Comando: `/export show-sensitive file=configs/<nombre-router>-<fase>.rsc`
    - Formato editable y versionable en Git, libre de claves sensibles en commits públicos.
@@ -250,49 +267,57 @@ La topología está conformada por 7 routers MikroTik CHR, 2 switches Ethernet v
 
 ## 3. Registro de Configuraciones de Dispositivos (F1 a F3)
 
-*(Los scripts de configuración limpios para cada uno de los 7 routers CHR se guardan en el directorio `configs/<router>.rsc` y se incorporan formalmente al completar cada fase).*
+_(Los scripts de configuración limpios para cada uno de los 7 routers CHR se guardan en el directorio `configs/<router>.rsc` y se incorporan formalmente al completar cada fase)._
 
 ### 3.1 Router ISP-1
-* **Rol:** Proveedor WAN Primario (AS 65001).
-* **Script asociado:** `configs/isp-1.rsc`
-* **Parámetros clave:** Loopback `1.1.1.1/32`, eBGP peering hacia EDGE `10.100.1.2`, originación de default route BGP.
+
+- **Rol:** Proveedor WAN Primario (AS 65001).
+- **Script asociado:** `configs/isp-1.rsc`
+- **Parámetros clave:** Loopback `1.1.1.1/32`, eBGP peering hacia EDGE `10.100.1.2`, originación de default route BGP.
 
 ### 3.2 Router ISP-2
-* **Rol:** Proveedor WAN Secundario (AS 65002).
-* **Script asociado:** `configs/isp-2.rsc`
-* **Parámetros clave:** Loopback `2.2.2.2/32`, eBGP peering hacia EDGE `10.200.1.2`, originación de default route BGP.
+
+- **Rol:** Proveedor WAN Secundario (AS 65002).
+- **Script asociado:** `configs/isp-2.rsc`
+- **Parámetros clave:** Loopback `2.2.2.2/32`, eBGP peering hacia EDGE `10.200.1.2`, originación de default route BGP.
 
 ### 3.3 Router EDGE
-* **Rol:** Borde perimetral multi-homing y Gateway exterior (AS 65000).
-* **Script asociado:** `configs/edge.rsc`
-* **Parámetros clave:** Loopback `3.3.3.3/32`, eBGP dual con TCP-MD5, OSPF Área 0 hacia Cores, Firewall con estado y NAT Masquerade.
+
+- **Rol:** Borde perimetral multi-homing y Gateway exterior (AS 65000).
+- **Script asociado:** `configs/edge.rsc`
+- **Parámetros clave:** Loopback `3.3.3.3/32`, eBGP dual con TCP-MD5, OSPF Área 0 hacia Cores, Firewall con estado y NAT Masquerade.
 
 ### 3.4 Router CORE-1
-* **Rol:** Núcleo de tránsito puro A (OSPF Área 0).
-* **Script asociado:** `configs/core-1.rsc`
-* **Parámetros clave:** Loopback `4.4.4.4/32`, enlace inter-Core `10.20.1.1/30` con OSPF MD5, uplinks a EDGE y downlinks a Distribución.
+
+- **Rol:** Núcleo de tránsito puro A (OSPF Área 0).
+- **Script asociado:** `configs/core-1.rsc`
+- **Parámetros clave:** Loopback `4.4.4.4/32`, enlace inter-Core `10.20.1.1/30` con OSPF MD5, uplinks a EDGE y downlinks a Distribución.
 
 ### 3.5 Router CORE-2
-* **Rol:** Núcleo de tránsito puro B (OSPF Área 0).
-* **Script asociado:** `configs/core-2.rsc`
-* **Parámetros clave:** Loopback `5.5.5.5/32`, enlace inter-Core `10.20.1.2/30` con OSPF MD5, uplinks a EDGE y downlinks a Distribución.
+
+- **Rol:** Núcleo de tránsito puro B (OSPF Área 0).
+- **Script asociado:** `configs/core-2.rsc`
+- **Parámetros clave:** Loopback `5.5.5.5/32`, enlace inter-Core `10.20.1.2/30` con OSPF MD5, uplinks a EDGE y downlinks a Distribución.
 
 ### 3.6 Router DIST-1
-* **Rol:** Distribución y Gateway de primer salto.
-* **Script asociado:** `configs/dist-1.rsc`
-* **Parámetros clave:** Loopback `6.6.6.6/32`, VRRP Master en VLAN 10 (Prio 150), VRRP Backup en VLAN 20 (Prio 100), OSPF pasivo en LANs.
+
+- **Rol:** Distribución y Gateway de primer salto.
+- **Script asociado:** `configs/dist-1.rsc`
+- **Parámetros clave:** Loopback `6.6.6.6/32`, VRRP Master en VLAN 10 (Prio 150), VRRP Backup en VLAN 20 (Prio 100), OSPF pasivo en LANs.
 
 ### 3.7 Router DIST-2
-* **Rol:** Distribución y Gateway de primer salto.
-* **Script asociado:** `configs/dist-2.rsc`
-* **Parámetros clave:** Loopback `7.7.7.7/32`, VRRP Master en VLAN 20 (Prio 150), VRRP Backup en VLAN 10 (Prio 100), OSPF pasivo en LANs.
+
+- **Rol:** Distribución y Gateway de primer salto.
+- **Script asociado:** `configs/dist-2.rsc`
+- **Parámetros clave:** Loopback `7.7.7.7/32`, VRRP Master en VLAN 20 (Prio 150), VRRP Backup en VLAN 10 (Prio 100), OSPF pasivo en LANs.
 
 ### 3.8 Configuración de Hosts Terminales (PC-USER y SRV)
-* **PC-USER (VLAN 10):**
+
+- **PC-USER (VLAN 10):**
   ```bash
   ip 192.168.10.100 255.255.255.0 192.168.10.1
   ```
-* **SRV (VLAN 20):**
+- **SRV (VLAN 20):**
   ```bash
   ip 192.168.20.100 255.255.255.0 192.168.20.1
   ```
@@ -302,9 +327,11 @@ La topología está conformada por 7 routers MikroTik CHR, 2 switches Ethernet v
 ## 4. Verificación y Batería de Drills de Failover (F4)
 
 ### 4.1 Pruebas de Conectividad Base
+
 Las pruebas de conectividad validan el funcionamiento nominal antes de inducir fallas:
-* **Ping intra-LAN:** `PC-USER` pinguea a `SRV` (`192.168.20.100`). Valida enrutamiento inter-VLAN en la capa de distribución.
-* **Traceroute WAN:** `PC-USER` y `SRV` ejecutan traceroute a las Loopbacks de los ISPs (`1.1.1.1` y `2.2.2.2`). Valida el camino completo: Acceso → Distribución → Core → Borde → Internet.
+
+- **Ping intra-LAN:** `PC-USER` pinguea a `SRV` (`192.168.20.100`). Valida enrutamiento inter-VLAN en la capa de distribución.
+- **Traceroute WAN:** `PC-USER` y `SRV` ejecutan traceroute a las Loopbacks de los ISPs (`1.1.1.1` y `2.2.2.2`). Valida el camino completo: Acceso → Distribución → Core → Borde → Internet.
 
 ### 4.2 Los 5 Drills de Failover de la Red
 
@@ -325,70 +352,78 @@ Cada drill se ejecuta siguiendo la metodología de ingeniería de resiliencia: *
 ```
 
 #### Drill 1 — VRRP: Caída de Gateway Master en Distribución
-* **Responsable:** Juan Ignacio Atencio (R4)
-* **Procedimiento:** Ejecutar ping sostenido desde `PC-USER` a `192.168.10.1`. Deshabilitar la interfaz `vlan10` en `DIST-1` (`/interface vlan disable vlan10`).
-* **Comportamiento Esperado:** Al dejar de recibir tramas VRRP Advertisement tras 3 intervalos consecutivos (3s), `DIST-2` conmuta de estado Backup (`B`) a Master (`RM`).
-* **Runbook:** Documentado en `runbooks/drill-1.md`.
+
+- **Responsable:** Juan Ignacio Atencio (R4)
+- **Procedimiento:** Ejecutar ping sostenido desde `PC-USER` a `192.168.10.1`. Deshabilitar la interfaz `vlan10` en `DIST-1` (`/interface vlan disable vlan10`).
+- **Comportamiento Esperado:** Al dejar de recibir tramas VRRP Advertisement tras 3 intervalos consecutivos (3s), `DIST-2` conmuta de estado Backup (`B`) a Master (`RM`).
+- **Runbook:** Documentado en `runbooks/drill-1.md`.
 
 #### Drill 2 — OSPF: Corte de Enlace Interno de Tránsito
-* **Responsable:** Ian Vidmar (R3)
-* **Procedimiento:** Iniciar transferencia de datos entre hosts y deshabilitar el enlace `EDGE` ↔ `CORE-1` (`10.10.1.0/30`).
-* **Comportamiento Esperado:** OSPF detecta la pérdida de adyacencia, inunda un nuevo Router LSA por el enlace horizontal Core-Core (`10.20.1.0/30`), recalculando el árbol SPF. El tráfico fluye por `CORE-2` sin interrupción de las sesiones de los hosts.
-* **Runbook:** Documentado en `runbooks/drill-2.md`.
+
+- **Responsable:** Ian Vidmar (R3)
+- **Procedimiento:** Iniciar transferencia de datos entre hosts y deshabilitar el enlace `EDGE` ↔ `CORE-1` (`10.10.1.0/30`).
+- **Comportamiento Esperado:** OSPF detecta la pérdida de adyacencia, inunda un nuevo Router LSA por el enlace horizontal Core-Core (`10.20.1.0/30`), recalculando el árbol SPF. El tráfico fluye por `CORE-2` sin interrupción de las sesiones de los hosts.
+- **Runbook:** Documentado en `runbooks/drill-2.md`.
 
 #### Drill 3 — BGP: Caída de Proveedor WAN Primario
-* **Responsable:** Camila Baccarini (R1)
-* **Procedimiento:** Deshabilitar la interfaz `ether1` en `EDGE` conectada a `ISP-1` mientras se monitorea ping hacia `1.1.1.1` y `8.8.8.8`.
-* **Comportamiento Esperado:** La sesión BGP con AS 65001 cae. La tabla de ruteo de `EDGE` conmuta la default route activa hacia el peer `ISP-2` (AS 65002).
-* **Runbook:** Documentado en `runbooks/drill-3.md`.
+
+- **Responsable:** Camila Baccarini (R1)
+- **Procedimiento:** Deshabilitar la interfaz `ether1` en `EDGE` conectada a `ISP-1` mientras se monitorea ping hacia `1.1.1.1` y `8.8.8.8`.
+- **Comportamiento Esperado:** La sesión BGP con AS 65001 cae. La tabla de ruteo de `EDGE` conmuta la default route activa hacia el peer `ISP-2` (AS 65002).
+- **Runbook:** Documentado en `runbooks/drill-3.md`.
 
 #### Drill 4 — check-gateway: Failover Estático Recursivo
-* **Responsable:** Alesandro Patricio Borda (R2)
-* **Procedimiento:** Simular una ruta estática alternativa con el parámetro `check-gateway=ping` y forzar la falta de respuesta ICMP del próximo salto.
-* **Comportamiento Esperado:** Tras 3 sondas fallidas espaciadas por 10 segundos (30s en total), RouterOS marca la ruta como inalcanzable y activa la ruta estática secundaria con mayor distancia administrativa.
-* **Runbook:** Documentado en `runbooks/drill-4.md`.
+
+- **Responsable:** Alesandro Patricio Borda (R2)
+- **Procedimiento:** Simular una ruta estática alternativa con el parámetro `check-gateway=ping` y forzar la falta de respuesta ICMP del próximo salto.
+- **Comportamiento Esperado:** Tras 3 sondas fallidas espaciadas por 10 segundos (30s en total), RouterOS marca la ruta como inalcanzable y activa la ruta estática secundaria con mayor distancia administrativa.
+- **Runbook:** Documentado en `runbooks/drill-4.md`.
 
 #### Drill 5 — Load-Sharing VRRP: Ambos Routers de Distribución Activos
-* **Responsable:** Juan Ignacio Atencio (R4)
-* **Procedimiento:** Generar tráfico simultáneo desde `PC-USER` hacia la WAN y desde `SRV` hacia la WAN, utilizando `/tool torch` en `DIST-1` y `DIST-2`.
-* **Comportamiento Esperado:** El flujo de `VLAN 10` atraviesa físicamente `DIST-1`, mientras que el flujo de `VLAN 20` atraviesa `DIST-2`. Ambos routers operan en modo activo sin enlaces ociosos.
-* **Runbook:** Documentado en `runbooks/drill-5.md`.
+
+- **Responsable:** Juan Ignacio Atencio (R4)
+- **Procedimiento:** Generar tráfico simultáneo desde `PC-USER` hacia la WAN y desde `SRV` hacia la WAN, utilizando `/tool torch` en `DIST-1` y `DIST-2`.
+- **Comportamiento Esperado:** El flujo de `VLAN 10` atraviesa físicamente `DIST-1`, mientras que el flujo de `VLAN 20` atraviesa `DIST-2`. Ambos routers operan en modo activo sin enlaces ociosos.
+- **Runbook:** Documentado en `runbooks/drill-5.md`.
 
 ---
 
 ## 5. Auditoría de Seguridad y Pruebas Negativas
 
-| Mecanismo de Seguridad | Dispositivos Aplicados | Criterio de Verificación / Prueba Negativa |
-| :--- | :--- | :--- |
-| **Hardening de Servicios** | Los 7 routers CHR | Escaneo nmap perimetral confirma que puertos Telnet (23), HTTP (80) y API (8728) se encuentran estrictamente cerrados o filtrados. |
-| **Autenticación OSPF MD5** | EDGE, CORE-1, CORE-2, DIST-1, DIST-2 | **Prueba Negativa:** Se altera la clave MD5 en un extremo del enlace. La adyacencia cae inmediatamente a estado `Down` o queda bloqueada en `ExStart`, registrando error de autenticación en `/log print`. |
-| **Autenticación BGP TCP-MD5** | EDGE, ISP-1, ISP-2 | **Prueba Negativa:** Se modifica la clave MD5 en la sesión BGP de EDGE. La conexión TCP es rechazada en el socket (SYN rechazado) y la sesión no alcanza estado `Established`. |
-| **Autenticación VRRP** | DIST-1, DIST-2 | Se inyecta una trama de anuncio con contraseña errónea; el nodo la descarta y no altera su estado Master/Backup. |
-| **Firewall Perimetral** | Router EDGE | Inspección con estado: se verifica que paquetes entrantes no solicitados desde la interfaz de ISP sean bloqueados en cadena `forward`. |
+| Mecanismo de Seguridad        | Dispositivos Aplicados               | Criterio de Verificación / Prueba Negativa                                                                                                                                                                 |
+| :---------------------------- | :----------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Hardening de Servicios**    | Los 7 routers CHR                    | Escaneo nmap perimetral confirma que puertos Telnet (23), HTTP (80) y API (8728) se encuentran estrictamente cerrados o filtrados.                                                                         |
+| **Autenticación OSPF MD5**    | EDGE, CORE-1, CORE-2, DIST-1, DIST-2 | **Prueba Negativa:** Se altera la clave MD5 en un extremo del enlace. La adyacencia cae inmediatamente a estado `Down` o queda bloqueada en `ExStart`, registrando error de autenticación en `/log print`. |
+| **Autenticación BGP TCP-MD5** | EDGE, ISP-1, ISP-2                   | **Prueba Negativa:** Se modifica la clave MD5 en la sesión BGP de EDGE. La conexión TCP es rechazada en el socket (SYN rechazado) y la sesión no alcanza estado `Established`.                             |
+| **Autenticación VRRP**        | DIST-1, DIST-2                       | Se inyecta una trama de anuncio con contraseña errónea; el nodo la descarta y no altera su estado Master/Backup.                                                                                           |
+| **Firewall Perimetral**       | Router EDGE                          | Inspección con estado: se verifica que paquetes entrantes no solicitados desde la interfaz de ISP sean bloqueados en cadena `forward`.                                                                     |
 
 ---
 
 ## 6. Gestión Operativa
 
 ### 6.1 Change Log del Proyecto
+
 El Change Log registra cada modificación arquitectónica y se concilia de manera unívoca con el historial de Git:
 
-| Fecha | Responsable | Hash / Commit | Motivo Técnico | Procedimiento de Reversión |
-| :---: | :---: | :--- | :--- | :--- |
-| 10/10/2026 | Patricio Borda (R2) | `chore(repo): crear estructura fisica de carpetas faltantes con gitkeep` | Crear directorios faltantes configs/, backups/, capturas/, runbooks/ y docs/diagramas/ con persistencia .gitkeep. | `git revert 4cc2e71` |
-| 10/10/2026 | Patricio Borda (R2) | `fix(roles): formalizar equipo de 4 integrantes, suprimir R5 y actualizar README` | Formalizar equipo oficial de 4 ingenieros (R1-R4), suprimir rol ficticio R5 y redistribuir cargas operativas en README.md. | `git revert d1ffc48` |
-| 10/10/2026 | Juan Ignacio Atencio (R4) | `docs(backlog): desglosar epics F0-F5 asignando roles, estados de tareas y criterios de aprobación` | Desglose exhaustivo de tareas técnicas y criterios de aceptación verificables para F0-F5. | `git revert 1424251` |
-| 10/10/2026 | Ian Vidmar (R3) | `feat(ipam): cerrar plan de direccionamiento, loopbacks y router-ids 1.1.1.1 a 7.7.7.7` | Cerrar al 100% el plan IPAM, asignar Router-IDs unívocos a los 7 routers y fundamentar rigurosamente los 4 defectos corregidos. | `git revert d11a0af` |
-| 10/10/2026 | Ian Vidmar (R3) | `docs(backlog): marcar tareas R3 de F0 como hechas` | Marcar tareas asignadas a R3 de la fase F0 como completadas en backlog.md. | `git revert 6bb2ac9` |
+|   Fecha    |        Responsable        | Hash / Commit                                                                                       | Motivo Técnico                                                                                                                  | Procedimiento de Reversión |
+| :--------: | :-----------------------: | :-------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------ | :------------------------- |
+| 10/10/2026 |    Patricio Borda (R2)    | `chore(repo): crear estructura fisica de carpetas faltantes con gitkeep`                            | Crear directorios faltantes configs/, backups/, capturas/, runbooks/ y docs/diagramas/ con persistencia .gitkeep.               | `git revert 4cc2e71`       |
+| 10/10/2026 |    Patricio Borda (R2)    | `fix(roles): formalizar equipo de 4 integrantes, suprimir R5 y actualizar README`                   | Formalizar equipo oficial de 4 ingenieros (R1-R4), suprimir rol ficticio R5 y redistribuir cargas operativas en README.md.      | `git revert d1ffc48`       |
+| 10/10/2026 | Juan Ignacio Atencio (R4) | `docs(backlog): desglosar epics F0-F5 asignando roles, estados de tareas y criterios de aprobación` | Desglose exhaustivo de tareas técnicas y criterios de aceptación verificables para F0-F5.                                       | `git revert 1424251`       |
+| 10/10/2026 |      Ian Vidmar (R3)      | `feat(ipam): cerrar plan de direccionamiento, loopbacks y router-ids 1.1.1.1 a 7.7.7.7`             | Cerrar al 100% el plan IPAM, asignar Router-IDs unívocos a los 7 routers y fundamentar rigurosamente los 4 defectos corregidos. | `git revert d11a0af`       |
+| 10/10/2026 |      Ian Vidmar (R3)      | `docs(backlog): marcar tareas R3 de F0 como hechas`                                                 | Marcar tareas asignadas a R3 de la fase F0 como completadas en backlog.md.                                                      | `git revert 6bb2ac9`       |
 
 ### 6.2 Política de Respaldo y Evidencia de Restauración
-* **Archivos exportados:** Se ubican en `configs/*.rsc`.
-* **Respaldos de contingencia:** Se ubican en `backups/*.backup`.
-* **Verificación de Restore:** En cada hito, se reinicia un router a valores de fábrica (`/system reset-configuration`) y se importa el script `/import file=<router>.rsc` verificando el 100% de la funcionalidad.
+
+- **Archivos exportados:** Se ubican en `configs/*.rsc`.
+- **Respaldos de contingencia:** Se ubican en `backups/*.backup`.
+- **Verificación de Restore:** En cada hito, se reinicia un router a valores de fábrica (`/system reset-configuration`) y se importa el script `/import file=<router>.rsc` verificando el 100% de la funcionalidad.
 
 ### 6.3 Monitoreo y Telemetría
-* **Protocolo:** SNMP v2c habilitado en los 7 routers.
-* **Métricas a recolectar:**
+
+- **Protocolo:** SNMP v2c habilitado en los 7 routers.
+- **Métricas a recolectar:**
   - Estado operacional de interfaces físicas y de enlace (MIB-II `ifOperStatus`).
   - Vecindad y cambios de estado en OSPF (OSPF MIB `ospfNbrState`).
   - Estado de las sesiones eBGP (BGP4 MIB `bgpPeerState`).
@@ -398,32 +433,49 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 
 ## 7. Repositorio de Evidencias Gráficas y Capturas
 
-Las evidencias visuales de verificación se organizan en la carpeta `capturas/` bajo la siguiente nomenclatura:
-* `capturas/F1-topologia-gns3.png`: Captura global de la topología interconectada en GNS3.
-* `capturas/F1-hardening-services.png`: Verificación de `/ip service print` con servicios apagados.
-* `capturas/F2-vrrp-loadsharing.png`: Salida de `/interface vrrp print` en DIST-1 y DIST-2 demostrando esquema activo/activo.
-* `capturas/F2-ospf-neighbors.png`: Salida de `/routing ospf neighbor print` con todas las adyacencias en estado `Full`.
-* `capturas/F3-bgp-sessions.png`: Salida de `/routing bgp session print` con ambas sesiones eBGP en estado `Established`.
-* `capturas/F4-drill1-vrrp-failover.png`: Gráfico de ping demostrando conmutación en < 3s ante caída de DIST-1.
-* `capturas/F4-drill2-ospf-failover.png`: Ping continuo demostrando reconvergencia por enlace Core-Core.
-* `capturas/F4-drill3-bgp-failover.png`: Conmutación de tráfico hacia ISP-2 ante corte de enlace con ISP-1.
+Las evidencias visuales se organizan en la carpeta `capturas/`, separadas por etapa del proyecto y tipo de verificación. Las rutas indicadas a continuación representan la ubicación prevista para cada evidencia; las capturas se incorporarán una vez realizadas las pruebas correspondientes.
+
+### F1 — Topología, conectividad y hardening
+
+- `capturas/f1/topologia/topologia-completa.png`: topología completa e interconectada en GNS3.
+- `capturas/f1/conectividad/<router>-ip-address.png`: direcciones IP configuradas en cada router.
+- `capturas/f1/conectividad/<router>-ping-vecinos.png`: resultados de las pruebas de conectividad con vecinos directos.
+- `capturas/f1/hardening/<router>-hardening.png`: verificación de las medidas de hardening aplicadas en cada router.
+- `capturas/f1/hardening/auditoria-<router>.png`: evidencia de la auditoría de hardening de cada router.
+
+En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: `isp-1`, `isp-2`, `edge`, `core-1`, `core-2`, `dist-1` o `dist-2`.
+
+### F2 — Alta disponibilidad y enrutamiento interno
+
+- `capturas/f2/vrrp/vrrp-loadsharing.png`: evidencia del estado de las interfaces VRRP en DIST-1 y DIST-2.
+- `capturas/f2/ospf/ospf-neighbors.png`: evidencia de las adyacencias OSPF establecidas.
+
+### F3 — Enrutamiento externo
+
+- `capturas/f3/bgp/bgp-sessions.png`: evidencia de las sesiones eBGP y sus estados.
+
+### F4 — Pruebas de contingencia
+
+- `capturas/f4/drills/drill1-vrrp-failover.png`: evidencia de la conmutación ante la caída de DIST-1.
+- `capturas/f4/drills/drill2-ospf-failover.png`: evidencia de la reconvergencia ante una caída de enlace entre los Core.
+- `capturas/f4/drills/drill3-bgp-failover.png`: evidencia de la conmutación hacia ISP-2 ante la caída del enlace con ISP-1.
 
 ---
 
-
 ## 8. Referencias Técnicas Consultadas
 
-1. **MikroTik RouterOS v7 Documentation:** *Routing Protocols (BGP, OSPF, VRRP)* — [help.mikrotik.com](https://help.mikrotik.com/docs/)
-2. **RFC 2385:** *Protection of BGP Sessions via the TCP MD5 Signature Option*.
-3. **RFC 2328:** *OSPF Version 2 Specification*.
-4. **RFC 5798:** *Virtual Router Redundancy Protocol (VRRP) Version 3 for IPv4 and IPv6*.
-5. **Cisco Validated Design (CVD):** *High Availability Campus Network Design*.
+1. **MikroTik RouterOS v7 Documentation:** _Routing Protocols (BGP, OSPF, VRRP)_ — [help.mikrotik.com](https://help.mikrotik.com/docs/)
+2. **RFC 2385:** _Protection of BGP Sessions via the TCP MD5 Signature Option_.
+3. **RFC 2328:** _OSPF Version 2 Specification_.
+4. **RFC 5798:** _Virtual Router Redundancy Protocol (VRRP) Version 3 for IPv4 and IPv6_.
+5. **Cisco Validated Design (CVD):** _High Availability Campus Network Design_.
 
 ---
 
 ## 9. Checklist de Autoverificación para el Gate F0
 
 ### Diseño (F0) — Criterios de Aprobación Obligatorios:
+
 - [x] **Equipo formalizado:** 4 integrantes identificados con roles unívocos (R1-R4) y eliminación definitiva de R5.
 - [x] **IPAM 100% cerrado:** Subredes /30 punto a punto, subredes /24 para VLANs 10 y 20, y Loopbacks /32 unívocas asignadas a los 7 routers.
 - [x] **Router-IDs unívocos:** Definidos del `1.1.1.1` al `7.7.7.7`.

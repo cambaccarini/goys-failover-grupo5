@@ -48,7 +48,7 @@
 - [~] [R2] Desplegar y cablear en GNS3 los nodos ISP-1 e ISP-2, conectando ether1 de cada uno hacia EDGE. Criterio: interfaces ether1 con link status UP y conectividad L2.
 - [~] [R3] Desplegar y cablear en GNS3 los nodos CORE-1 y CORE-2, interconectando ether2 entre sí (enlace Core-Core), ether1 hacia EDGE y ether3/ether4 hacia DIST-1 y DIST-2. Criterio: enlaces del Core levantados según el diagrama aprobado.
 - [~] [R4] Desplegar y cablear en GNS3 los nodos DIST-1 y DIST-2 hacia Core (ether1 y ether2), hacia los switches de acceso SW-ACC-USERS y SW-ACC-SERVERS (ether3), y conectar PC-USER y SRV. Criterio: enlaces de Distribución levantados según el diagrama aprobado.
-- [ ] [R4] Capturar la topología completa y guardar la evidencia en `capturas/F1/topologia/`. Criterio: la captura permite identificar los 7 routers CHR, los 2 switches, los 2 hosts y sus enlaces.
+- [ ] [R4] Capturar la topología completa y guardar la evidencia en `capturas/f1/topologia/`. Criterio: la captura permite identificar los 7 routers CHR, los 2 switches, los 2 hosts y sus enlaces.
 
 ### Configuración de Direccionamiento IP y Loopbacks
 
@@ -61,7 +61,7 @@
 
 - [ ] [R4] Completar en `docs/memoria.md` la tabla de interfaces, direcciones IP, vecinos, loopbacks y Router-IDs, usando los datos confirmados por cada responsable. Criterio: la tabla cubre los 7 routers y coincide con las configuraciones y el IPAM aprobado.
 - [ ] [R1] [R2] [R3] [R4] Verificar conectividad IP entre vecinos directos en los enlaces asignados a cada rol. Criterio: los pings a las IPs adyacentes tienen respuesta y cualquier falla queda registrada.
-- [ ] [R4] Consolidar las evidencias de conectividad en `capturas/F1/conectividad/` y registrar en `docs/memoria.md` los vecinos probados y resultados. Criterio: cada enlace de tránsito tiene resultado documentado y evidencia asociada cuando corresponda.
+- [ ] [R4] Consolidar las evidencias de conectividad en `capturas/f1/conectividad/` y registrar en `docs/memoria.md` los vecinos probados y resultados. Criterio: cada enlace de tránsito tiene resultado documentado y evidencia asociada cuando corresponda.
 
 ### Hardening de Dispositivos (7 Routers)
 
@@ -69,16 +69,16 @@
 - [ ] [R2] Aplicar la política de hardening en ISP-1 e ISP-2: desactivar servicios no cifrados, excluir interfaces WAN del descubrimiento MNDP/CDP y configurar usuarios locales. Criterio: `/ip neighbor discovery-settings print` muestra las interfaces WAN excluidas y los servicios coinciden con la política.
 - [ ] [R3] Aplicar la política de hardening en CORE-1 y CORE-2: deshabilitar servicios innecesarios y aplicar banners legales de acceso. Criterio: SSH funciona con el usuario `monitor`, que no puede realizar cambios de configuración.
 - [ ] [R4] Aplicar la política de hardening en DIST-1 y DIST-2: deshabilitar servicios no seguros y restringir el acceso por SSH/WinBox. Criterio: los servicios no autorizados están deshabilitados y los intentos HTTP/Telnet son rechazados.
-- [ ] [R3] Auditar la evidencia de hardening de los 7 routers y registrar resultados y desvíos en `docs/memoria.md`. Criterio: usuarios, permisos y servicios se verifican contra la política de seguridad de F0; las evidencias quedan organizadas en `capturas/F1/hardening/`.
+- [ ] [R3] Auditar la evidencia de hardening de los 7 routers y registrar resultados y desvíos en `docs/memoria.md`. Criterio: usuarios, permisos y servicios se verifican contra la política de seguridad de F0; las evidencias quedan organizadas en `capturas/f1/hardening/`.
 
 ### Snapshot BASE
 
 - [ ] [R3] Generar en GNS3 un snapshot completo del proyecto denominado `SNAPSHOT-BASE-F1`, con la topología desplegada en el estado inicial acordado. Criterio: el snapshot es accesible y puede restaurarse.
-- [ ] [R4] Documentar en `docs/memoria.md` la fecha, el nombre y el estado incluido en el snapshot; guardar evidencia en `capturas/F1/topologia/` si corresponde. Criterio: otra persona puede identificar qué estado del proyecto representa el snapshot.
+- [ ] [R4] Documentar en `docs/memoria.md` la fecha, el nombre y el estado incluido en el snapshot; guardar evidencia en `capturas/f1/topologia/` si corresponde. Criterio: otra persona puede identificar qué estado del proyecto representa el snapshot.
 
 ### Backup Inicial
 
-- [ ] [R2] Exportar una configuración base de cada router mediante `/export`, sin incluir valores sensibles, y guardar los 7 archivos `.rsc` en `backups/F1/exports/`. Criterio: hay un archivo identificado por router, revisado para confirmar que no contiene contraseñas, claves ni otros secretos antes de versionarlo.
+- [ ] [R2] Exportar una configuración base de cada router mediante `/export`, sin incluir valores sensibles, y guardar los 7 archivos `.rsc` en `backups/f1/exports/`. Criterio: hay un archivo identificado por router, revisado para confirmar que no contiene contraseñas, claves ni otros secretos antes de versionarlo.
 - [ ] [R2] Generar los backups binarios de los 7 routers mediante `/system backup save` y almacenarlos en un medio restringido, fuera de los archivos versionados del repositorio. Criterio: los 7 backups están identificados y disponibles para restauración; no se suben al repositorio.
 - [ ] [R2] Realizar una prueba de restauración en un nodo de test para validar la integridad del backup. Criterio: el router de prueba restaura la configuración esperada y vuelve a operar.
 
