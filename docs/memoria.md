@@ -78,59 +78,102 @@ A partir del análisis exhaustivo del diagrama de referencia _"Enterprise Networ
 
 ### 1.2 Plan Integral de Direccionamiento IP (IPAM)
 
-El esquema de direccionamiento fue diseñado bajo una estricta jerarquía de subredes que optimiza el espacio, elimina colisiones y permite el filtrado ágil por máscaras de red:
+El plan de direccionamiento se organiza mediante subredes específicas para los enlaces punto a punto, segmentos LAN y loopbacks de los siete routers. Las direcciones configuradas se verifican contra las salidas de RouterOS (`/ip address print` y `/interface vlan print`) y las evidencias de conectividad de F1.
 
-```
-+---------------------------------------------------------------------------------------------------+
-| ESQUEMA DE SEGMENTACIÓN JERÁRQUICA                                                                |
-+-------------------+--------------------+----------------------------------------------------------+
-| Bloque / Prefijo  | Función de Red     | Criterio de Diseño y Justificación Técnica               |
-+-------------------+--------------------+----------------------------------------------------------+
-| 10.100.1.0/30     | WAN ISP-1          | Acometida BGP con AS 65001. Aislado de la red interna.   |
-| 10.200.1.0/30     | WAN ISP-2          | Acometida BGP con AS 65002. Aislado de la red interna.   |
-| 10.10.0.0/24      | Tránsito Edge-Core | Enlaces punto a punto /30 perimetrales hacia el núcleo.   |
-| 10.20.0.0/24      | Backbone Core-Core | Enlace punto a punto /30 dedicado inter-core.             |
-| 10.30.0.0/24      | Core-Distribución  | Malla completa /30 entre Core 1/2 y Distribución 1/2.    |
-| 192.168.10.0/24   | VLAN 10 (Usuarios) | Segmento LAN usuarios de acceso. Gateway virtual VRRP.    |
-| 192.168.20.0/24   | VLAN 20 (Servers)  | Segmento LAN servidores de acceso. Gateway virtual VRRP.  |
-| X.X.X.X/32        | Loopbacks Gestión  | Identificadores unívocos de router para OSPF y BGP.      |
-+-------------------+--------------------+----------------------------------------------------------+
-```
+Los bloques de direccionamiento agrupan las redes por función. Las subredes `/30` se utilizan en los enlaces de tránsito, las `/24` en las VLAN de acceso y las `/32` en las interfaces loopback. Las direcciones virtuales VRRP y los Router-ID de los protocolos de enrutamiento se consideran parámetros planificados para las fases posteriores.
 
-#### 1.2.1 Identificadores de Router (Router-IDs) y Loopbacks (/32)
+| Bloque / Prefijo            | Función de Red       | Criterio de Diseño                                                                                            |
+| :-------------------------- | :------------------- | :------------------------------------------------------------------------------------------------------------ |
+| `10.100.1.0/30`             | WAN ISP-1            | Enlace punto a punto ISP-1 ↔ EDGE.                                                                            |
+| `10.200.1.0/30`             | WAN ISP-2            | Enlace punto a punto ISP-2 ↔ EDGE.                                                                            |
+| `10.10.1.0/30`              | EDGE–CORE-1          | Enlace de tránsito entre EDGE y CORE-1.                                                                       |
+| `10.10.2.0/30`              | EDGE–CORE-2          | Enlace de tránsito entre EDGE y CORE-2.                                                                       |
+| `10.20.1.0/30`              | CORE-1–CORE-2        | Enlace dedicado entre los dos routers de núcleo.                                                              |
+| `10.30.1.0/30`              | CORE-1–DIST-1        | Enlace de tránsito entre CORE-1 y DIST-1.                                                                     |
+| `10.30.2.0/30`              | CORE-1–DIST-2        | Enlace de tránsito entre CORE-1 y DIST-2.                                                                     |
+| `10.30.3.0/30`              | CORE-2–DIST-1        | Enlace de tránsito entre CORE-2 y DIST-1.                                                                     |
+| `10.30.4.0/30`              | CORE-2–DIST-2        | Enlace de tránsito entre CORE-2 y DIST-2.                                                                     |
+| `192.168.10.0/24`           | VLAN 10 — Usuarios   | Segmento de acceso para PC-USER. Gateway virtual previsto para F2.                                            |
+| `192.168.20.0/24`           | VLAN 20 — Servidores | Segmento de acceso para SRV. Gateway virtual previsto para F2.                                                |
+| `1.1.1.1/32` a `7.7.7.7/32` | Loopbacks            | Identificadores asignados a las interfaces `lo`; previstos como Router-ID en los protocolos correspondientes. |
 
-Cada router de la topología cuenta con una interfaz Loopback virtual configurada con una dirección IP de 32 bits que actúa de manera determinista como su **Router-ID** en los procesos de OSPF y BGP:
+#### 1.2.1 Identificadores de Router (Router-ID previstos) y Loopbacks (/32)
 
-| Dispositivo | Capa de Red      | Router-ID / Loopback | Máscara | Función Principal en el Laboratorio       |
-| :---------- | :--------------- | :------------------: | :-----: | :---------------------------------------- |
-| **ISP-1**   | WAN Externa      |      `1.1.1.1`       |  `/32`  | Proveedor BGP Primario (AS 65001)         |
-| **ISP-2**   | WAN Externa      |      `2.2.2.2`       |  `/32`  | Proveedor BGP Secundario (AS 65002)       |
-| **EDGE**    | Borde Perimetral |      `3.3.3.3`       |  `/32`  | BGP Multi-homing (AS 65000) / OSPF Área 0 |
-| **CORE-1**  | Núcleo (Core)    |      `4.4.4.4`       |  `/32`  | OSPF Backbone Área 0 / Tránsito Puro A    |
-| **CORE-2**  | Núcleo (Core)    |      `5.5.5.5`       |  `/32`  | OSPF Backbone Área 0 / Tránsito Puro B    |
-| **DIST-1**  | Distribución     |      `6.6.6.6`       |  `/32`  | OSPF Área 0 / VRRP Master VLAN 10         |
-| **DIST-2**  | Distribución     |      `7.7.7.7`       |  `/32`  | OSPF Área 0 / VRRP Master VLAN 20         |
+Los siete routers tienen configurada una interfaz loopback llamada `lo`, con una dirección IPv4 `/32`. Estas direcciones proporcionan identificadores estables para el diseño del laboratorio.
+
+**La existencia de la interfaz y su dirección IP no implica que el Router-ID ya esté configurado en OSPF o BGP.** Esa configuración se realizará y verificará durante las fases F2 y F3, según corresponda.
+
+| Dispositivo | Capa de Red      | Dirección de Loopback | Máscara | Función prevista en el laboratorio                 |
+| :---------- | :--------------- | :-------------------: | :-----: | :------------------------------------------------- |
+| **ISP-1**   | WAN externa      |       `1.1.1.1`       |  `/32`  | Identificador del proveedor primario (AS 65001).   |
+| **ISP-2**   | WAN externa      |       `2.2.2.2`       |  `/32`  | Identificador del proveedor secundario (AS 65002). |
+| **EDGE**    | Borde perimetral |       `3.3.3.3`       |  `/32`  | Identificador previsto para BGP (AS 65000) y OSPF. |
+| **CORE-1**  | Núcleo (Core)    |       `4.4.4.4`       |  `/32`  | Identificador previsto para OSPF Área 0.           |
+| **CORE-2**  | Núcleo (Core)    |       `5.5.5.5`       |  `/32`  | Identificador previsto para OSPF Área 0.           |
+| **DIST-1**  | Distribución     |       `6.6.6.6`       |  `/32`  | Identificador previsto para OSPF Área 0.           |
+| **DIST-2**  | Distribución     |       `7.7.7.7`       |  `/32`  | Identificador previsto para OSPF Área 0.           |
 
 #### 1.2.2 Matriz Completa de Enlaces Punto a Punto (/30)
 
-| Enlace Físico       |   Red / CIDR    | Dispositivo A | Interfaz A |     IP A     | Dispositivo B | Interfaz B |     IP B     |
-| :------------------ | :-------------: | :------------ | :--------: | :----------: | :------------ | :--------: | :----------: |
-| **ISP-1 ↔ EDGE**    | `10.100.1.0/30` | ISP-1         |  `ether1`  | `10.100.1.1` | EDGE          |  `ether1`  | `10.100.1.2` |
-| **ISP-2 ↔ EDGE**    | `10.200.1.0/30` | ISP-2         |  `ether1`  | `10.200.1.1` | EDGE          |  `ether2`  | `10.200.1.2` |
-| **EDGE ↔ CORE-1**   | `10.10.1.0/30`  | EDGE          |  `ether3`  | `10.10.1.1`  | CORE-1        |  `ether1`  | `10.10.1.2`  |
-| **EDGE ↔ CORE-2**   | `10.10.2.0/30`  | EDGE          |  `ether4`  | `10.10.2.1`  | CORE-2        |  `ether1`  | `10.10.2.2`  |
-| **CORE-1 ↔ CORE-2** | `10.20.1.0/30`  | CORE-1        |  `ether2`  | `10.20.1.1`  | CORE-2        |  `ether2`  | `10.20.1.2`  |
-| **CORE-1 ↔ DIST-1** | `10.30.1.0/30`  | CORE-1        |  `ether3`  | `10.30.1.1`  | DIST-1        |  `ether1`  | `10.30.1.2`  |
-| **CORE-1 ↔ DIST-2** | `10.30.2.0/30`  | CORE-1        |  `ether4`  | `10.30.2.1`  | DIST-2        |  `ether1`  | `10.30.2.2`  |
-| **CORE-2 ↔ DIST-1** | `10.30.3.0/30`  | CORE-2        |  `ether3`  | `10.30.3.1`  | DIST-1        |  `ether2`  | `10.30.3.2`  |
-| **CORE-2 ↔ DIST-2** | `10.30.4.0/30`  | CORE-2        |  `ether4`  | `10.30.4.1`  | DIST-2        |  `ether2`  | `10.30.4.2`  |
+La siguiente matriz identifica las nueve conexiones entre routers. Las direcciones de ambos extremos pertenecen a la misma subred `/30`, sin solapamientos.
 
-#### 1.2.3 Segmentos de Acceso LAN y Configuración VRRP
+| Enlace físico       |   Red / CIDR    | Dispositivo A | Interfaz A |      IP A       | Dispositivo B | Interfaz B |      IP B       |
+| :------------------ | :-------------: | :------------ | :--------: | :-------------: | :------------ | :--------: | :-------------: |
+| **ISP-1 ↔ EDGE**    | `10.100.1.0/30` | ISP-1         |  `ether1`  | `10.100.1.1/30` | EDGE          |  `ether1`  | `10.100.1.2/30` |
+| **ISP-2 ↔ EDGE**    | `10.200.1.0/30` | ISP-2         |  `ether1`  | `10.200.1.1/30` | EDGE          |  `ether2`  | `10.200.1.2/30` |
+| **EDGE ↔ CORE-1**   | `10.10.1.0/30`  | EDGE          |  `ether3`  | `10.10.1.1/30`  | CORE-1        |  `ether1`  | `10.10.1.2/30`  |
+| **EDGE ↔ CORE-2**   | `10.10.2.0/30`  | EDGE          |  `ether4`  | `10.10.2.1/30`  | CORE-2        |  `ether1`  | `10.10.2.2/30`  |
+| **CORE-1 ↔ CORE-2** | `10.20.1.0/30`  | CORE-1        |  `ether2`  | `10.20.1.1/30`  | CORE-2        |  `ether2`  | `10.20.1.2/30`  |
+| **CORE-1 ↔ DIST-1** | `10.30.1.0/30`  | CORE-1        |  `ether3`  | `10.30.1.1/30`  | DIST-1        |  `ether1`  | `10.30.1.2/30`  |
+| **CORE-1 ↔ DIST-2** | `10.30.2.0/30`  | CORE-1        |  `ether4`  | `10.30.2.1/30`  | DIST-2        |  `ether1`  | `10.30.2.2/30`  |
+| **CORE-2 ↔ DIST-1** | `10.30.3.0/30`  | CORE-2        |  `ether3`  | `10.30.3.1/30`  | DIST-1        |  `ether2`  | `10.30.3.2/30`  |
+| **CORE-2 ↔ DIST-2** | `10.30.4.0/30`  | CORE-2        |  `ether4`  | `10.30.4.1/30`  | DIST-2        |  `ether2`  | `10.30.4.2/30`  |
 
-| Segmento / VLAN  | ID VLAN |   Subred de Red   | IP DIST-1 (`vlanX`) | IP DIST-2 (`vlanX`) |  IP Virtual VRRP   | VRID | Prioridad DIST-1 | Prioridad DIST-2 | Host de Prueba Asignado                               |
-| :--------------- | :-----: | :---------------: | :-----------------: | :-----------------: | :----------------: | :--: | :--------------: | :--------------: | :---------------------------------------------------- |
-| **VLAN-USERS**   |  `10`   | `192.168.10.0/24` |  `192.168.10.2/24`  |  `192.168.10.3/24`  | **`192.168.10.1`** | `10` | **150 (Master)** |   100 (Backup)   | **PC-USER:** `192.168.10.100/24` (GW: `192.168.10.1`) |
-| **VLAN-SERVERS** |  `20`   | `192.168.20.0/24` |  `192.168.20.2/24`  |  `192.168.20.3/24`  | **`192.168.20.1`** | `20` |   100 (Backup)   | **150 (Master)** | **SRV:** `192.168.20.100/24` (GW: `192.168.20.1`)     |
+#### 1.2.3 Segmentos de Acceso LAN y Parámetros VRRP Planificados
+
+Las redes LAN están asociadas a interfaces VLAN configuradas sobre interfaces físicas de los routers de distribución. Las direcciones IP indicadas en las columnas de DIST-1 y DIST-2 corresponden a las direcciones individuales actualmente asignadas a esas interfaces VLAN.
+
+Las direcciones virtuales, los VRID y las prioridades se incluyen como parámetros de diseño previstos para F2; **no se afirma que VRRP esté configurado u operativo durante F1**.
+
+| Segmento / VLAN  | ID VLAN |      Subred       | Interfaz DIST-1         |     IP DIST-1     | Interfaz DIST-2         |     IP DIST-2     | Gateway virtual previsto | VRID previsto |
+| :--------------- | :-----: | :---------------: | :---------------------- | :---------------: | :---------------------- | :---------------: | :----------------------: | :-----------: |
+| **VLAN-USERS**   |  `10`   | `192.168.10.0/24` | `vlan10` sobre `ether3` | `192.168.10.2/24` | `vlan10` sobre `ether4` | `192.168.10.3/24` |      `192.168.10.1`      |     `10`      |
+| **VLAN-SERVERS** |  `20`   | `192.168.20.0/24` | `vlan20` sobre `ether4` | `192.168.20.2/24` | `vlan20` sobre `ether3` | `192.168.20.3/24` |      `192.168.20.1`      |     `20`      |
+
+La planificación de prioridades para F2 es la siguiente:
+
+| Grupo VRRP previsto | Router previsto como Master | Prioridad | Router previsto como Backup | Prioridad |
+| :------------------ | :-------------------------- | :-------: | :-------------------------- | :-------: |
+| VLAN 10 — USERS     | DIST-1                      |   `150`   | DIST-2                      |   `100`   |
+| VLAN 20 — SERVERS   | DIST-2                      |   `150`   | DIST-1                      |   `100`   |
+
+#### 1.2.4 Matriz de Interfaces Físicas y Conexiones de Acceso
+
+La topología utiliza cuatro enlaces desde los routers de distribución hacia los switches de acceso, además de un enlace desde cada switch hacia su host. Esta distribución corresponde al diseño de 15 enlaces utilizado para reconstruir la topología de GOYS.
+
+| Dispositivo de origen | Interfaz / Puerto de origen | Dispositivo de destino | Interfaz / Puerto de destino | Función                |
+| :-------------------- | :-------------------------- | :--------------------- | :--------------------------- | :--------------------- |
+| DIST-1                | `ether3`                    | SW-ACC-USERS           | Puerto `0`                   | Transporte de VLAN 10. |
+| DIST-2                | `ether4`                    | SW-ACC-USERS           | Puerto `1`                   | Transporte de VLAN 10. |
+| DIST-1                | `ether4`                    | SW-ACC-SERVERS         | Puerto `0`                   | Transporte de VLAN 20. |
+| DIST-2                | `ether3`                    | SW-ACC-SERVERS         | Puerto `1`                   | Transporte de VLAN 20. |
+| SW-ACC-USERS          | Puerto `2`                  | PC-USER                | `Ethernet0`                  | Acceso a VLAN 10.      |
+| SW-ACC-SERVERS        | Puerto `2`                  | SRV                    | `Ethernet0`                  | Acceso a VLAN 20.      |
+
+#### 1.2.5 Direccionamiento de los Hosts
+
+Las siguientes direcciones son las previstas para los equipos terminales. El gateway indicado es la dirección virtual planificada para F2; su funcionamiento debe validarse después de configurar VRRP.
+
+| Host        | Segmento             | Dirección IP prevista | Máscara | Gateway previsto |
+| :---------- | :------------------- | :-------------------: | :-----: | :--------------: |
+| **PC-USER** | VLAN 10 — Usuarios   |   `192.168.10.100`    |  `/24`  |  `192.168.10.1`  |
+| **SRV**     | VLAN 20 — Servidores |   `192.168.20.100`    |  `/24`  |  `192.168.20.1`  |
+
+#### Estado de implementación al cierre de F1-B
+
+En esta etapa están configuradas las direcciones IP de los 7 routers, las interfaces loopback y las interfaces VLAN de distribución. Se ejecutaron y verificaron las pruebas de conectividad entre vecinos directos, incluidas las pruebas entre las direcciones VLAN de DIST-1 y DIST-2.
+
+OSPF, BGP y VRRP no se implementaron porque corresponden a fases posteriores del laboratorio.
 
 ---
 
