@@ -44,10 +44,10 @@
 
 ### Despliegue de Topología (7 CHR + 2 Switches + 2 Hosts)
 
-- [ ] [R1] Desplegar y cablear en GNS3 el nodo EDGE (MikroTik CHR RouterOS v7): ether1 a ISP-1, ether2 a ISP-2, ether3 a CORE-1 y ether4 a CORE-2. Criterio: interfaces levantadas con link status UP.
-- [ ] [R2] Desplegar y cablear en GNS3 los nodos ISP-1 e ISP-2, conectando ether1 de cada uno hacia EDGE. Criterio: interfaces ether1 con link status UP y conectividad L2.
-- [ ] [R3] Desplegar y cablear en GNS3 los nodos CORE-1 y CORE-2, interconectando ether2 entre sí (enlace Core-Core), ether1 hacia EDGE y ether3/ether4 hacia DIST-1 y DIST-2. Criterio: enlaces del Core levantados según el diagrama aprobado.
-- [ ] [R4] Desplegar y cablear en GNS3 los nodos DIST-1 y DIST-2 hacia Core (ether1 y ether2), hacia los switches de acceso SW-ACC-USERS y SW-ACC-SERVERS (ether3), y conectar PC-USER y SRV. Criterio: enlaces de Distribución levantados según el diagrama aprobado.
+- [~] [R1] Desplegar y cablear en GNS3 el nodo EDGE (MikroTik CHR RouterOS v7): ether1 a ISP-1, ether2 a ISP-2, ether3 a CORE-1 y ether4 a CORE-2. Criterio: interfaces levantadas con link status UP.
+- [~] [R2] Desplegar y cablear en GNS3 los nodos ISP-1 e ISP-2, conectando ether1 de cada uno hacia EDGE. Criterio: interfaces ether1 con link status UP y conectividad L2.
+- [~] [R3] Desplegar y cablear en GNS3 los nodos CORE-1 y CORE-2, interconectando ether2 entre sí (enlace Core-Core), ether1 hacia EDGE y ether3/ether4 hacia DIST-1 y DIST-2. Criterio: enlaces del Core levantados según el diagrama aprobado.
+- [~] [R4] Desplegar y cablear en GNS3 los nodos DIST-1 y DIST-2 hacia Core (ether1 y ether2), hacia los switches de acceso SW-ACC-USERS y SW-ACC-SERVERS (ether3), y conectar PC-USER y SRV. Criterio: enlaces de Distribución levantados según el diagrama aprobado.
 - [ ] [R4] Capturar la topología completa y guardar la evidencia en `capturas/F1/topologia/`. Criterio: la captura permite identificar los 7 routers CHR, los 2 switches, los 2 hosts y sus enlaces.
 
 ### Configuración de Direccionamiento IP y Loopbacks
