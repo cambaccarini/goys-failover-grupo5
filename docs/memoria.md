@@ -11,11 +11,11 @@
 
 ## Integrantes y Matriz de Roles
 
-> **Aclaración sobre la Composición del Equipo:**  
-> La nómina administrativa original asignaba 3 integrantes al Grupo 5 (Baccarini, Borda, Vidmar). Juan Ignacio Atencio Barrenechea se incorporó formalmente a la comisión en el rol **R4**.  
-> **El grupo está compuesto exclusivamente por 4 integrantes.** El rol auxiliar **R5 fue eliminado formalmente**, redistribuyendo el 100% de sus responsabilidades (Gestión de Hosts, Aseguramiento de Calidad / QA, Respaldos, Change Log, Observabilidad y Ejecución de Drills) de forma equitativa entre R1, R2, R3 y R4.
+> **Aclaración sobre la composición del equipo y las funciones operativas:**  
+> El Grupo 5 está compuesto por cuatro integrantes: Camila Baccarini (R1), Patricio Borda (R2), Ian Vidmar (R3) y Juan Ignacio Atencio Barrenechea (R4). **R5 se mantiene como una función operativa transversal y no representa a un quinto integrante.** Incluye gestión de hosts, aseguramiento de calidad (QA), respaldos, Change Log, observabilidad y ejecución de drills.  
+> **Responsable nominal de R5:** [PENDIENTE: definir por acuerdo del grupo antes del cierre de F1]. La persona asignada conservará su rol técnico R1–R4 y asumirá R5 como responsabilidad operativa adicional.
 
-| Integrante                           |  Rol   | Email Institucional / Git                           | Módulo de Infraestructura                                                                                                                                                     | Responsabilidades Operativas (Ex-R5)                                                                                                                                                                                      |
+| Integrante                           |  Rol   | Email Institucional / Git                           | Módulo de Infraestructura                                                                                                                                                     | Responsabilidades operativas complementarias                                                                                                                                                                              |
 | :----------------------------------- | :----: | :-------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Camila Baccarini**                 | **R1** | `cambaccarini01@gmail.com`                          | **Líder / Borde-WAN:** Router EDGE (AS 65000), dual-homing eBGP con ISP-1 e ISP-2, redistribución controlada OSPF↔BGP, BGP TCP-MD5, Firewall perimetral y NAT.                | Gobernanza del repositorio Git, control de calidad documental y elaboración del Runbook para Drill 3 (BGP Failover por caída de ISP).                                                                                     |
 | **Alesandro Patricio Borda**         | **R2** | `PATOEDA@HOTMAIL.COM`                               | **Proveedores (ISP):** Routers ISP-1 (AS 65001) e ISP-2 (AS 65002), inyección de default route (`default-originate`), eBGP peerings hacia EDGE, Loopbacks públicas simuladas. | Política integral y ejecución de Backups (`/export` y respaldos binarios), verificación de restauración y Runbook para Drill 4 (`check-gateway` / Failover estático).                                                     |
@@ -184,14 +184,15 @@ La política de seguridad establece medidas técnicas de hardening perimetral y 
 #### 1. Usuarios y Control de Acceso Basado en Roles (RBAC)
 
 - Se eliminan las credenciales de fábrica (`admin` con contraseña vacía).
+- Los comandos siguientes son plantillas documentales. Las contraseñas reales deben definirse localmente y no incorporarse al repositorio.
 - Se crea una cuenta de administración segura local:
   ```routeros
   /user group add name=superadmin policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,snmp,sensitive,api,romon,rest-api
-  /user add name=netadmin group=superadmin password="P@ssw0rdSegura2026!GOYS"
+  /user add name=netadmin group=superadmin password="<DEFINIR_LOCALMENTE>"
   ```
 - Se crea un usuario de auditoría de solo lectura para monitoreo y verificación de estado:
   ```routeros
-  /user add name=monitor group=read password="Mon1tor_Read0nly#2026"
+  /user add name=monitor group=read password="<DEFINIR_LOCALMENTE>"
   ```
 - Se desactiva o remueve el usuario `admin` por defecto:
   ```routeros
@@ -269,44 +270,52 @@ La salvaguarda de configuraciones sigue un esquema dual:
 
 ## 2. Topología de Red (Fase F1)
 
-La topología está conformada por 7 routers MikroTik CHR, 2 switches Ethernet virtuales de Capa 2 y 2 terminales de prueba (PC-USER y SRV).
+La topología está conformada por 7 routers MikroTik CHR, 2 switches Ethernet virtuales de Capa 2 y 2 terminales de prueba. El diseño contiene 9 enlaces entre routers, 4 enlaces entre distribución y acceso y 2 enlaces hacia los hosts, para un total de 15 enlaces internos.
 
-```text
-[ INTERNET / WAN ]
-      ISP-1 (1.1.1.1/32) [AS 65001]           ISP-2 (2.2.2.2/32) [AS 65002]
-         (ether1: 10.100.1.1/30)                 (ether1: 10.200.1.1/30)
-                     │                                       │
-                     └───────────────────┬───────────────────┘
-                                         │
-[ BORDE / EDGE ]                 (ether1)│(ether2)
-                                   [ EDGE (3.3.3.3/32) ]
-                                        [AS 65000]
-                     (ether3: 10.10.1.1/30)│   │(ether4: 10.10.2.1/30)
-                                           │   │
-[ NÚCLEO / CORE ]                          ▼   ▼
-               [ CORE-1 (4.4.4.4/32) ] ───────────── [ CORE-2 (5.5.5.5/32) ]
-               (ether1: 10.10.1.2/30)   10.20.1.0/30  (ether1: 10.10.2.2/30)
-                                        (Core-Core)
-               (ether3: 10.30.1.1/30)│  │(ether4: 10.30.2.1/30)
-                                     │  │(ether3: 10.30.3.1/30)│  │(ether4: 10.30.4.1/30)
-                                     │  └──────────┐           │  │
-                                     ▼             ▼           ▼  ▼
-[ DISTRIBUCIÓN ]               [ DIST-1 (6.6.6.6/32) ]     [ DIST-2 (7.7.7.7/32) ]
-                               VRRP Master VLAN 10         VRRP Master VLAN 20
-                               VRRP Backup VLAN 20         VRRP Backup VLAN 10
-                                     │                           │
-                                     └─────────────┬─────────────┘
-                                                   │ (Trunk / Access)
-[ ACCESO / HOSTS ]                                 ▼
-                     [ SW-ACC-USERS ]                      [ SW-ACC-SERVERS ]
-                     VLAN 10 (192.168.10.0/24)             VLAN 20 (192.168.20.0/24)
-                           │                                     │
-                     [ PC-USER ]                           [ SRV-PROD ]
-                     IP: 192.168.10.100/24                 IP: 192.168.20.100/24
-                     GW: 192.168.10.1                      GW: 192.168.20.1
-```
+````mermaid
+flowchart TB
+    ISP1["ISP-1<br/>Loopback 1.1.1.1/32<br/>AS previsto: 65001"]
+    ISP2["ISP-2<br/>Loopback 2.2.2.2/32<br/>AS previsto: 65002"]
 
----
+    EDGE["EDGE<br/>Loopback 3.3.3.3/32<br/>AS previsto: 65000"]
+
+    subgraph CORE["Núcleo"]
+        C1["CORE-1<br/>Loopback 4.4.4.4/32"]
+        C2["CORE-2<br/>Loopback 5.5.5.5/32"]
+    end
+
+    subgraph DIST["Distribución"]
+        D1["DIST-1<br/>Loopback 6.6.6.6/32<br/>VRRP VLAN 10 previsto para F2"]
+        D2["DIST-2<br/>Loopback 7.7.7.7/32<br/>VRRP VLAN 20 previsto para F2"]
+    end
+
+    subgraph ACCESS["Acceso"]
+        SWU["SW-ACC-USERS<br/>VLAN 10"]
+        SWS["SW-ACC-SERVERS<br/>VLAN 20"]
+        PC["PC-USER<br/>IP prevista para F2: 192.168.10.100/24<br/>GW prevista: 192.168.10.1"]
+        SRV["SRV<br/>IP prevista para F2: 192.168.20.100/24<br/>GW prevista: 192.168.20.1"]
+    end
+
+    ISP1 ---|"ether1 ↔ ether1 · 10.100.1.0/30"| EDGE
+    ISP2 ---|"ether1 ↔ ether2 · 10.200.1.0/30"| EDGE
+
+    EDGE ---|"ether3 ↔ ether1 · 10.10.1.0/30"| C1
+    EDGE ---|"ether4 ↔ ether1 · 10.10.2.0/30"| C2
+    C1 ---|"ether2 ↔ ether2 · 10.20.1.0/30"| C2
+
+    C1 ---|"ether3 ↔ ether1 · 10.30.1.0/30"| D1
+    C1 ---|"ether4 ↔ ether1 · 10.30.2.0/30"| D2
+    C2 ---|"ether3 ↔ ether2 · 10.30.3.0/30"| D1
+    C2 ---|"ether4 ↔ ether2 · 10.30.4.0/30"| D2
+
+    D1 ---|"ether3 ↔ puerto 0 · trunk VLAN 10"| SWU
+    D2 ---|"ether4 ↔ puerto 1 · trunk VLAN 10"| SWU
+    D1 ---|"ether4 ↔ puerto 0 · trunk VLAN 20"| SWS
+    D2 ---|"ether3 ↔ puerto 1 · trunk VLAN 20"| SWS
+
+    SWU ---|"puerto 2 · access VLAN 10"| PC
+    SWS ---|"puerto 2 · access VLAN 20"| SRV
+
 
 ## 3. Registro de Configuraciones de Dispositivos (F1 a F3)
 
@@ -359,7 +368,8 @@ _(Los scripts de configuración limpios para cada uno de los 7 routers CHR se gu
 - **PC-USER (VLAN 10):**
   ```bash
   ip 192.168.10.100 255.255.255.0 192.168.10.1
-  ```
+````
+
 - **SRV (VLAN 20):**
   ```bash
   ip 192.168.20.100 255.255.255.0 192.168.20.1
@@ -449,13 +459,13 @@ Cada drill se ejecuta siguiendo la metodología de ingeniería de resiliencia: *
 
 El Change Log registra cada modificación arquitectónica y se concilia de manera unívoca con el historial de Git:
 
-|   Fecha    |        Responsable        | Hash / Commit                                                                                       | Motivo Técnico                                                                                                                  | Procedimiento de Reversión |
-| :--------: | :-----------------------: | :-------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------ | :------------------------- |
-| 10/10/2026 |    Patricio Borda (R2)    | `chore(repo): crear estructura fisica de carpetas faltantes con gitkeep`                            | Crear directorios faltantes configs/, backups/, capturas/, runbooks/ y docs/diagramas/ con persistencia .gitkeep.               | `git revert 4cc2e71`       |
-| 10/10/2026 |    Patricio Borda (R2)    | `fix(roles): formalizar equipo de 4 integrantes, suprimir R5 y actualizar README`                   | Formalizar equipo oficial de 4 ingenieros (R1-R4), suprimir rol ficticio R5 y redistribuir cargas operativas en README.md.      | `git revert d1ffc48`       |
-| 10/10/2026 | Juan Ignacio Atencio (R4) | `docs(backlog): desglosar epics F0-F5 asignando roles, estados de tareas y criterios de aprobación` | Desglose exhaustivo de tareas técnicas y criterios de aceptación verificables para F0-F5.                                       | `git revert 1424251`       |
-| 10/10/2026 |      Ian Vidmar (R3)      | `feat(ipam): cerrar plan de direccionamiento, loopbacks y router-ids 1.1.1.1 a 7.7.7.7`             | Cerrar al 100% el plan IPAM, asignar Router-IDs unívocos a los 7 routers y fundamentar rigurosamente los 4 defectos corregidos. | `git revert d11a0af`       |
-| 10/10/2026 |      Ian Vidmar (R3)      | `docs(backlog): marcar tareas R3 de F0 como hechas`                                                 | Marcar tareas asignadas a R3 de la fase F0 como completadas en backlog.md.                                                      | `git revert 6bb2ac9`       |
+|   Fecha    |        Responsable        | Hash / Commit                                                                                       | Motivo Técnico                                                                                                                                                                                              | Procedimiento de Reversión |
+| :--------: | :-----------------------: | :-------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------- |
+| 10/10/2026 |    Patricio Borda (R2)    | `chore(repo): crear estructura fisica de carpetas faltantes con gitkeep`                            | Crear directorios faltantes configs/, backups/, capturas/, runbooks/ y docs/diagramas/ con persistencia .gitkeep.                                                                                           | `git revert 4cc2e71`       |
+| 10/10/2026 |    Patricio Borda (R2)    | `fix(roles): formalizar equipo de 4 integrantes, suprimir R5 y actualizar README`                   | Decisión documental tomada en ese commit y rectificada en esta versión: R5 se conserva como función operativa transversal, sin constituir un quinto integrante; responsable pendiente de acuerdo del grupo. | `git revert d1ffc48`       |
+| 10/10/2026 | Juan Ignacio Atencio (R4) | `docs(backlog): desglosar epics F0-F5 asignando roles, estados de tareas y criterios de aprobación` | Desglose exhaustivo de tareas técnicas y criterios de aceptación verificables para F0-F5.                                                                                                                   | `git revert 1424251`       |
+| 10/10/2026 |      Ian Vidmar (R3)      | `feat(ipam): cerrar plan de direccionamiento, loopbacks y router-ids 1.1.1.1 a 7.7.7.7`             | Cerrar al 100% el plan IPAM, asignar Router-IDs unívocos a los 7 routers y fundamentar rigurosamente los 4 defectos corregidos.                                                                             | `git revert d11a0af`       |
+| 10/10/2026 |      Ian Vidmar (R3)      | `docs(backlog): marcar tareas R3 de F0 como hechas`                                                 | Marcar tareas asignadas a R3 de la fase F0 como completadas en backlog.md.                                                                                                                                  | `git revert 6bb2ac9`       |
 
 ### 6.2 Política de Respaldo y Evidencia de Restauración
 
@@ -519,7 +529,8 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 
 ### Diseño (F0) — Criterios de Aprobación Obligatorios:
 
-- [x] **Equipo formalizado:** 4 integrantes identificados con roles unívocos (R1-R4) y eliminación definitiva de R5.
+- [x] **Equipo formalizado:** 4 integrantes identificados con roles unívocos (R1-R4).
+- [ ] **Función operativa R5:** Se conserva como responsabilidad transversal y no como quinto integrante. Falta definir y documentar cuál de los cuatro integrantes la asume antes del cierre de F1.
 - [x] **IPAM 100% cerrado:** Subredes /30 punto a punto, subredes /24 para VLANs 10 y 20, y Loopbacks /32 unívocas asignadas a los 7 routers.
 - [x] **Router-IDs unívocos:** Definidos del `1.1.1.1` al `7.7.7.7`.
 - [x] **Corrección del diagrama:** 4 defectos analizados y justificados técnicamente sin generalidades.
