@@ -222,13 +222,17 @@ Para minimizar la superficie de ataque, se desactivan todos los servicios de adm
 
 - **OSPF v2 (Área 0):** Autenticación criptográfica obligatoria con **MD5** en todas las interfaces de tránsito. Las adyacencias rechazan paquetes hello o LSUs que no coincidan en la firma MD5.
   ```routeros
-  /routing ospf interface-template add area=backbone-v2 auth=md5 auth-key="ClaveOSPF_Area0_MD5!2026"
+  /routing ospf interface-template add area=backbone-v2 auth=md5 auth-key="<DEFINIR_LOCALMENTE>"
   ```
 - **BGP (eBGP Multi-Homing):** Protección a nivel de socket TCP mediante la opción **TCP-MD5 Signature** (RFC 2385) entre EDGE e ISPs:
+
   ```routeros
-  /routing bgp connection add name=peer-isp1 remote.address=10.100.1.1 .as=65001 tcp-md5-key="ClaveBGP_ISP1_TCPMD5#2026"
-  /routing bgp connection add name=peer-isp2 remote.address=10.200.1.1 .as=65002 tcp-md5-key="ClaveBGP_ISP2_TCPMD5#2026"
+  /routing bgp connection add name=peer-isp1 remote.address=10.100.1.1 .as=65001 tcp-md5-key="<DEFINIR_LOCALMENTE>"
+
+  /routing bgp connection add name=peer-isp2 remote.address=10.200.1.1 .as=65002 tcp-md5-key="<DEFINIR_LOCALMENTE>"
+
   ```
+
 - **VRRP v2/v3:** Autenticación por clave compartida (_Simple Authentication_) en los grupos VRID 10 y VRID 20 para evitar que hosts no autorizados en los segmentos LAN inyecten anuncios VRRP con prioridades arbitrarias.
 
 ---
@@ -272,7 +276,7 @@ La salvaguarda de configuraciones sigue un esquema dual:
 
 La topología está conformada por 7 routers MikroTik CHR, 2 switches Ethernet virtuales de Capa 2 y 2 terminales de prueba. El diseño contiene 9 enlaces entre routers, 4 enlaces entre distribución y acceso y 2 enlaces hacia los hosts, para un total de 15 enlaces internos.
 
-````mermaid
+```mermaid
 flowchart TB
     ISP1["ISP-1<br/>Loopback 1.1.1.1/32<br/>AS previsto: 65001"]
     ISP2["ISP-2<br/>Loopback 2.2.2.2/32<br/>AS previsto: 65002"]
@@ -315,7 +319,9 @@ flowchart TB
 
     SWU ---|"puerto 2 · access VLAN 10"| PC
     SWS ---|"puerto 2 · access VLAN 20"| SRV
+```
 
+---
 
 ## 3. Registro de Configuraciones de Dispositivos (F1 a F3)
 
@@ -366,14 +372,20 @@ _(Los scripts de configuración limpios para cada uno de los 7 routers CHR se gu
 ### 3.8 Configuración de Hosts Terminales (PC-USER y SRV)
 
 - **PC-USER (VLAN 10):**
-  ```bash
-  ip 192.168.10.100 255.255.255.0 192.168.10.1
+
+````markdown
+```bash
+ip 192.168.10.100 255.255.255.0 192.168.10.1
+```
 ````
 
 - **SRV (VLAN 20):**
-  ```bash
-  ip 192.168.20.100 255.255.255.0 192.168.20.1
-  ```
+
+````markdown
+```bash
+ip 192.168.20.100 255.255.255.0 192.168.20.1
+```
+````
 
 ---
 
