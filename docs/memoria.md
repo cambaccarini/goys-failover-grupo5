@@ -373,19 +373,14 @@ _(Los scripts de configuración limpios para cada uno de los 7 routers CHR se gu
 
 - **PC-USER (VLAN 10):**
 
-````markdown
-```bash
-ip 192.168.10.100 255.255.255.0 192.168.10.1
-```
-````
+  ```bash
+  ip 192.168.10.100 255.255.255.0 192.168.10.1
+  ```
 
 - **SRV (VLAN 20):**
-
-````markdown
-```bash
-ip 192.168.20.100 255.255.255.0 192.168.20.1
-```
-````
+  ```bash
+  ip 192.168.20.100 255.255.255.0 192.168.20.1
+  ```
 
 ---
 
