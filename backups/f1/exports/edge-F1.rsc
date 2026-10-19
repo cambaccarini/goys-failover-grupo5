@@ -1,4 +1,5 @@
-# 2026-10-19 16:59:56 by RouterOS 7.24.1
+# 2026-10-19 21:45:39 by RouterOS 7.24.1
+# system id = xrnaDUjGiuN
 #
 /interface ethernet
 set [ find default-name=ether1 ] disable-running-check=no
@@ -22,12 +23,21 @@ add address=10.10.1.1/30 comment=EDGE-CORE-1 interface=ether3 network=\
 add address=10.10.2.1/30 comment=EDGE-CORE-2 interface=ether4 network=\
     10.10.2.0
 /ip dhcp-client
-add interface=ether1 name=client1
+add disabled=yes interface=ether1 name=client1
 /ip service
 set ftp disabled=yes
+set ssh available-from=10.0.0.0/8,192.168.0.0/16
 set telnet disabled=yes
 set www disabled=yes
+set reverse-proxy disabled=yes
+set winbox available-from=10.0.0.0/8,192.168.0.0/16
 set api disabled=yes
 set api-ssl disabled=yes
 /system identity
 set name=EDGE
+/tool mac-server
+set allowed-interface-list=none
+/tool mac-server mac-winbox
+set allowed-interface-list=none
+/tool mac-server ping
+set enabled=no

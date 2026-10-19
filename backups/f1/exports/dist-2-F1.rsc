@@ -1,4 +1,5 @@
-# 2026-10-19 17:34:10 by RouterOS 7.24.1
+# 2026-10-19 21:47:39 by RouterOS 7.24.1
+# system id = OINlIIfBfhJ
 #
 /interface ethernet
 set [ find default-name=ether1 ] disable-running-check=no
@@ -23,14 +24,21 @@ add address=10.30.4.2/30 comment=DIST-2-CORE-2 interface=ether2 network=\
 add address=192.168.10.3/24 interface=vlan10 network=192.168.10.0
 add address=192.168.20.3/24 interface=vlan20 network=192.168.20.0
 /ip dhcp-client
-add interface=ether1 name=client1
+add disabled=yes interface=ether1 name=client1
 /ip service
 set ftp disabled=yes
 set ssh available-from=10.0.0.0/8,192.168.0.0/16
 set telnet disabled=yes
 set www disabled=yes
+set reverse-proxy disabled=yes
 set winbox available-from=10.0.0.0/8,192.168.0.0/16
 set api disabled=yes
 set api-ssl disabled=yes
 /system identity
 set name=DIST-2
+/tool mac-server
+set allowed-interface-list=none
+/tool mac-server mac-winbox
+set allowed-interface-list=none
+/tool mac-server ping
+set enabled=no
