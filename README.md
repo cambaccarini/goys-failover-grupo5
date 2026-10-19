@@ -24,6 +24,9 @@
 El presente laboratorio aborda el diseño, aprovisionamiento, hardening, operación y verificación empírica de una infraestructura de red empresarial jerárquica de **5 capas**, con el objetivo de mejorar la resiliencia ante contingencias físicas o lógicas. La alta disponibilidad y la conmutación por falla se verificarán progresivamente mediante las fases de implementación y sus evidencias.
 
 ### Pilares Arquitectónicos y Protocolos:
+
+> **Estado de implementación al cierre de F1 (19/10/2026):** los apartados siguientes describen la arquitectura objetivo del laboratorio, no una declaración de que todos esos protocolos ya estén desplegados. En F1 se verificaron la topología, el direccionamiento, las loopbacks, las VLAN de distribución, el hardening y las pruebas de conectividad documentadas. VRRP/OSPF corresponden a F2; BGP, redistribución, firewall y NAT se configurarán y verificarán en F3; los drills pertenecen a F4.
+
 1. **Redundancia de Primer Salto (FHRP - Layer 1 de Failover):**
    - Implementación de **VRRP v2/v3** en la capa de Distribución con balanceo de carga simétrico (*Active/Active Load-Sharing*):
      - `DIST-1`: Master de VLAN 10 (Usuarios - `192.168.10.1`, VRID 10, Prioridad 150) y Backup de VLAN 20 (Prioridad 100).
@@ -146,7 +149,7 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 | Fase / Hito | Alcance Principal | Fecha de Entrega | Estado |
 | :--- | :--- | :---: | :---: |
 | **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Aprobado con observaciones** |
-| **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **En cierre** (snapshot BASE restaurado y enlace ISP-1 ↔ EDGE verificado; auditoría final de hardening y recuperación de backups binarios pendientes) |
+| **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **En cierre** (snapshot restaurado y conectividad ISP-1 ↔ EDGE verificada; siete exports y catorce capturas de hardening/auditoría incorporados. Pendientes: recuperación de backups binarios) |
 | **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Vie 16/10/2026 | En Curso |
 | **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Vie 16/10/2026 | Planificado |
 | **F4** | Ejecución de los 5 Drills destructivos de failover, monitoreo y telemetría | Mar 20/10/2026 | Planificado |

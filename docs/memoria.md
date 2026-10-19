@@ -375,23 +375,28 @@ Evidencias en `capturas/f1/troubleshooting/`: `consola-chr-en-blanco.png`, `cons
 
 ### 2.3 Hardening de los 7 Routers (F1)
 
-Se aplicó el bloque común de la política de la sección 1.3 en los 7 routers (credenciales reales definidas localmente, **no versionadas**):
+Se verificó la configuración de hardening en los siete routers. Las cuentas administrativas utilizan `netadmin` en el grupo `full`; el usuario `monitor` utiliza el grupo personalizado `monitor-ro`, y el usuario por defecto `admin` ya no aparece en las salidas de auditoría.
 
-```routeros
-/user group set [find name=superadmin] policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,sniff,sensitive,api,romon,rest-api
-/user add name=netadmin group=superadmin password="<DEFINIR_LOCALMENTE>"
-/user add name=monitor group=read password="<DEFINIR_LOCALMENTE>"
-/user remove [find name=admin]
-/ip service disable telnet,ftp,www,www-ssl,api,api-ssl
-/ip neighbor discovery-settings set discover-interface-list=none
-```
+| Control | Estado verificado |
+| :-- | :-- |
+| Identidad y usuarios | Nombre correcto del router, `netadmin` en `full`, `monitor` en `monitor-ro` y ausencia de `admin`. |
+| Servicios de administración | FTP, Telnet, HTTP, HTTPS de administración, API, API-SSL y reverse-proxy deshabilitados. |
+| SSH y WinBox | Activos y restringidos a `10.0.0.0/8,192.168.0.0/16`. |
+| Descubrimiento de vecinos | `discover-interface-list=none`. |
+| Cliente DHCP | Cliente `client1` deshabilitado donde está presente. |
+| Servidor de ancho de banda | `/tool bandwidth-server print` indica `enabled=no`. |
+| Acceso MAC | `allowed-interface-list=none` para MAC Server y MAC WinBox; MAC ping deshabilitado. |
+| Usuario `monitor` | En los siete routers, el intento de agregar `9.9.9.9/32` a `lo` fue rechazado con `not enough permissions (9)`. |
+
+Las credenciales reales se administran localmente y no se documentan en el repositorio público.
 
 Medidas específicas por capa:
 
 | Routers | Medida adicional | Evidencia |
 | :-- | :-- | :-- |
-| CORE-1 y CORE-2 | Banner legal de acceso (`/system note set show-at-login=yes`) | `capturas/f1/hardening/core-1-banner-legal.png` |
-| DIST-1 y DIST-2 | Acceso SSH/WinBox restringido a `10.0.0.0/8,192.168.0.0/16` | `capturas/f1/hardening/dist-2-restriccion-ssh-winbox.png` |
+| CORE-1 | Banner legal de acceso (`/system note set show-at-login=yes`) | `capturas/f1/hardening/core-1-banner-legal.png` |
+| CORE-2 | Banner legal de acceso (`/system note set show-at-login=yes`) | Pendiente de confirmar y documentar la evidencia. |
+| DIST-1 y DIST-2 | Acceso SSH/WinBox restringido a `10.0.0.0/8,192.168.0.0/16` | `capturas/f1/hardening/dist-1-hardening.png`, `capturas/f1/hardening/dist-2-hardening.png` |
 
 ![Banner legal en CORE-1](../capturas/f1/hardening/core-1-banner-legal.png)
 ![Restricción SSH/WinBox en DIST-2](../capturas/f1/hardening/dist-2-restriccion-ssh-winbox.png)
@@ -411,10 +416,10 @@ Medidas específicas por capa:
 
 1. **Política `superadmin`:** el grupo se definió con el permiso `sniff` en lugar de `snmp` (sección 1.3 de F0). Corregir en F4 si se requiere acceso SNMP desde este grupo.
 2. **Usuarios preexistentes:** al repetir el bloque, RouterOS informó `group/user with the same name already exists` (`isp-2-usuarios-preexistentes.png`). Es esperable al reaplicar el bloque y no altera el resultado.
-3. **Eliminación de `admin`:** el primer intento en ISP-1 falló porque `netadmin` no tenía todavía permisos completos. Posteriormente se corrigieron los permisos y se verificó la eliminación de `admin` en ISP-1 e ISP-2. La auditoría final y la evidencia organizada de los siete routers siguen pendientes de consolidación.
+3. **Eliminación de `admin`:** el primer intento en ISP-1 falló porque `netadmin` no tenía todavía permisos completos. Posteriormente se corrigieron los permisos. En las capturas actuales de los siete routers, `netadmin` aparece en `full` y `admin` no aparece en la lista de usuarios.
 4. **Intentos de login fallidos en el log:** se observan eventos `login failure` durante la configuración inicial (`isp-1-login-netadmin.png`), generados al ingresar comandos o credenciales en el prompt de login; no se detectaron accesos externos.
 
-> **Evidencia pendiente de organizar en `capturas/f1/hardening/`:** las capturas por router `<router>-hardening.png` y `auditoria-<router>.png` previstas en la sección 7 no se incluyeron en este envío; se adjuntarán al cerrar la auditoría cruzada (tarea R3).
+Las evidencias de hardening y auditoría se incorporaron a `capturas/f1/hardening/`: siete archivos `<router>-hardening.png` y siete archivos `auditoria-<router>.png`. En las auditorías se comprobó que el intento de agregar `9.9.9.9/32` como `monitor` es rechazado en los siete routers.
 
 ### 2.4 Conectividad entre Vecinos Directos
 
@@ -425,6 +430,7 @@ Las capturas de `/ip address print` y de los pings a vecinos directos de cada ro
 | Elemento | Detalle |
 | :-- | :-- |
 | Snapshot GNS3 | `SNAPSHOT-BASE-F1`, creado el 19/10/2026. Se conserva `PRE-RESTORE-F1-20261019` como punto de retorno. |
+| Evidencia visual del snapshot | `capturas/f1/topologia/snapshot-base-f1.png`; muestra `SNAPSHOT-BASE-F1` y `PRE-RESTORE-F1-20261019` con sus fechas y horas. |
 | Estado incluido | Topología F1 con direccionamiento IP, loopbacks y hardening base, sin OSPF, BGP ni VRRP. |
 | Prueba de restauración del snapshot | Se restauró `SNAPSHOT-BASE-F1`. EDGE conservó su identidad y las direcciones IP esperadas. Los pings EDGE → ISP-1 (`10.100.1.1`) e ISP-1 → EDGE (`10.100.1.2`) respondieron 4/4, con 0 % de pérdida. La validación realizada cubre el enlace ISP-1–EDGE, no una auditoría completa de los siete routers. |
 | Exports `.rsc` | Generados mediante `/export` sin `show-sensitive` y versionados en `backups/f1/exports/`. Deben permanecer libres de contraseñas, claves y otros datos sensibles. |
@@ -584,21 +590,27 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 | 10/10/2026 | Juan Ignacio Atencio (R4) | `docs(backlog): desglosar epics F0-F5 asignando roles, estados de tareas y criterios de aprobación` | Desglose exhaustivo de tareas técnicas y criterios de aceptación verificables para F0-F5.                                                                                                                   | `git revert 1424251`       |
 | 10/10/2026 |      Ian Vidmar (R3)      | `feat(ipam): cerrar plan de direccionamiento, loopbacks y router-ids 1.1.1.1 a 7.7.7.7`             | Cerrar al 100% el plan IPAM, asignar Router-IDs unívocos a los 7 routers y fundamentar rigurosamente los 4 defectos corregidos.                                                                             | `git revert d11a0af`       |
 | 10/10/2026 |      Ian Vidmar (R3)      | `docs(backlog): marcar tareas R3 de F0 como hechas`                                                 | Marcar tareas asignadas a R3 de la fase F0 como completadas en backlog.md.                                                                                                                                  | `git revert 6bb2ac9`       |
-| 19/10/2026 | Equipo (R1–R4) | `docs(memoria): documentar despliegue, hardening y troubleshooting de F1` | Registrar entorno GNS3, solución del error de consola/KVM, hardening, pruebas negativas y snapshot BASE. | `git revert <hash-pendiente>` |
-| 19/10/2026 | Equipo (R1–R4) | `docs(backlog): marcar F1 como completado` | Cierre de las tareas de F1; el versionado de `.rsc` queda en curso. | `git revert <hash-pendiente>` |
-| 19/10/2026 | Equipo (R1–R4) | `docs(readme): actualizar estado de hitos F1/F2` | F1 completado, F2 en curso. | `git revert <hash-pendiente>` |
-| 19/10/2026 | Equipo (R1–R4) | `chore(capturas): agregar evidencias de hardening, topología y troubleshooting de F1` | Incorporar capturas al repositorio. | `git revert <hash-pendiente>` |
+| 19/10/2026 | Ian Vidmar (R3) | `672d0cc` — `Hardening, pings y checks de seguridad` | Registrar configuración de hardening y verificaciones de conectividad y seguridad. | `git revert 672d0cc` |
+| 19/10/2026 | Juan Ignacio Atencio (R4) | `393517c` — `chore(f1): agregar exports de configuracion RouterOS` | Versionar los siete exports base de F1. | `git revert 393517c` |
+| 19/10/2026 | Juan Ignacio Atencio (R4) | `b71c0e4` — `docs(f1): alinear estado y política de backups` | Alinear el estado de F1 y la política de respaldos con lo verificado. | `git revert b71c0e4` |
+| 19/10/2026 | Juan Ignacio Atencio (R4) | `86b8466` — `chore(f1): actualizar exports tras hardening` | Actualizar los exports luego de los cambios de hardening. | `git revert 86b8466` |
+| 19/10/2026 | Juan Ignacio Atencio (R4) | `d869324` — `docs(f1): agregar evidencia del snapshot base` | Incorporar evidencia visual inicial del snapshot base. | `git revert d869324` |
+| 19/10/2026 | Juan Ignacio Atencio (R4) | `041cfa4` — `docs(f1): actualizar evidencias y pendientes de cierre` | Alinear documentación y pendientes de F1 con el estado real. | `git revert 041cfa4` |
+| 19/10/2026 | Juan Ignacio Atencio (R4) | `a824231` — `docs(f1): actualizar evidencia del snapshot base` | Actualizar la evidencia del administrador de snapshots. | `git revert a824231` |
+| 19/10/2026 | Juan Ignacio Atencio (R4) | `dba8776` — `chore(f1): limpiar metadatos de exports` | Retirar metadatos innecesarios de los exports públicos. | `git revert dba8776` |
+| 19/10/2026 | Juan Ignacio Atencio (R4) | `58d7324` — `docs(f1): agregar evidencias de hardening y auditoria` | Incorporar las catorce capturas de hardening y auditoría. | `git revert 58d7324` |
 
 ### 6.2 Política de Respaldo y Evidencia de Restauración
 
-- **Archivos exportados:** Se ubican en `configs/*.rsc`.
-- **Respaldos de contingencia:** Se ubican en `backups/*.backup`.
-- **Verificación de Restore:** En cada hito, se reinicia un router a valores de fábrica (`/system reset-configuration`) y se importa el script `/import file=<router>.rsc` verificando el 100% de la funcionalidad.
+- **Exports de F1:** los siete archivos `.rsc` se versionan en `backups/f1/exports/`. Se generaron sin `show-sensitive` y se revisaron inicialmente con búsquedas de patrones habituales de contraseñas y claves; dichas búsquedas no devolvieron coincidencias.
+- **Backups binarios:** los siete archivos `*-F1-post-hardening.backup` se generaron en los routers. Sigue pendiente confirmar que estén disponibles fuera del proyecto en un medio privado, confirmar su protección y realizar una prueba de restauración en un nodo aislado.
+- **Snapshot:** `SNAPSHOT-BASE-F1` se restauró en GNS3. Se verificó la identidad y el direccionamiento de EDGE y se comprobó conectividad bidireccional con ISP-1, sin pérdida de paquetes. Esta prueba no reemplaza la restauración de un backup binario.
+- **Seguridad:** los binarios `.backup` no deben versionarse en el repositorio público. No se debe ejecutar `/system reset-configuration` sobre los routers de trabajo para probar una restauración.
 
 ### 6.3 Monitoreo y Telemetría
 
-- **Protocolo:** SNMP v2c habilitado en los 7 routers.
-- **Métricas a recolectar:**
+- **SNMP v2c:** su configuración y validación están previstas para F4; no se declara como habilitado ni probado durante F1.
+- **Métricas previstas:**
   - Estado operacional de interfaces físicas y de enlace (MIB-II `ifOperStatus`).
   - Vecindad y cambios de estado en OSPF (OSPF MIB `ospfNbrState`).
   - Estado de las sesiones eBGP (BGP4 MIB `bgpPeerState`).
@@ -617,8 +629,8 @@ Las evidencias visuales se organizan en la carpeta `capturas/`, separadas por et
 - `capturas/f1/conectividad/<router>-ip-address.png`: direcciones IP configuradas en cada router.
 - `capturas/f1/conectividad/<router>-ping-vecinos.png`: resultados de las pruebas de conectividad con vecinos directos.
 - `capturas/f1/hardening/`: banner legal (`core-1-banner-legal.png`), restricción de acceso (`dist-2-restriccion-ssh-winbox.png`), servicios y discovery (`isp-1-servicios-discovery-admin.png`) y pruebas negativas (`core-2-monitor-solo-lectura.png`, `dist-1-telnet-http-rechazados.png`, `dist-1-http-rechazado.png`).
-- `capturas/f1/hardening/<router>-hardening.png` y `auditoria-<router>.png`: **pendientes de incorporar** (ver sección 2.3).
-- `capturas/f1/troubleshooting/`: evidencia del error de consola/KVM y su solución (sección 2.2).
+- `capturas/f1/hardening/<router>-hardening.png` y `capturas/f1/hardening/auditoria-<router>.png`: catorce capturas incorporadas, una de configuración de hardening y otra de auditoría por router. La evidencia del banner legal de CORE-2 todavía debe confirmarse.
+- `capturas/f1/topologia/snapshot-base-f1.png`: evidencia del administrador de snapshots, con ambos nombres y fechas visibles.
 
 En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: `isp-1`, `isp-2`, `edge`, `core-1`, `core-2`, `dist-1` o `dist-2`.
 
