@@ -272,7 +272,7 @@ La salvaguarda de configuraciones sigue un esquema dual:
 
 ---
 
-## 2. Topología de Red (Fase F1)
+## 2. Topología de Red y Despliegue (Fase F1)
 
 La topología está conformada por 7 routers MikroTik CHR, 2 switches Ethernet virtuales de Capa 2 y 2 terminales de prueba. El diseño contiene 9 enlaces entre routers, 4 enlaces entre distribución y acceso y 2 enlaces hacia los hosts, para un total de 15 enlaces internos.
 
@@ -320,6 +320,115 @@ flowchart TB
     SWU ---|"puerto 2 · access VLAN 10"| PC
     SWS ---|"puerto 2 · access VLAN 20"| SRV
 ```
+
+### 2.1 Evidencia de la Topología Desplegada
+
+La topología de 11 nodos y 15 enlaces internos fue desplegada en GNS3. La captura oficial se conserva en `capturas/f1/topologia/topologia-completa.png`.
+
+![Topología completa](../capturas/f1/topologia/topologia-completa.png)
+
+Evidencias complementarias:
+
+| Evidencia | Archivo |
+| :-- | :-- |
+| Proyecto operativo en GNS3 con los 7 routers encendidos (hosts aún sin iniciar) | `capturas/f1/topologia/gns3-topologia-operativa.png` |
+| Configuración de puertos de SW-ACC-USERS | `capturas/f1/topologia/sw-acc-users-config.png` |
+| Configuración de puertos de SW-ACC-SERVERS | `capturas/f1/topologia/sw-acc-servers-config.png` |
+
+### 2.2 Entorno de Simulación y Problemas Encontrados
+
+**Entorno final de ejecución:** GNS3 3.0.6 (instalado con `pipx`) con cliente de escritorio `gns3-gui`, sobre una VM Linux Mint, con MikroTik CHR RouterOS 7.24.1. Las consolas de los CHR se exponen por interfaz web para el acceso desde otros equipos.
+
+**Problema:** al abrir la consola de cualquier CHR no era posible ingresar comandos (consola en blanco por telnet/SSH y reintentos de arranque reiterados por VNC).
+
+| Variable probada | Resultado |
+| :-- | :-- |
+| Distintas versiones de MikroTik CHR y de QEMU | Sin cambios |
+| Consolas telnet, SSH y VNC | Consola en blanco o reintentos de arranque |
+| Distintas versiones de GNS3 (incluida alpha) | Sin cambios |
+| Hosts Linux y Windows; virtualización anidada activada | Sin cambios; algunas combinaciones colgaban la VM o el host |
+| GNS3 en VirtualBox con interfaz web | Falla (también con la aceleración desactivada) |
+
+**Solución:** ejecutar GNS3 en una VM Linux Mint con `gns3-gui` y desactivar KVM en el servidor GNS3, ya que el CHR informaba un error de aceleración. En `~/.config/GNS3/2.2/gns3_server.conf` se agregó al final:
+
+```toml
+[Qemu]
+enable_kvm = false
+```
+
+**Conclusión:** el origen del problema era la plataforma donde corría GNS3 y no la virtualización anidada en sí.
+
+**Compatibilidad de proyectos:** el GNS3 del PPA `ppa:gns3/ppa` es 2.2.x y no importa proyectos de versión 3.x (la interfaz web falla sin mostrar error). Se reemplazó por GNS3 3.0.6:
+
+```bash
+sudo apt remove gns3-gui gns3-server
+sudo apt install pipx python3-pyqt6 python3-pyqt6.qtwebsockets python3-pyqt6.qtsvg dynamips ubridge vpcs
+pipx install gns3-server
+pipx install gns3-gui
+pipx inject gns3-gui gns3-server PyQt6
+pipx ensurepath
+sudo apt install libxcb-cursor0   # sin esto GNS3 abortaba con "Fatal Python error: Aborted"
+gns3
+```
+
+Evidencias en `capturas/f1/troubleshooting/`: `consola-chr-en-blanco.png`, `consola-vnc-reintentos.png`, `error-aceleracion-kvm.png` y `gns3-server-conf-enable-kvm-false.png`.
+
+### 2.3 Hardening de los 7 Routers (F1)
+
+Se aplicó el bloque común de la política de la sección 1.3 en los 7 routers (credenciales reales definidas localmente, **no versionadas**):
+
+```routeros
+/user group set [find name=superadmin] policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,sniff,sensitive,api,romon,rest-api
+/user add name=netadmin group=superadmin password="<DEFINIR_LOCALMENTE>"
+/user add name=monitor group=read password="<DEFINIR_LOCALMENTE>"
+/user remove [find name=admin]
+/ip service disable telnet,ftp,www,www-ssl,api,api-ssl
+/ip neighbor discovery-settings set discover-interface-list=none
+```
+
+Medidas específicas por capa:
+
+| Routers | Medida adicional | Evidencia |
+| :-- | :-- | :-- |
+| CORE-1 y CORE-2 | Banner legal de acceso (`/system note set show-at-login=yes`) | `capturas/f1/hardening/core-1-banner-legal.png` |
+| DIST-1 y DIST-2 | Acceso SSH/WinBox restringido a `10.0.0.0/8,192.168.0.0/16` | `capturas/f1/hardening/dist-2-restriccion-ssh-winbox.png` |
+
+![Banner legal en CORE-1](../capturas/f1/hardening/core-1-banner-legal.png)
+![Restricción SSH/WinBox en DIST-2](../capturas/f1/hardening/dist-2-restriccion-ssh-winbox.png)
+
+#### Pruebas de seguridad negativa
+
+| Prueba | Resultado esperado | Resultado obtenido | Evidencia |
+| :-- | :-- | :-- | :-- |
+| SSH como `monitor` desde CORE-1 hacia CORE-2 (`10.20.1.2`) y alta de `9.9.9.9/32` en `lo` | `not enough permissions` | Rechazado: `not enough permissions (9)` | `core-2-monitor-solo-lectura.png` |
+| `/system telnet 10.30.1.2` desde CORE-1 hacia DIST-1 | Conexión rechazada | `Connection refused` | `dist-1-telnet-http-rechazados.png` |
+| `/tool fetch url="http://10.30.1.2"` desde CORE-1 hacia DIST-1 | Falla | `status: failed` · `Connection refused` | `dist-1-http-rechazado.png`, `dist-1-telnet-http-rechazados.png` |
+
+![monitor es solo lectura](../capturas/f1/hardening/core-2-monitor-solo-lectura.png)
+![Telnet y HTTP rechazados en DIST-1](../capturas/f1/hardening/dist-1-telnet-http-rechazados.png)
+
+#### Desvíos y observaciones
+
+1. **Política `superadmin`:** el grupo se definió con el permiso `sniff` en lugar de `snmp` (sección 1.3 de F0). Corregir en F4 si se requiere acceso SNMP desde este grupo.
+2. **Usuarios preexistentes:** al repetir el bloque, RouterOS informó `group/user with the same name already exists` (`isp-2-usuarios-preexistentes.png`). Es esperable al reaplicar el bloque y no altera el resultado.
+3. **Eliminación de `admin` en ISP-1:** el comando `/user remove [find name=admin]` falló con `the user is last one with full access permissions` (`isp-1-servicios-discovery-admin.png`). Verificar que `netadmin` tenga la política completa del grupo `superadmin` y que el usuario `admin` quede eliminado en los 7 routers.
+4. **Intentos de login fallidos en el log:** se observan eventos `login failure` durante la configuración inicial (`isp-1-login-netadmin.png`), generados al ingresar comandos o credenciales en el prompt de login; no se detectaron accesos externos.
+
+> **Evidencia pendiente de organizar en `capturas/f1/hardening/`:** las capturas por router `<router>-hardening.png` y `auditoria-<router>.png` previstas en la sección 7 no se incluyeron en este envío; se adjuntarán al cerrar la auditoría cruzada (tarea R3).
+
+### 2.4 Conectividad entre Vecinos Directos
+
+Las capturas de `/ip address print` y de los pings a vecinos directos de cada router están en `capturas/f1/conectividad/` (`<router>-ip-address.png` y `<router>-ping-vecinos.png`). Los pings entre DIST-1 y DIST-2 sobre VLAN 10 y VLAN 20 también fueron exitosos.
+
+### 2.5 Snapshot BASE y Backup Inicial
+
+| Elemento | Detalle |
+| :-- | :-- |
+| Snapshot GNS3 | `SNAPSHOT-BASE-F1` (fecha y hora: completar al adjuntar `snapshot-base-f1.png` en `capturas/f1/topologia/`), tomado con los 7 routers con IPs, loopbacks y hardening, **sin** OSPF, BGP ni VRRP, y con todos los nodos detenidos. |
+| Exports `.rsc` | Se generan con `/export file=<router>-F1` **sin** `show-sensitive` y se versionan en `backups/f1/exports/`. |
+| Backups `.backup` | `/system backup save name=<router>-F1`; se almacenan **fuera** del repositorio. |
+
+> Nota: la política de la sección 1.4 menciona `/export show-sensitive`; en F1 se aplicó el criterio más restrictivo (sin `show-sensitive`), alineado con el backlog.
 
 ---
 
@@ -473,6 +582,10 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 | 10/10/2026 | Juan Ignacio Atencio (R4) | `docs(backlog): desglosar epics F0-F5 asignando roles, estados de tareas y criterios de aprobación` | Desglose exhaustivo de tareas técnicas y criterios de aceptación verificables para F0-F5.                                                                                                                   | `git revert 1424251`       |
 | 10/10/2026 |      Ian Vidmar (R3)      | `feat(ipam): cerrar plan de direccionamiento, loopbacks y router-ids 1.1.1.1 a 7.7.7.7`             | Cerrar al 100% el plan IPAM, asignar Router-IDs unívocos a los 7 routers y fundamentar rigurosamente los 4 defectos corregidos.                                                                             | `git revert d11a0af`       |
 | 10/10/2026 |      Ian Vidmar (R3)      | `docs(backlog): marcar tareas R3 de F0 como hechas`                                                 | Marcar tareas asignadas a R3 de la fase F0 como completadas en backlog.md.                                                                                                                                  | `git revert 6bb2ac9`       |
+| 19/10/2026 | Equipo (R1–R4) | `docs(memoria): documentar despliegue, hardening y troubleshooting de F1` | Registrar entorno GNS3, solución del error de consola/KVM, hardening, pruebas negativas y snapshot BASE. | `git revert <hash-pendiente>` |
+| 19/10/2026 | Equipo (R1–R4) | `docs(backlog): marcar F1 como completado` | Cierre de las tareas de F1; el versionado de `.rsc` queda en curso. | `git revert <hash-pendiente>` |
+| 19/10/2026 | Equipo (R1–R4) | `docs(readme): actualizar estado de hitos F1/F2` | F1 completado, F2 en curso. | `git revert <hash-pendiente>` |
+| 19/10/2026 | Equipo (R1–R4) | `chore(capturas): agregar evidencias de hardening, topología y troubleshooting de F1` | Incorporar capturas al repositorio. | `git revert <hash-pendiente>` |
 
 ### 6.2 Política de Respaldo y Evidencia de Restauración
 
@@ -493,15 +606,17 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 
 ## 7. Repositorio de Evidencias Gráficas y Capturas
 
-Las evidencias visuales se organizan en la carpeta `capturas/`, separadas por etapa del proyecto y tipo de verificación. Las rutas indicadas a continuación representan la ubicación prevista para cada evidencia; las capturas se incorporarán una vez realizadas las pruebas correspondientes.
+Las evidencias visuales se organizan en la carpeta `capturas/`, separadas por etapa del proyecto y tipo de verificación. Las capturas de F1 ya están incorporadas; las de F2 a F4 indican la ubicación prevista y se incorporarán al realizar las pruebas.
 
 ### F1 — Topología, conectividad y hardening
 
 - `capturas/f1/topologia/topologia-completa.png`: topología completa e interconectada en GNS3.
+- `capturas/f1/topologia/gns3-topologia-operativa.png`, `sw-acc-users-config.png`, `sw-acc-servers-config.png`: proyecto operativo y configuración de switches.
 - `capturas/f1/conectividad/<router>-ip-address.png`: direcciones IP configuradas en cada router.
 - `capturas/f1/conectividad/<router>-ping-vecinos.png`: resultados de las pruebas de conectividad con vecinos directos.
-- `capturas/f1/hardening/<router>-hardening.png`: verificación de las medidas de hardening aplicadas en cada router.
-- `capturas/f1/hardening/auditoria-<router>.png`: evidencia de la auditoría de hardening de cada router.
+- `capturas/f1/hardening/`: banner legal (`core-1-banner-legal.png`), restricción de acceso (`dist-2-restriccion-ssh-winbox.png`), servicios y discovery (`isp-1-servicios-discovery-admin.png`) y pruebas negativas (`core-2-monitor-solo-lectura.png`, `dist-1-telnet-http-rechazados.png`, `dist-1-http-rechazado.png`).
+- `capturas/f1/hardening/<router>-hardening.png` y `auditoria-<router>.png`: **pendientes de incorporar** (ver sección 2.3).
+- `capturas/f1/troubleshooting/`: evidencia del error de consola/KVM y su solución (sección 2.2).
 
 En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: `isp-1`, `isp-2`, `edge`, `core-1`, `core-2`, `dist-1` o `dist-2`.
 

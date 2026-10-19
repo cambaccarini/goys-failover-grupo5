@@ -113,11 +113,12 @@ goys-failover-grupo5/
 ├── configs/               # Scripts exportados (.rsc) limpios para cada uno de los 7 routers
 │   └── .gitkeep
 ├── backups/               # Respaldos de configuración (scripts /export y binarios .backup)
-│   └── .gitkeep
+│   ├── .gitkeep
+│   └── f1/exports/        # .rsc base de F1 (sin secretos)
 ├── runbooks/              # Procedimientos operativos estándar (SOP) para los 5 drills
 │   └── .gitkeep
 └── capturas/              # Evidencias en imagen de adyacencias, ping de drills y failover
-    └── .gitkeep
+    └── f1/                # topologia/ · conectividad/ · hardening/ · troubleshooting/
 ```
 
 ---
@@ -145,8 +146,8 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 | Fase / Hito | Alcance Principal | Fecha de Entrega | Estado |
 | :--- | :--- | :---: | :---: |
 | **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Re-entrega presentado / En revisión** |
-| **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | En Curso |
-| **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Vie 16/10/2026 | Planificado |
+| **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **Completado** (pendiente versionar `.rsc` de backup) |
+| **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Vie 16/10/2026 | En Curso |
 | **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Vie 16/10/2026 | Planificado |
 | **F4** | Ejecución de los 5 Drills destructivos de failover, monitoreo y telemetría | Mar 20/10/2026 | Planificado |
 | **F5** | Memoria técnica completa, cierre del backlog, repositorio final y defensa oral | Vie 23/10/2026 | Planificado |
