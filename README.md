@@ -21,7 +21,7 @@
 
 ## 2. Resumen Ejecutivo del Proyecto
 
-El presente laboratorio aborda el diseño, aprovisionamiento, hardening, operación y verificación empírica de una infraestructura de red empresarial jerárquica de **5 capas**, diseñada para eliminar puntos únicos de falla (*Single Points of Failure - SPOF*) y garantizar alta disponibilidad continua ante contingencias físicas o lógicas.
+El presente laboratorio aborda el diseño, aprovisionamiento, hardening, operación y verificación empírica de una infraestructura de red empresarial jerárquica de **5 capas**, con el objetivo de mejorar la resiliencia ante contingencias físicas o lógicas. La alta disponibilidad y la conmutación por falla se verificarán progresivamente mediante las fases de implementación y sus evidencias.
 
 ### Pilares Arquitectónicos y Protocolos:
 1. **Redundancia de Primer Salto (FHRP - Layer 1 de Failover):**
@@ -145,8 +145,8 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 
 | Fase / Hito | Alcance Principal | Fecha de Entrega | Estado |
 | :--- | :--- | :---: | :---: |
-| **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Re-entrega presentado / En revisión** |
-| **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **Completado** (pendiente versionar `.rsc` de backup) |
+| **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Aprobado con observaciones** |
+| **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **Completado** (exports versionados; evidencia de snapshot y hardening por verificar) |
 | **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Vie 16/10/2026 | En Curso |
 | **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Vie 16/10/2026 | Planificado |
 | **F4** | Ejecución de los 5 Drills destructivos de failover, monitoreo y telemetría | Mar 20/10/2026 | Planificado |

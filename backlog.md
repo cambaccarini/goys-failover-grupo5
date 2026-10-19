@@ -40,7 +40,7 @@
 
 ---
 
-## Epic F1 — Topología + Hardening + Backup Inicial · _vence vie 09/10/2026_ · [x]
+## Epic F1 — Topología + Hardening + Backup Inicial · _vence vie 09/10/2026_ · [~]
 
 ### Despliegue de Topología (7 CHR + 2 Switches + 2 Hosts)
 
@@ -85,8 +85,7 @@
 - [x] [R2] Realizar una prueba de restauración en un nodo de test para validar la integridad del backup. Criterio: el router de prueba restaura la configuración esperada y vuelve a operar.
 
 ---
-> **Pendiente de cierre en F1:** versionar los 7 `.rsc` de `/export` en `backups/f1/exports/` (no se recibieron junto con el trabajo). Los `.backup` binarios quedan fuera del repositorio por política.
-
+> **Cierre F1:** los siete exports `.rsc` están versionados en `backups/f1/exports/`. Confirmar y documentar la evidencia del snapshot BASE y la auditoría de hardening. Los backups binarios `.backup` deben permanecer fuera del repositorio.
 ---
 
 ## Epic F2 — VRRP + OSPF · _vence vie 16/10_

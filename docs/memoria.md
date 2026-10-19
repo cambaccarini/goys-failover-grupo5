@@ -260,7 +260,7 @@ Para garantizar la trazabilidad de cada intervención de ingeniería, el reposit
 La salvaguarda de configuraciones sigue un esquema dual:
 
 1. **Exportación Declarativa en Texto Plano (`/export`):**
-   - Comando: `/export show-sensitive file=configs/<nombre-router>-<fase>.rsc`
+   - Comando: `/export file=<router>-F1.rsc`
    - Formato editable y versionable en Git, libre de claves sensibles en commits públicos.
 2. **Respaldo Binario del Estado del Sistema (`/system backup`):**
    - Comando: `/system backup save name=backups/<nombre-router>-<fase>.backup`
