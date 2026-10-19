@@ -411,7 +411,7 @@ Medidas específicas por capa:
 
 1. **Política `superadmin`:** el grupo se definió con el permiso `sniff` en lugar de `snmp` (sección 1.3 de F0). Corregir en F4 si se requiere acceso SNMP desde este grupo.
 2. **Usuarios preexistentes:** al repetir el bloque, RouterOS informó `group/user with the same name already exists` (`isp-2-usuarios-preexistentes.png`). Es esperable al reaplicar el bloque y no altera el resultado.
-3. **Eliminación de `admin` en ISP-1:** el comando `/user remove [find name=admin]` falló con `the user is last one with full access permissions` (`isp-1-servicios-discovery-admin.png`). Verificar que `netadmin` tenga la política completa del grupo `superadmin` y que el usuario `admin` quede eliminado en los 7 routers.
+3. **Eliminación de `admin`:** el primer intento en ISP-1 falló porque `netadmin` no tenía todavía permisos completos. Posteriormente se corrigieron los permisos y se verificó la eliminación de `admin` en ISP-1 e ISP-2. La auditoría final y la evidencia organizada de los siete routers siguen pendientes de consolidación.
 4. **Intentos de login fallidos en el log:** se observan eventos `login failure` durante la configuración inicial (`isp-1-login-netadmin.png`), generados al ingresar comandos o credenciales en el prompt de login; no se detectaron accesos externos.
 
 > **Evidencia pendiente de organizar en `capturas/f1/hardening/`:** las capturas por router `<router>-hardening.png` y `auditoria-<router>.png` previstas en la sección 7 no se incluyeron en este envío; se adjuntarán al cerrar la auditoría cruzada (tarea R3).
@@ -424,11 +424,13 @@ Las capturas de `/ip address print` y de los pings a vecinos directos de cada ro
 
 | Elemento | Detalle |
 | :-- | :-- |
-| Snapshot GNS3 | `SNAPSHOT-BASE-F1` (fecha y hora: completar al adjuntar `snapshot-base-f1.png` en `capturas/f1/topologia/`), tomado con los 7 routers con IPs, loopbacks y hardening, **sin** OSPF, BGP ni VRRP, y con todos los nodos detenidos. |
-| Exports `.rsc` | Se generan con `/export file=<router>-F1` **sin** `show-sensitive` y se versionan en `backups/f1/exports/`. |
-| Backups `.backup` | `/system backup save name=<router>-F1`; se almacenan **fuera** del repositorio. |
+| Snapshot GNS3 | `SNAPSHOT-BASE-F1`, creado el 19/10/2026. Se conserva `PRE-RESTORE-F1-20261019` como punto de retorno. |
+| Estado incluido | Topología F1 con direccionamiento IP, loopbacks y hardening base, sin OSPF, BGP ni VRRP. |
+| Prueba de restauración del snapshot | Se restauró `SNAPSHOT-BASE-F1`. EDGE conservó su identidad y las direcciones IP esperadas. Los pings EDGE → ISP-1 (`10.100.1.1`) e ISP-1 → EDGE (`10.100.1.2`) respondieron 4/4, con 0 % de pérdida. La validación realizada cubre el enlace ISP-1–EDGE, no una auditoría completa de los siete routers. |
+| Exports `.rsc` | Generados mediante `/export` sin `show-sensitive` y versionados en `backups/f1/exports/`. Deben permanecer libres de contraseñas, claves y otros datos sensibles. |
+| Backups binarios `.backup` | Generados en los siete routers con nombres `*-F1-post-hardening`. Queda pendiente confirmar una copia fuera del proyecto y probar la restauración de un backup en un nodo aislado. No versionar estos archivos en Git. |
 
-> Nota: la política de la sección 1.4 menciona `/export show-sensitive`; en F1 se aplicó el criterio más restrictivo (sin `show-sensitive`), alineado con el backlog.
+> La política de la sección 1.4 menciona `/export show-sensitive`; para F1 se utilizó `/export` sin `show-sensitive`, siguiendo el criterio más restrictivo para evitar exponer secretos en el repositorio público.
 
 ---
 

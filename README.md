@@ -146,7 +146,7 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 | Fase / Hito | Alcance Principal | Fecha de Entrega | Estado |
 | :--- | :--- | :---: | :---: |
 | **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Aprobado con observaciones** |
-| **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **Completado** (exports versionados; evidencia de snapshot y hardening por verificar) |
+| **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **En cierre** (snapshot BASE restaurado y enlace ISP-1 ↔ EDGE verificado; auditoría final de hardening y recuperación de backups binarios pendientes) |
 | **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Vie 16/10/2026 | En Curso |
 | **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Vie 16/10/2026 | Planificado |
 | **F4** | Ejecución de los 5 Drills destructivos de failover, monitoreo y telemetría | Mar 20/10/2026 | Planificado |
