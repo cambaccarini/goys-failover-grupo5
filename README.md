@@ -12,18 +12,23 @@
 
 | Integrante | Rol | Email de Contacto / Git | Responsabilidad de Infraestructura | Responsabilidades Operativas Asumidas |
 | :--- | :---: | :--- | :--- | :--- |
-| **Camila Baccarini** | **R1** | `cambaccarini01@gmail.com` | **Líder / Edge-WAN:** Router EDGE (AS 65000), dual-homing eBGP con ISP-1 e ISP-2, redistribución y filtrado OSPF↔BGP, BGP TCP-MD5, Firewall perimetral y NAT. | Gobernanza del repositorio Git, consolidación del Change Log general del proyecto y elaboración del Runbook para Drill 3 (BGP Failover ante caída de ISP). |
-| **Alesandro Patricio Borda** | **R2** | `PATOEDA@HOTMAIL.COM` | **Proveedores (ISP):** Routers ISP-1 (AS 65001) e ISP-2 (AS 65002), inyección de rutas por defecto (`default-originate`), peering eBGP hacia EDGE, simulación de Loopbacks públicas. | Política integral y ejecución de Backups (`/export` scripts `.rsc` y backups binarios `.backup`), pruebas de restauración ante desastres y Runbook para Drill 4 (`check-gateway` / Failover estático). |
+| **Camila Baccarini** | **R1** | `cambaccarini01@gmail.com` | **Líder / Edge-WAN:** Router EDGE (AS 65000), dual-homing eBGP con ISP-1 e ISP-2, redistribución y filtrado OSPF↔BGP, BGP TCP-MD5, Firewall perimetral y NAT. | Gobernanza del repositorio Git, revisión de calidad documental y elaboración del Runbook para Drill 3 (BGP Failover ante caída de ISP). |
+| **Alesandro Patricio Borda** | **R2 + R5 operativo** | `PATOEDA@HOTMAIL.COM` | **Proveedores (ISP):** Routers ISP-1 (AS 65001) e ISP-2 (AS 65002), inyección de rutas por defecto (`default-originate`), peering eBGP hacia EDGE y simulación de loopbacks públicas. | **Responsable nominal de R5:** coordinar backups y restauraciones, mantener el Change Log, coordinar la recopilación de evidencias de los drills y consolidar post-mortems. Conserva la responsabilidad técnica de ISP-1/ISP-2 y el Runbook para Drill 4 (`check-gateway` / Failover estático). |
 | **Ian Vidmar** | **R3** | `ividmar@alu.frlp.utn.edu.ar` | **Core / Backbone:** Routers CORE-1 y CORE-2, OSPF v2 Área 0 backbone en modo tránsito puro, enlace dedicado `core-core`, autenticación criptográfica OSPF MD5. | Aseguramiento de Calidad (QA) y auditoría técnica de configuraciones, monitoreo y telemetría de red (SNMP / logs de adyacencias OSPF/BGP) y Runbook para Drill 2 (Corte de enlace interno OSPF). |
 | **Juan Ignacio Atencio Barrenechea** | **R4** | `juanignacioatenciobarrenechea@alu.frlp.utn.edu.ar` | **Distribución & FHRP:** Routers DIST-1 y DIST-2, redundancia de primer salto VRRP activo/activo (*load-sharing* entre VLAN 10 y VLAN 20), autenticación VRRP simple y enlaces OSPF uplink. | Despliegue, configuración y pruebas en equipos terminales (PC-USER en VLAN 10 y SRV en VLAN 20), verificación de conectividad L3 de primer salto y Runbooks para Drill 1 (Caída de Master VRRP) y Drill 5 (Load-sharing VRRP). |
+
+> **Función operativa R5:** queda asignada a Alesandro Patricio Borda (R2) como responsabilidad adicional, sin constituir un quinto integrante. Cada responsable técnico R1–R4 conserva la ejecución de su módulo y entrega a R5 las evidencias, los cambios registrados y los resultados de sus pruebas. R5 coordina la trazabilidad operativa, los backups/restores, el Change Log y la consolidación de los post-mortems.
 
 ---
 
 ## 2. Resumen Ejecutivo del Proyecto
 
-El presente laboratorio aborda el diseño, aprovisionamiento, hardening, operación y verificación empírica de una infraestructura de red empresarial jerárquica de **5 capas**, diseñada para eliminar puntos únicos de falla (*Single Points of Failure - SPOF*) y garantizar alta disponibilidad continua ante contingencias físicas o lógicas.
+El presente laboratorio aborda el diseño, aprovisionamiento, hardening, operación y verificación empírica de una infraestructura de red empresarial jerárquica de **5 capas**, con el objetivo de mejorar la resiliencia ante contingencias físicas o lógicas. La alta disponibilidad y la conmutación por falla se verificarán progresivamente mediante las fases de implementación y sus evidencias.
 
 ### Pilares Arquitectónicos y Protocolos:
+
+> **Estado de implementación al cierre de F1 (19/10/2026):** los apartados siguientes describen la arquitectura objetivo del laboratorio, no una declaración de que todos esos protocolos ya estén desplegados. En F1 se verificaron la topología, el direccionamiento, las loopbacks, las VLAN de distribución, el hardening y las pruebas de conectividad documentadas. VRRP/OSPF corresponden a F2; BGP, redistribución, firewall y NAT se configurarán y verificarán en F3; los drills pertenecen a F4.
+
 1. **Redundancia de Primer Salto (FHRP - Layer 1 de Failover):**
    - Implementación de **VRRP v2/v3** en la capa de Distribución con balanceo de carga simétrico (*Active/Active Load-Sharing*):
      - `DIST-1`: Master de VLAN 10 (Usuarios - `192.168.10.1`, VRID 10, Prioridad 150) y Backup de VLAN 20 (Prioridad 100).
@@ -113,11 +118,12 @@ goys-failover-grupo5/
 ├── configs/               # Scripts exportados (.rsc) limpios para cada uno de los 7 routers
 │   └── .gitkeep
 ├── backups/               # Respaldos de configuración (scripts /export y binarios .backup)
-│   └── .gitkeep
+│   ├── .gitkeep
+│   └── f1/exports/        # .rsc base de F1 (sin secretos)
 ├── runbooks/              # Procedimientos operativos estándar (SOP) para los 5 drills
 │   └── .gitkeep
 └── capturas/              # Evidencias en imagen de adyacencias, ping de drills y failover
-    └── .gitkeep
+    └── f1/                # topologia/ · conectividad/ · hardening/ · troubleshooting/
 ```
 
 ---
@@ -144,9 +150,11 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 
 | Fase / Hito | Alcance Principal | Fecha de Entrega | Estado |
 | :--- | :--- | :---: | :---: |
-| **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Re-entrega presentado / En revisión** |
-| **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | En Curso |
-| **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Vie 16/10/2026 | Planificado |
-| **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Vie 16/10/2026 | Planificado |
-| **F4** | Ejecución de los 5 Drills destructivos de failover, monitoreo y telemetría | Mar 20/10/2026 | Planificado |
-| **F5** | Memoria técnica completa, cierre del backlog, repositorio final y defensa oral | Vie 23/10/2026 | Planificado |
+| **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Aprobado con observaciones** |
+| **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **En cierre** (snapshot restaurado y conectividad ISP-1 ↔ EDGE verificada; siete exports y catorce capturas de hardening/auditoría incorporados. Pendientes: recuperación de backups binarios) |
+| **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Mié 21/10/2026 (propuesta) | Planificado |
+| **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Jue 22/10/2026 (propuesta) | Planificado |
+| **F4** | Ejecución de los 5 drills de failover, monitoreo y telemetría | Lun 26/10/2026 (propuesta) | Planificado |
+| **F5** | Memoria técnica final, cierre del backlog, repositorio y defensa oral | Mar 27/10/2026 (propuesta) | Planificado |
+
+> **Replanificación solicitada:** las fechas objetivo de F2–F5 fueron propuestas al docente debido al retraso acumulado. Permanecen pendientes de aprobación y se actualizarán si el profesor propone otro cronograma.

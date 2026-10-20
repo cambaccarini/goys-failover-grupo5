@@ -8,6 +8,16 @@
 - Cada tarea tiene asignado su **dueño unívoco** (rol técnico): `[R1]`, `[R2]`, `[R3]` o `[R4]`.
 - Cada tarea define su **criterio de aceptación técnico** (comando CLI, bandera o resultado esperado).
 
+- **Responsable operativo R5:** Alesandro Patricio Borda (R2), como responsabilidad adicional. Coordina backups/restores, Change Log, evidencias de drills y post-mortems; los responsables técnicos conservan la ejecución de sus módulos.
+
+> **Replanificación propuesta al docente (pendiente de aprobación):**
+> - F2: miércoles 21/10/2026.
+> - F3: jueves 22/10/2026.
+> - F4: lunes 26/10/2026.
+> - F5: martes 27/10/2026.
+>
+> Las fechas son objetivos solicitados y no se consideran aprobados hasta recibir confirmación del docente. No marcar fases como completadas sin cumplir sus criterios de aceptación.
+
 ---
 
 ## Epic F0 — Diseño y Gestión de Cambio · _vence vie 02/10_ · [x]
@@ -40,51 +50,55 @@
 
 ---
 
-## Epic F1 — Topología + Hardening + Backup Inicial · _vence vie 09/10/2026_
+## Epic F1 — Topología + Hardening + Backup Inicial · _vence vie 09/10/2026_ · [~]
 
 ### Despliegue de Topología (7 CHR + 2 Switches + 2 Hosts)
 
-- [ ] [R1] Desplegar y cablear en GNS3 el nodo EDGE (MikroTik CHR RouterOS v7): ether1 a ISP-1, ether2 a ISP-2, ether3 a CORE-1 y ether4 a CORE-2. Criterio: interfaces levantadas con link status UP.
-- [ ] [R2] Desplegar y cablear en GNS3 los nodos ISP-1 e ISP-2, conectando ether1 de cada uno hacia EDGE. Criterio: interfaces ether1 con link status UP y conectividad L2.
-- [ ] [R3] Desplegar y cablear en GNS3 los nodos CORE-1 y CORE-2, interconectando ether2 entre sí (enlace Core-Core), ether1 hacia EDGE y ether3/ether4 hacia DIST-1 y DIST-2. Criterio: enlaces del Core levantados según el diagrama aprobado.
-- [ ] [R4] Desplegar y cablear en GNS3 los nodos DIST-1 y DIST-2 hacia Core (ether1 y ether2), hacia los switches de acceso SW-ACC-USERS y SW-ACC-SERVERS (ether3), y conectar PC-USER y SRV. Criterio: enlaces de Distribución levantados según el diagrama aprobado.
-- [ ] [R4] Capturar la topología completa y guardar la evidencia en `capturas/F1/topologia/`. Criterio: la captura permite identificar los 7 routers CHR, los 2 switches, los 2 hosts y sus enlaces.
+- [x] [R1] Desplegar y cablear EDGE: ether1 hacia ISP-1, ether2 hacia ISP-2, ether3 hacia CORE-1 y ether4 hacia CORE-2. Criterio: enlaces conectados y conectividad IP directa verificada.
+- [x] [R2] Desplegar y cablear ISP-1 e ISP-2, conectando ether1 de cada router hacia su interfaz correspondiente en EDGE. Criterio: enlaces conectados y pings a los vecinos directos exitosos.
+- [x] [R3] Desplegar y cablear CORE-1 y CORE-2, conectando ether1 hacia EDGE, ether2 entre los CORE y ether3/ether4 hacia los DIST. Criterio: los cinco enlaces correspondientes a los CORE están conectados y las pruebas de conectividad directa resultan exitosas.
+- [x] [R4] Desplegar y cablear DIST-1 y DIST-2 hacia ambos CORE y ambos switches de acceso; conectar PC-USER y SRV. DIST-1 utiliza ether3 hacia SW-ACC-USERS y ether4 hacia SW-ACC-SERVERS; DIST-2 utiliza ether4 hacia SW-ACC-USERS y ether3 hacia SW-ACC-SERVERS. Criterio: topología de 11 nodos y 15 enlaces internos conectados.
+- [x] [R4] Guardar la captura completa de la topología en `capturas/f1/topologia/topologia-completa.png`. Criterio: PNG legible que muestra los 11 nodos y los 15 enlaces internos, incorporado al repositorio.
 
 ### Configuración de Direccionamiento IP y Loopbacks
 
-- [ ] [R1] Configurar en EDGE la loopback lo (3.3.3.3/32) y las IPs de tránsito /30 hacia ISP-1, ISP-2, CORE-1 y CORE-2. Criterio: `/ip address print` muestra las 5 direcciones asignadas según el IPAM.
-- [ ] [R2] Configurar en ISP-1 (1.1.1.1/32) e ISP-2 (2.2.2.2/32) las loopbacks y las IPs WAN 10.100.1.1/30 y 10.200.1.1/30. Criterio: ping exitoso a las IPs adyacentes de EDGE.
-- [ ] [R3] Configurar en CORE-1 (4.4.4.4/32) y CORE-2 (5.5.5.5/32) las loopbacks y las IPs de los enlaces /30 de tránsito Core-Core, Edge-Core y Core-Distribución. Criterio: ping exitoso entre CORE-1 (10.20.1.1) y CORE-2 (10.20.1.2), y direcciones coincidentes con el IPAM.
-- [ ] [R4] Configurar en DIST-1 (6.6.6.6/32) y DIST-2 (7.7.7.7/32) las loopbacks, los enlaces /30 hacia Core y las interfaces VLAN 10 (192.168.10.2, 192.168.10.3) y VLAN 20 (192.168.20.2, 192.168.20.3). Criterio: direcciones coincidentes con el IPAM y conectividad con los vecinos directos.
+- [x] [R1] Configurar en EDGE la loopback `lo` (3.3.3.3/32) y las cuatro direcciones de tránsito /30 hacia ISP-1, ISP-2, CORE-1 y CORE-2. Criterio: `/ip address print` coincide con el IPAM aprobado.
+- [x] [R2] Configurar en ISP-1 e ISP-2 las loopbacks (1.1.1.1/32 y 2.2.2.2/32) y las IP WAN 10.100.1.1/30 y 10.200.1.1/30. Criterio: direcciones verificadas y pings a EDGE exitosos.
+- [x] [R3] Configurar en CORE-1 y CORE-2 las loopbacks y las IP de los enlaces /30 de tránsito. Criterio: direcciones coincidentes con el IPAM y conectividad IP con los vecinos directos.
+- [x] [R4] Configurar en DIST-1 y DIST-2 las loopbacks, enlaces /30 hacia CORE y las interfaces VLAN 10 y VLAN 20, con sus IP individuales y asociaciones físicas. Criterio: direcciones coincidentes con el IPAM y pings de las VLAN entre ambos DIST exitosos.
 
 ### Verificación L3 y Documentación de F1
 
-- [ ] [R4] Completar en `docs/memoria.md` la tabla de interfaces, direcciones IP, vecinos, loopbacks y Router-IDs, usando los datos confirmados por cada responsable. Criterio: la tabla cubre los 7 routers y coincide con las configuraciones y el IPAM aprobado.
-- [ ] [R1] [R2] [R3] [R4] Verificar conectividad IP entre vecinos directos en los enlaces asignados a cada rol. Criterio: los pings a las IPs adyacentes tienen respuesta y cualquier falla queda registrada.
-- [ ] [R4] Consolidar las evidencias de conectividad en `capturas/F1/conectividad/` y registrar en `docs/memoria.md` los vecinos probados y resultados. Criterio: cada enlace de tránsito tiene resultado documentado y evidencia asociada cuando corresponda.
+- [x] [R4] Completar en `docs/memoria.md` el inventario por router de interfaces, direcciones IP, vecinos físicos, usos y loopbacks/Router-ID previstos. Criterio: la tabla coincide con las configuraciones verificadas y distingue los parámetros configurados de los previstos para F2/F3.
+- [x] [R1] [R2] [R3] [R4] Verificar conectividad IP entre los vecinos directos de todos los enlaces entre routers. Criterio: pings exitosos y fallas registradas si corresponde.
+- [x] [R4] Consolidar las evidencias en `capturas/f1/conectividad/` y documentar los resultados en `docs/memoria.md`. Criterio: capturas por router de `/ip address print` y de todos los pings correspondientes, copiadas al repositorio y vinculadas desde la memoria.
 
 ### Hardening de Dispositivos (7 Routers)
 
-- [ ] [R1] Aplicar la política de hardening en EDGE: deshabilitar telnet, ftp, www, api y api-ssl; crear usuario administrativo con contraseña segura y usuario `monitor` con permisos de solo lectura. Criterio: `/ip service print` muestra únicamente los servicios autorizados activos.
-- [ ] [R2] Aplicar la política de hardening en ISP-1 e ISP-2: desactivar servicios no cifrados, excluir interfaces WAN del descubrimiento MNDP/CDP y configurar usuarios locales. Criterio: `/ip neighbor discovery-settings print` muestra las interfaces WAN excluidas y los servicios coinciden con la política.
-- [ ] [R3] Aplicar la política de hardening en CORE-1 y CORE-2: deshabilitar servicios innecesarios y aplicar banners legales de acceso. Criterio: SSH funciona con el usuario `monitor`, que no puede realizar cambios de configuración.
-- [ ] [R4] Aplicar la política de hardening en DIST-1 y DIST-2: deshabilitar servicios no seguros y restringir el acceso por SSH/WinBox. Criterio: los servicios no autorizados están deshabilitados y los intentos HTTP/Telnet son rechazados.
-- [ ] [R3] Auditar la evidencia de hardening de los 7 routers y registrar resultados y desvíos en `docs/memoria.md`. Criterio: usuarios, permisos y servicios se verifican contra la política de seguridad de F0; las evidencias quedan organizadas en `capturas/F1/hardening/`.
+> Evidencia en `capturas/f1/hardening/` (ver sección 2.3 de `docs/memoria.md`). Los desvíos respecto de la política se documentan allí.
+
+- [x] [R1] Aplicar la política de hardening en EDGE: deshabilitar telnet, ftp, www, api y api-ssl; crear usuario administrativo con contraseña segura y usuario `monitor` con permisos de solo lectura. Criterio: `/ip service print` muestra únicamente los servicios autorizados activos.
+- [x] [R2] Aplicar la política de hardening en ISP-1 e ISP-2: desactivar servicios no cifrados, excluir interfaces WAN del descubrimiento MNDP/CDP y configurar usuarios locales. Criterio: `/ip neighbor discovery-settings print` muestra las interfaces WAN excluidas y los servicios coinciden con la política.
+- [x] [R3] Aplicar la política de hardening en CORE-1 y CORE-2: deshabilitar servicios innecesarios y aplicar banners legales de acceso. Criterio: SSH funciona con el usuario `monitor`, que no puede realizar cambios de configuración.
+- [x] [R4] Aplicar la política de hardening en DIST-1 y DIST-2: deshabilitar servicios no seguros y restringir el acceso por SSH/WinBox. Criterio: los servicios no autorizados están deshabilitados y los intentos HTTP/Telnet son rechazados.
+- [X] [R3] Auditar la evidencia de hardening de los 7 routers y registrar resultados y desvíos en `docs/memoria.md`. Criterio: usuarios, permisos y servicios se verifican contra la política de seguridad de F0; las evidencias quedan organizadas en `capturas/f1/hardening/`.
 
 ### Snapshot BASE
 
-- [ ] [R3] Generar en GNS3 un snapshot completo del proyecto denominado `SNAPSHOT-BASE-F1`, con la topología desplegada en el estado inicial acordado. Criterio: el snapshot es accesible y puede restaurarse.
-- [ ] [R4] Documentar en `docs/memoria.md` la fecha, el nombre y el estado incluido en el snapshot; guardar evidencia en `capturas/F1/topologia/` si corresponde. Criterio: otra persona puede identificar qué estado del proyecto representa el snapshot.
+- [x] [R3] Generar en GNS3 un snapshot completo del proyecto denominado `SNAPSHOT-BASE-F1`, con la topología desplegada en el estado inicial acordado. Criterio: el snapshot es accesible y puede restaurarse.
+- [x] [R4] Documentar en `docs/memoria.md` la fecha, el nombre y el estado incluido en el snapshot; guardar evidencia en `capturas/f1/topologia/` si corresponde. Criterio: otra persona puede identificar qué estado del proyecto representa el snapshot.
 
 ### Backup Inicial
 
-- [ ] [R2] Exportar una configuración base de cada router mediante `/export`, sin incluir valores sensibles, y guardar los 7 archivos `.rsc` en `backups/F1/exports/`. Criterio: hay un archivo identificado por router, revisado para confirmar que no contiene contraseñas, claves ni otros secretos antes de versionarlo.
-- [ ] [R2] Generar los backups binarios de los 7 routers mediante `/system backup save` y almacenarlos en un medio restringido, fuera de los archivos versionados del repositorio. Criterio: los 7 backups están identificados y disponibles para restauración; no se suben al repositorio.
+- [X] [R2] Exportar una configuración base de cada router mediante `/export`, sin incluir valores sensibles, y guardar los 7 archivos `.rsc` en `backups/f1/exports/`. Criterio: hay un archivo identificado por router, revisado para confirmar que no contiene contraseñas, claves ni otros secretos antes de versionarlo.
+- [~] [R2] Generar los backups binarios de los 7 routers mediante `/system backup save` y almacenarlos en un medio restringido, fuera de los archivos versionados del repositorio. Criterio: los 7 backups están identificados y disponibles para restauración; no se suben al repositorio.
 - [ ] [R2] Realizar una prueba de restauración en un nodo de test para validar la integridad del backup. Criterio: el router de prueba restaura la configuración esperada y vuelve a operar.
 
 ---
+> **Cierre F1:** la topología, el direccionamiento, los exports `.rsc` y el snapshot `SNAPSHOT-BASE-F1` están documentados; el snapshot fue restaurado y la conectividad ISP-1 ↔ EDGE quedó verificada. Las catorce capturas de hardening y auditoría fueron incorporadas. Siguen pendientes asegurar una copia externa privada de los backups binarios y probar la restauración de un `.backup` en un nodo aislado. Los binarios no deben incluirse en el repositorio público.
+---
 
-## Epic F2 — VRRP + OSPF · _vence vie 16/10_
+## Epic F2 — VRRP + OSPF · _objetivo propuesto: mié 21/10/2026_ · [ ]
 
 ### VRRP (2 Grupos, Load-Sharing Activo/Activo, Auth)
 
@@ -107,8 +121,7 @@
 
 ---
 
-## Epic F3 — BGP + Firewall · _vence vie 16/10_
-
+## Epic F3 — BGP + Firewall · _objetivo propuesto: jue 22/10/2026_ · [ ]
 ### eBGP Multi-Homing (2 Sesiones Independientes, TCP-MD5)
 
 - [ ] [R2] Configurar en ISP-1 (AS 65001) sesión eBGP hacia EDGE (10.100.1.2) con protección TCP-MD5 y originación de ruta por defecto (`default-originate=always`). Criterio: `/routing bgp session print` muestra sesión 'established'.
@@ -129,8 +142,7 @@
 
 ---
 
-## Epic F4 — Drills + Monitoreo · _vence mar 20/10_
-
+## Epic F4 — Drills + Monitoreo · _objetivo propuesto: lun 26/10/2026_ · [ ]
 ### Los 5 Drills de Failover (Runbook + Medición + Post-Mortem)
 
 - [ ] [R4] Ejecutar Drill 1 (VRRP: caída de gateway Master DIST-1): deshabilitar vlan10 en DIST-1 durante ping continuo desde PC-USER. Medir tiempo de conmutación a DIST-2 y registrar post-mortem en `runbooks/drill-1.md`. Criterio: recuperación en < 3s y pérdida <= 2 paquetes ICMP.
@@ -151,8 +163,7 @@
 
 ---
 
-## Epic F5 — Memoria + Defensa · _vence vie 23/10_
-
+## Epic F5 — Memoria + Defensa · _objetivo propuesto: mar 27/10/2026_ · [ ]
 ### Consolidación Documental y Repositorio Final
 
 - [ ] [R1] Consolidar y auditar la versión final de `docs/memoria.md`, asegurando que todas las secciones, diagramas y referencias técnicas estén completas y sin ningún placeholder. Criterio: memoria técnica 100% aprobada por el equipo.
