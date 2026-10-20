@@ -8,6 +8,16 @@
 - Cada tarea tiene asignado su **dueño unívoco** (rol técnico): `[R1]`, `[R2]`, `[R3]` o `[R4]`.
 - Cada tarea define su **criterio de aceptación técnico** (comando CLI, bandera o resultado esperado).
 
+- **Responsable operativo R5:** Alesandro Patricio Borda (R2), como responsabilidad adicional. Coordina backups/restores, Change Log, evidencias de drills y post-mortems; los responsables técnicos conservan la ejecución de sus módulos.
+
+> **Replanificación propuesta al docente (pendiente de aprobación):**
+> - F2: miércoles 21/10/2026.
+> - F3: jueves 22/10/2026.
+> - F4: lunes 26/10/2026.
+> - F5: martes 27/10/2026.
+>
+> Las fechas son objetivos solicitados y no se consideran aprobados hasta recibir confirmación del docente. No marcar fases como completadas sin cumplir sus criterios de aceptación.
+
 ---
 
 ## Epic F0 — Diseño y Gestión de Cambio · _vence vie 02/10_ · [x]
@@ -88,7 +98,7 @@
 > **Cierre F1:** la topología, el direccionamiento, los exports `.rsc` y el snapshot `SNAPSHOT-BASE-F1` están documentados; el snapshot fue restaurado y la conectividad ISP-1 ↔ EDGE quedó verificada. Las catorce capturas de hardening y auditoría fueron incorporadas. Siguen pendientes asegurar una copia externa privada de los backups binarios y probar la restauración de un `.backup` en un nodo aislado. Los binarios no deben incluirse en el repositorio público.
 ---
 
-## Epic F2 — VRRP + OSPF · _vence vie 16/10_
+## Epic F2 — VRRP + OSPF · _objetivo propuesto: mié 21/10/2026_ · [ ]
 
 ### VRRP (2 Grupos, Load-Sharing Activo/Activo, Auth)
 
@@ -111,8 +121,7 @@
 
 ---
 
-## Epic F3 — BGP + Firewall · _vence vie 16/10_
-
+## Epic F3 — BGP + Firewall · _objetivo propuesto: jue 22/10/2026_ · [ ]
 ### eBGP Multi-Homing (2 Sesiones Independientes, TCP-MD5)
 
 - [ ] [R2] Configurar en ISP-1 (AS 65001) sesión eBGP hacia EDGE (10.100.1.2) con protección TCP-MD5 y originación de ruta por defecto (`default-originate=always`). Criterio: `/routing bgp session print` muestra sesión 'established'.
@@ -133,8 +142,7 @@
 
 ---
 
-## Epic F4 — Drills + Monitoreo · _vence mar 20/10_
-
+## Epic F4 — Drills + Monitoreo · _objetivo propuesto: lun 26/10/2026_ · [ ]
 ### Los 5 Drills de Failover (Runbook + Medición + Post-Mortem)
 
 - [ ] [R4] Ejecutar Drill 1 (VRRP: caída de gateway Master DIST-1): deshabilitar vlan10 en DIST-1 durante ping continuo desde PC-USER. Medir tiempo de conmutación a DIST-2 y registrar post-mortem en `runbooks/drill-1.md`. Criterio: recuperación en < 3s y pérdida <= 2 paquetes ICMP.
@@ -155,8 +163,7 @@
 
 ---
 
-## Epic F5 — Memoria + Defensa · _vence vie 23/10_
-
+## Epic F5 — Memoria + Defensa · _objetivo propuesto: mar 27/10/2026_ · [ ]
 ### Consolidación Documental y Repositorio Final
 
 - [ ] [R1] Consolidar y auditar la versión final de `docs/memoria.md`, asegurando que todas las secciones, diagramas y referencias técnicas estén completas y sin ningún placeholder. Criterio: memoria técnica 100% aprobada por el equipo.
