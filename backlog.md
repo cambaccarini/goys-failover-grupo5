@@ -50,7 +50,7 @@
 
 ---
 
-## Epic F1 — Topología + Hardening + Backup Inicial · _vence vie 09/10/2026_ · [~]
+## Epic F1 — Topología + Hardening + Backup Inicial · _vence vie 09/10/2026_ · [x]
 
 ### Despliegue de Topología (7 CHR + 2 Switches + 2 Hosts)
 
@@ -90,12 +90,12 @@
 
 ### Backup Inicial
 
-- [X] [R2] Exportar una configuración base de cada router mediante `/export`, sin incluir valores sensibles, y guardar los 7 archivos `.rsc` en `backups/f1/exports/`. Criterio: hay un archivo identificado por router, revisado para confirmar que no contiene contraseñas, claves ni otros secretos antes de versionarlo.
-- [~] [R2] Generar los backups binarios de los 7 routers mediante `/system backup save` y almacenarlos en un medio restringido, fuera de los archivos versionados del repositorio. Criterio: los 7 backups están identificados y disponibles para restauración; no se suben al repositorio.
-- [ ] [R2] Realizar una prueba de restauración en un nodo de test para validar la integridad del backup. Criterio: el router de prueba restaura la configuración esperada y vuelve a operar.
+- [x] [R2] Exportar una configuración base de cada router mediante `/export`, sin incluir valores sensibles, y guardar los 7 archivos `.rsc` en `backups/f1/exports/`. Criterio: hay un archivo identificado por router, revisado para confirmar que no contiene contraseñas, claves ni otros secretos antes de versionarlo.
+- [x] [R2] Generar los backups binarios de los 7 routers mediante `/system backup save` y almacenarlos en un medio restringido, fuera de los archivos versionados del repositorio. Criterio: los 7 backups están identificados y disponibles para restauración; no se suben al repositorio.
+- [x] [R2] Realizar una prueba de restauración en un nodo de test para validar la integridad del backup. Criterio: el router de prueba restaura la configuración esperada y vuelve a operar.
 
 ---
-> **Cierre F1:** la topología, el direccionamiento, los exports `.rsc` y el snapshot `SNAPSHOT-BASE-F1` están documentados; el snapshot fue restaurado y la conectividad ISP-1 ↔ EDGE quedó verificada. Las catorce capturas de hardening y auditoría fueron incorporadas. Siguen pendientes asegurar una copia externa privada de los backups binarios y probar la restauración de un `.backup` en un nodo aislado. Los binarios no deben incluirse en el repositorio público.
+> **Cierre F1:** la topología, el direccionamiento, los exports `.rsc` saneados y el snapshot `SNAPSHOT-BASE-F1` están documentados; el snapshot fue restaurado y la conectividad ISP-1 ↔ EDGE quedó verificada. Las catorce capturas de hardening y auditoría fueron incorporadas. El responsable R2 ejecutó satisfactoriamente la prueba de restauración de un backup binario (`.backup`) en un nodo MikroTik CHR aislado de test y confirmó el resguardo offline privado de los 7 respaldos binarios. Epic F1 cerrado al 100%.
 ---
 
 ## Epic F2 — VRRP + OSPF · _objetivo propuesto: mié 21/10/2026_ · [ ]
