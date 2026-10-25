@@ -98,7 +98,10 @@
 > **Cierre F1:** la topología, el direccionamiento, los exports `.rsc` saneados y el snapshot `SNAPSHOT-BASE-F1` están documentados; el snapshot fue restaurado y la conectividad ISP-1 ↔ EDGE quedó verificada. Las catorce capturas de hardening y auditoría fueron incorporadas. El responsable R2 ejecutó satisfactoriamente la prueba de restauración de un backup binario (`.backup`) en un nodo MikroTik CHR aislado de test y confirmó el resguardo offline privado de los 7 respaldos binarios. Epic F1 cerrado al 100%.
 ---
 
-## Epic F2 — VRRP + OSPF · _objetivo propuesto: mié 21/10/2026_ · [ ]
+## Epic F2 — VRRP + OSPF · _objetivo propuesto: mié 21/10/2026_ · [~]
+
+> **Avance F2 al 25/10/2026 — Paso 1 (OSPF Área 0 con MD5):** instancia `ospf1`, área `backbone` (0.0.0.0) e interface-templates aplicados en EDGE, CORE-1, CORE-2, DIST-1 y DIST-2 (router-id 3.3.3.3 a 7.7.7.7). Adyacencias en `Full` verificadas con `/routing ospf neighbor print`: EDGE 2/2, CORE-1 4/4, DIST-1 2/2 y DIST-2 2/2; CORE-2 queda verificado desde el lado de sus vecinos. Evidencia en `capturas/f2/ospf/` (ver sección 7 de `docs/memoria.md`). En RouterOS v7 las rutas OSPF aparecen con flag `DAo`.
+> **Pendiente de F2:** VRRP (paso 2), hosts y verificación L3 (paso 3) y ECMP. Las tareas marcadas `[~]` cumplen parte del criterio y se cierran con las verificaciones indicadas.
 
 ### VRRP (2 Grupos, Load-Sharing Activo/Activo, Auth)
 
@@ -108,10 +111,10 @@
 
 ### OSPF v2 Área 0 (Backbone con Autenticación MD5)
 
-- [ ] [R3] Configurar instancia OSPF v2 en CORE-1 y CORE-2 con router-id 4.4.4.4 y 5.5.5.5 en Área 0 (0.0.0.0), habilitando interface-template con autenticación MD5 en enlace core-core (10.20.1.0/30). Criterio: `/routing ospf neighbor print` muestra adyacencia 'Full' entre ambos cores.
-- [ ] [R3] Configurar adyacencias OSPF MD5 en enlaces CORE hacia DIST-1 y DIST-2 con costo balanceado. Criterio: tabla de rutas `/ip route print` muestra rutas de distribución con flag 'Do' (Dynamic OSPF).
-- [ ] [R1] Configurar instancia OSPF en EDGE (router-id 3.3.3.3) en Área 0 con plantillas MD5 hacia CORE-1 y CORE-2. Criterio: adyacencias OSPF con CORE-1 y CORE-2 en estado 'Full'.
-- [ ] [R4] Configurar OSPF en DIST-1 y DIST-2 publicando las redes de usuarios (192.168.10.0/24) y servidores (192.168.20.0/24) como interfaces pasivas (`passive=yes`) para evitar LSA flooding no deseado hacia el acceso. Criterio: redes LAN visibles en CORE y EDGE sin tráfico multicast OSPF en switches de acceso.
+- [x] [R3] Configurar instancia OSPF v2 en CORE-1 y CORE-2 con router-id 4.4.4.4 y 5.5.5.5 en Área 0 (0.0.0.0), habilitando interface-template con autenticación MD5 en enlace core-core (10.20.1.0/30). Criterio: `/routing ospf neighbor print` muestra adyacencia 'Full' entre ambos cores.
+- [~] [R3] Configurar adyacencias OSPF MD5 en enlaces CORE hacia DIST-1 y DIST-2 con costo balanceado. Criterio: tabla de rutas `/ip route print` muestra rutas de distribución con flag 'Do' (Dynamic OSPF). _Hecho: adyacencias CORE-1 y CORE-2 con DIST-1 y DIST-2 en `Full`. Pendiente: costo OSPF explícito y `/ip route print where ospf` en CORE-1 y CORE-2._
+- [x] [R1] Configurar instancia OSPF en EDGE (router-id 3.3.3.3) en Área 0 con plantillas MD5 hacia CORE-1 y CORE-2. Criterio: adyacencias OSPF con CORE-1 y CORE-2 en estado 'Full'.
+- [~] [R4] Configurar OSPF en DIST-1 y DIST-2 publicando las redes de usuarios (192.168.10.0/24) y servidores (192.168.20.0/24) como interfaces pasivas (`passive=yes`) para evitar LSA flooding no deseado hacia el acceso. Criterio: redes LAN visibles en CORE y EDGE sin tráfico multicast OSPF en switches de acceso. _Hecho: `vlan10`, `vlan20` y `lo` en OSPF como `passive` en DIST-1 y DIST-2. Pendiente: confirmar 192.168.10.0/24 y 192.168.20.0/24 en la tabla de rutas de CORE y EDGE._
 
 ### Verificación L3 y Conectividad End-to-End
 

@@ -500,6 +500,18 @@ _(Los scripts de configuración limpios para cada uno de los 7 routers CHR se gu
   ip 192.168.20.100 255.255.255.0 192.168.20.1
   ```
 
+### 3.9 OSPF Área 0 con MD5: adyacencias al cierre del paso 1 de F2 (25/10/2026)
+
+Todos los routers internos usan la instancia `ospf1` y el área `backbone` (0.0.0.0). Las loopbacks y las interfaces VLAN de DIST van como `passive`. EDGE no incluye `ether1` ni `ether2` en OSPF, porque son los enlaces hacia los ISP.
+
+| Router | Router-ID | Vecinos en `Full` |
+| :--- | :---: | :--- |
+| EDGE | 3.3.3.3 | CORE-1 (4.4.4.4) por `ether3`, CORE-2 (5.5.5.5) por `ether4` |
+| CORE-1 | 4.4.4.4 | EDGE, CORE-2, DIST-1 y DIST-2 |
+| CORE-2 | 5.5.5.5 | Verificado desde EDGE, CORE-1, DIST-1 y DIST-2 |
+| DIST-1 | 6.6.6.6 | CORE-1 (4.4.4.4) por `ether1`, CORE-2 (5.5.5.5) por `ether2` |
+| DIST-2 | 7.7.7.7 | CORE-1 (4.4.4.4) por `ether1`, CORE-2 (5.5.5.5) por `ether2` |
+
 ---
 
 ## 4. Verificación y Batería de Drills de Failover (F4)
@@ -650,7 +662,8 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 ### F2 — Alta disponibilidad y enrutamiento interno
 
 - `capturas/f2/vrrp/vrrp-loadsharing.png`: evidencia del estado de las interfaces VRRP en DIST-1 y DIST-2.
-- `capturas/f2/ospf/ospf-neighbors.png`: evidencia de las adyacencias OSPF establecidas.
+- `capturas/f2/ospf/<router>-ospf-config.png`: configuración OSPF (instancia, área e interface-templates) en `edge`, `core-1`, `core-2`, `dist-1` y `dist-2`. En `core-2` y `dist-1` se ocultaron líneas del log con intentos de login fallidos.
+- `capturas/f2/ospf/dist-2-ospf-neighbor-rutas.png`: `/routing ospf neighbor print` y `/ip route print where ospf` en DIST-2, capturados mientras solo CORE-2 había alcanzado `Full`. El `neighbor print` completo de cada router está en la sección 3.9.
 
 ### F3 — Enrutamiento externo
 
