@@ -100,14 +100,17 @@
 
 ## Epic F2 — VRRP + OSPF · _objetivo propuesto: mié 21/10/2026_ · [~]
 
-> **Avance F2 al 25/10/2026 — Paso 1 (OSPF Área 0 con MD5):** instancia `ospf1`, área `backbone` (0.0.0.0) e interface-templates aplicados en EDGE, CORE-1, CORE-2, DIST-1 y DIST-2 (router-id 3.3.3.3 a 7.7.7.7). Adyacencias en `Full` verificadas con `/routing ospf neighbor print`: EDGE 2/2, CORE-1 4/4, DIST-1 2/2 y DIST-2 2/2; CORE-2 queda verificado desde el lado de sus vecinos. Evidencia en `capturas/f2/ospf/` (ver sección 7 de `docs/memoria.md`). En RouterOS v7 las rutas OSPF aparecen con flag `DAo`.
-> **Pendiente de F2:** VRRP (paso 2), hosts y verificación L3 (paso 3) y ECMP. Las tareas marcadas `[~]` cumplen parte del criterio y se cierran con las verificaciones indicadas.
+> **Avance F2 al 25/10/2026 — Paso 1 (OSPF), Paso 2 (VRRP) y Paso 3 (Verificación L3):**
+> 1. **OSPF Área 0 con MD5:** instancia `ospf1`, área `backbone` (0.0.0.0) e interface-templates aplicados en EDGE, CORE-1, CORE-2, DIST-1 y DIST-2 (router-id 3.3.3.3 a 7.7.7.7). Adyacencias en `Full` verificadas con `/routing ospf neighbor print`: EDGE 2/2, CORE-1 4/4, DIST-1 2/2 y DIST-2 2/2; CORE-2 verificado por adyacencias de vecinos. Evidencia en `capturas/f2/ospf/`.
+> 2. **VRRP Load-Sharing Activo/Activo con Auth:** VRID 10 (USERS) configurado en `vlan10` (DIST-1 Master `RM` prioridad 150, DIST-2 Backup `B` prioridad 100, IP virtual `192.168.10.1`). VRID 20 (SERVERS) configurado en `vlan20` (DIST-2 Master `RM` prioridad 150, DIST-1 Backup `B` prioridad 100, IP virtual `192.168.20.1`). Autenticación `simple`, `version=2`, `interval=1s` y `preempt-mode=yes` validados. Evidencias en `capturas/f2/vrrp/`.
+> 3. **Verificación L3 y Conectividad End-to-End (R5):** Hosts terminales configurados con direccionamiento estático y gateways virtuales. Pings 100% exitosos hacia las VIPs y pings bidireccionales intra-LAN entre PC-USER y SRV cruzando el Core (0% de pérdida, TTL 63). Resolución ARP de MACs virtuales VRRP confirmadas (`00:00:5E:00:01:0A` y `00:00:5E:00:01:14`). Load-sharing verificado fehacientemente por traceroute: PC-USER sale por DIST-1 (`192.168.10.2`) y SRV sale por DIST-2 (`192.168.20.3`). Evidencias en `capturas/f2/conectividad/`.
+> **Pendiente de F2:** ECMP (Paso 4) y backups de configuración F2.
 
 ### VRRP (2 Grupos, Load-Sharing Activo/Activo, Auth)
 
-- [ ] [R4] Configurar grupo VRRP vrid=10 (USERS) sobre vlan10 en DIST-1 como Master (priority=150) y DIST-2 como Backup (priority=100) con IP virtual 192.168.10.1 y autenticación por clave simple. Criterio: `/interface vrrp print` muestra flag 'RM' en DIST-1 y 'B' en DIST-2.
-- [ ] [R4] Configurar grupo VRRP vrid=20 (SERVERS) sobre vlan20 en DIST-2 como Master (priority=150) y DIST-1 como Backup (priority=100) con IP virtual 192.168.20.1 y autenticación por clave simple. Criterio: `/interface vrrp print` muestra flag 'RM' en DIST-2 y 'B' en DIST-1.
-- [ ] [R4] Configurar parámetros de preemption (`preempt-mode=yes`) e intervalo de anuncio (`interval=1s`) en ambos routers. Criterio: timers alineados y sincronizados.
+- [x] [R4] Configurar grupo VRRP vrid=10 (USERS) sobre vlan10 en DIST-1 como Master (priority=150) y DIST-2 como Backup (priority=100) con IP virtual 192.168.10.1 y autenticación por clave simple. Criterio: `/interface vrrp print` muestra flag 'RM' en DIST-1 y 'B' en DIST-2.
+- [x] [R4] Configurar grupo VRRP vrid=20 (SERVERS) sobre vlan20 en DIST-2 como Master (priority=150) y DIST-1 como Backup (priority=100) con IP virtual 192.168.20.1 y autenticación por clave simple. Criterio: `/interface vrrp print` muestra flag 'RM' en DIST-2 y 'B' en DIST-1.
+- [x] [R4] Configurar parámetros de preemption (`preempt-mode=yes`) e intervalo de anuncio (`interval=1s`) en ambos routers. Criterio: timers alineados y sincronizados.
 
 ### OSPF v2 Área 0 (Backbone con Autenticación MD5)
 
@@ -118,8 +121,8 @@
 
 ### Verificación L3 y Conectividad End-to-End
 
-- [ ] [R4] Configurar direccionamiento estático en PC-USER (192.168.10.100/24 GW 192.168.10.1) y SRV (192.168.20.100/24 GW 192.168.20.1). Criterio: ping exitoso de cada host a su respectiva IP virtual VRRP.
-- [ ] [R4] Realizar ping bidireccional intra-LAN entre PC-USER y SRV. Criterio: 0% de pérdida de paquetes a través del enrutamiento inter-VLAN de distribución.
+- [x] [R4/R5] Configurar direccionamiento estático en PC-USER (192.168.10.100/24 GW 192.168.10.1) y SRV (192.168.20.100/24 GW 192.168.20.1). Criterio: ping exitoso de cada host a su respectiva IP virtual VRRP.
+- [x] [R4/R5] Realizar ping bidireccional intra-LAN entre PC-USER y SRV. Criterio: 0% de pérdida de paquetes a través del enrutamiento inter-VLAN de distribución.
 - [ ] [R3] Verificar ECMP (Equal-Cost Multi-Path) o convergencia simétrica desde DIST hacia EDGE a través de ambos cores. Criterio: `/ip route print detail` muestra dos gateways activos en rutas transitivas.
 
 ---

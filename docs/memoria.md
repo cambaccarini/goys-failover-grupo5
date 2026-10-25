@@ -512,6 +512,32 @@ Todos los routers internos usan la instancia `ospf1` y el área `backbone` (0.0.
 | DIST-1 | 6.6.6.6 | CORE-1 (4.4.4.4) por `ether1`, CORE-2 (5.5.5.5) por `ether2` |
 | DIST-2 | 7.7.7.7 | CORE-1 (4.4.4.4) por `ether1`, CORE-2 (5.5.5.5) por `ether2` |
 
+### 3.10 VRRP Activo/Activo y Verificación L3 End-to-End (25/10/2026)
+
+Se completó la implementación y verificación del esquema de redundancia de primer salto (VRRP) y conectividad terminal:
+
+1. **Topología de VRRP en Distribución:**
+   - **VLAN 10 — USERS:** VRID `10`, IP Virtual `192.168.10.1/32`. DIST-1 opera como **Master** (`priority=150`, flag `RM`) y DIST-2 como **Backup** (`priority=100`, flag `B`).
+   - **VLAN 20 — SERVERS:** VRID `20`, IP Virtual `192.168.20.1/32`. DIST-2 opera como **Master** (`priority=150`, flag `RM`) y DIST-1 como **Backup** (`priority=100`, flag `B`).
+   - Parámetros operativos: RouterOS `version=2`, autenticación `simple`, intervalo de anuncios de 1s (`interval=1s`) y preemption habilitado (`preempt-mode=yes`).
+   - Evidencias en `capturas/f2/vrrp/`: `dist-1-vrrp.png`, `dist-2-vrrp.png`, `dist-1-vip.png` y `dist-2-vip.png`.
+
+2. **Resolución de Direcciones Virtuales (ARP):**
+   - En PC-USER, `192.168.10.1` resuelve a la MAC Virtual VRRP RFC 5798 `00:00:5E:00:01:0A` (VRID 10 en hex).
+   - En SRV, `192.168.20.1` resuelve a la MAC Virtual VRRP RFC 5798 `00:00:5E:00:01:14` (VRID 20 en hex).
+   - Evidencias en `capturas/f2/conectividad/`: `pc-user-arp-vrrp.png` y `srv-arp-vrrp.png`.
+
+3. **Conectividad Intra-LAN y Ruteo Inter-VLAN:**
+   - Ambos hosts alcanzan con éxito su gateway virtual con RTT < 1ms.
+   - Ping bidireccional entre `PC-USER` (`192.168.10.100`) y `SRV` (`192.168.20.100`) con 0% de pérdida de paquetes y TTL 63 (degradado por el salto de enrutamiento L3 en distribución/core).
+   - Evidencias en `capturas/f2/conectividad/`: `pc-user-pings.png` y `srv-pings.png`.
+
+4. **Validación de Load-Sharing Activo/Activo mediante Traceroute:**
+   - `PC-USER> trace 192.168.20.100`: Salto 1 = `192.168.10.2` (**DIST-1**) → Salto 2 = `192.168.20.100` (`pc-user-trace-srv.png`).
+   - `SRV> trace 192.168.10.100`: Salto 1 = `192.168.20.3` (**DIST-2**) → Salto 2 = `192.168.10.100` (`srv-trace-pc-user.png`).
+   - Se constata que el tráfico de salida de VLAN 10 es procesado por DIST-1 mientras que el de VLAN 20 es procesado simultáneamente por DIST-2, operando en modo activo/activo real sin enlaces ociosos.
+   - Las cachés ARP completas se registran en `pc-user-arp-cache.png` y `srv-arp-cache.png`.
+
 ---
 
 ## 4. Verificación y Batería de Drills de Failover (F4)
@@ -615,6 +641,8 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 | 21/10/2026 | Patricio Borda (R2) | `f1b3fc3` — `Revert "chore(f1): limpiar metadatos de exports"` | Revertir saneamiento previo para conciliar autoría y trazabilidad del módulo de backups asignado a R2. | `git revert f1b3fc3` |
 | 21/10/2026 | Patricio Borda (R2) | `64e6f56` — `chore(f1): depurar metadatos en exports base de configuracion RouterOS` | Depurar metadatos de hardware de simulación (system id) en exports .rsc de los 7 routers preservando configuración base. | `git revert 64e6f56` |
 | 21/10/2026 | Patricio Borda (R2 + R5) | `7f009f2` — `docs(f1): registrar validacion de restauracion de backups por R2 y cerrar hito F1` | Documentar validación de restauración en nodo de test, conciliar Change Log y formalizar cierre de F1 y R5. | `git revert 7f009f2` |
+| 25/10/2026 | Juan Ignacio Atencio (R4) | `b7b5c0d` — `docs(f2): agregar evidencias de VRRP, OSPF y conectividad` | Incorporar configuraciones OSPF Área 0 con MD5, grupos VRRP activo/activo y adyacencias OSPF iniciales. | `git revert b7b5c0d` |
+| 25/10/2026 | Patricio Borda (R2 + R5) | `80e400b` — `feat(f2): validar conectividad L3, resolucion ARP VRRP y balanceo de carga activo/activo` | Incorporar evidencias completas de Paso 3 de F2 (pings bidireccionales, resolución ARP a MACs virtuales VRRP y traceroutes cruzados demostrando load-sharing inter-VLAN vía DIST-1 y DIST-2), actualizar memoria técnica y backlog. | `git revert 80e400b` |
 
 ### 6.2 Política de Respaldo y Evidencia de Restauración
 
@@ -661,9 +689,16 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 
 ### F2 — Alta disponibilidad y enrutamiento interno
 
-- `capturas/f2/vrrp/vrrp-loadsharing.png`: evidencia del estado de las interfaces VRRP en DIST-1 y DIST-2.
+- `capturas/f2/vrrp/dist-1-vrrp.png` y `dist-2-vrrp.png`: evidencia de los estados operacionales VRRP (`/interface vrrp print detail`), mostrando Master (`RM`) en DIST-1 para VRID 10 y en DIST-2 para VRID 20, con Backup (`B`) cruzado, `version=2`, autenticación `simple` e `interval=1s`.
+- `capturas/f2/vrrp/dist-1-vip.png` y `dist-2-vip.png`: configuración de las direcciones IP virtuales (`192.168.10.1/32` en `vrrp10` y `192.168.20.1/32` en `vrrp20`).
 - `capturas/f2/ospf/<router>-ospf-config.png`: configuración OSPF (instancia, área e interface-templates) en `edge`, `core-1`, `core-2`, `dist-1` y `dist-2`. En `core-2` y `dist-1` se ocultaron líneas del log con intentos de login fallidos.
-- `capturas/f2/ospf/dist-2-ospf-neighbor-rutas.png`: `/routing ospf neighbor print` y `/ip route print where ospf` en DIST-2, capturados mientras solo CORE-2 había alcanzado `Full`. El `neighbor print` completo de cada router está en la sección 3.9.
+- `capturas/f2/ospf/<router>-neighbors.png`: adyacencias OSPF en estado `Full` en `edge`, `core-1`, `core-2`, `dist-1` y `dist-2`.
+- `capturas/f2/ospf/dist-1-ping-edge-loopback.png`: ping de prueba de extremo a extremo desde DIST-1 hacia la loopback de EDGE (`3.3.3.3`) a través del core OSPF.
+- `capturas/f2/ospf/dist-2-ospf-neighbor-rutas.png`: `/routing ospf neighbor print` y `/ip route print where ospf` en DIST-2.
+- `capturas/f2/conectividad/pc-user-pings.png` y `srv-pings.png`: verificación de conectividad L3 de hosts hacia sus gateways virtuales VRRP (`192.168.10.1` y `192.168.20.1`) y pings bidireccionales intra-LAN inter-VLAN entre PC-USER y SRV (0% packet loss, TTL 63).
+- `capturas/f2/conectividad/pc-user-arp-vrrp.png` y `srv-arp-vrrp.png`: resolución ARP de las direcciones virtuales a sus MACs virtuales RFC 5798 (`00:00:5E:00:01:0A` para VRID 10 y `00:00:5E:00:01:14` para VRID 20).
+- `capturas/f2/conectividad/pc-user-trace-srv.png` y `srv-trace-pc-user.png`: verificación fehaciente de load-sharing activo/activo por traceroute; PC-USER enruta hacia la red de servidores a través de DIST-1 (`192.168.10.2`) y SRV enruta hacia la red de usuarios a través de DIST-2 (`192.168.20.3`).
+- `capturas/f2/conectividad/pc-user-arp-cache.png` y `srv-arp-cache.png`: tablas de caché ARP completas en ambos terminales evidenciando aprendizaje de MACs virtuales y físicas.
 
 ### F3 — Enrutamiento externo
 

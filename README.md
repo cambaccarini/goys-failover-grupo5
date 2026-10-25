@@ -152,7 +152,7 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 | :--- | :--- | :---: | :---: |
 | **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Aprobado con observaciones** |
 | **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **Completado** (topología, direccionamiento, hardening, exports saneados, snapshot y validación de restauración de backups por R2) |
-| **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Mié 21/10/2026 (propuesta) | **En curso** (OSPF Área 0 con adyacencias `Full`; VRRP pendiente) |
+| **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Mié 21/10/2026 (propuesta) | **En curso** (OSPF Área 0, VRRP Activo/Activo y verificación L3 completados; pendiente validación ECMP) |
 | **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Jue 22/10/2026 (propuesta) | Planificado |
 | **F4** | Ejecución de los 5 drills de failover, monitoreo y telemetría | Lun 26/10/2026 (propuesta) | Planificado |
 | **F5** | Memoria técnica final, cierre del backlog, repositorio y defensa oral | Mar 27/10/2026 (propuesta) | Planificado |
