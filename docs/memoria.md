@@ -81,7 +81,7 @@ A partir del análisis exhaustivo del diagrama de referencia _"Enterprise Networ
 
 El plan de direccionamiento se organiza mediante subredes específicas para los enlaces punto a punto, segmentos LAN y loopbacks de los siete routers. Las direcciones configuradas se verifican contra las salidas de RouterOS (`/ip address print` y `/interface vlan print`) y las evidencias de conectividad de F1.
 
-Los bloques de direccionamiento agrupan las redes por función. Las subredes `/30` se utilizan en los enlaces de tránsito, las `/24` en las VLAN de acceso y las `/32` en las interfaces loopback. Las direcciones virtuales VRRP y los Router-ID de los protocolos de enrutamiento se consideran parámetros planificados para las fases posteriores.
+Los bloques de direccionamiento agrupan las redes por función. Las subredes `/30` se utilizan en los enlaces de tránsito, las `/24` en las VLAN de acceso y las `/32` en las interfaces loopback. Las direcciones virtuales VRRP de las VLAN 10 y 20 y los Router-ID de OSPF de los cinco routers internos fueron configurados durante F2 y están verificados en las evidencias de esta fase. La configuración de BGP, incluidas las sesiones con los ISP, corresponde a F3.
 
 | Bloque / Prefijo            | Función de Red       | Criterio de Diseño                                                                                            |
 | :-------------------------- | :------------------- | :------------------------------------------------------------------------------------------------------------ |
@@ -223,7 +223,7 @@ Para minimizar la superficie de ataque, se desactivan todos los servicios de adm
 
 - **OSPF v2 (Área 0):** Autenticación criptográfica obligatoria con **MD5** en todas las interfaces de tránsito. Las adyacencias rechazan paquetes hello o LSUs que no coincidan en la firma MD5.
   ```routeros
-  /routing ospf interface-template add area=backbone-v2 auth=md5 auth-key="<DEFINIR_LOCALMENTE>"
+  /routing ospf interface-template add area=backbone interfaces=INTERFACES_TRANSITO> auth=md5 auth-id=1 authentication_key="<DEFINIR_LOCALMENTE>"
   ```
 - **BGP (eBGP Multi-Homing):** Protección a nivel de socket TCP mediante la opción **TCP-MD5 Signature** (RFC 2385) entre EDGE e ISPs:
 
@@ -448,7 +448,7 @@ _(Los scripts de configuración limpios para cada uno de los 7 routers CHR se gu
 ### 3.1 Router ISP-1
 
 - **Rol:** Proveedor WAN Primario (AS 65001).
-- **Script asociado:** `configs/isp-1.rsc`
+- **Script asociado:** `../backups/f1/exports/isp-1-F1.rsc`
 - **Parámetros clave:** Loopback `1.1.1.1/32`, eBGP peering hacia EDGE `10.100.1.2`, originación de default route BGP.
 
 ### 3.2 Router ISP-2
@@ -537,6 +537,27 @@ Se completó la implementación y verificación del esquema de redundancia de pr
    - `SRV> trace 192.168.10.100`: Salto 1 = `192.168.20.3` (**DIST-2**) → Salto 2 = `192.168.10.100` (`srv-trace-pc-user.png`).
    - Se constata que el tráfico de salida de VLAN 10 es procesado por DIST-1 mientras que el de VLAN 20 es procesado simultáneamente por DIST-2, operando en modo activo/activo real sin enlaces ociosos.
    - Las cachés ARP completas se registran en `pc-user-arp-cache.png` y `srv-arp-cache.png`.
+
+### 3.11 Propagación de rutas LAN y ECMP (25/10/2026)
+
+Las rutas OSPF de F2 fueron verificadas en los routers de distribución, núcleo y borde mediante `/ip route print detail`. Los resultados demuestran tanto la propagación de las LAN como la existencia de múltiples próximos saltos activos de igual preferencia.
+
+1. **ECMP desde DIST-1 hacia EDGE:** la ruta a `3.3.3.3/32` presenta caminos a través de `10.30.1.1%ether1` (CORE-1) y `10.30.3.1%ether2` (CORE-2). El ping a `3.3.3.3` obtuvo cinco respuestas y 0% de pérdida.
+   - Evidencia: `capturas/f2/ospf/dist-1-ping-edge-loopback.png`.
+
+2. **ECMP desde DIST-2 hacia EDGE:** la ruta a `3.3.3.3/32` presenta caminos a través de `10.30.2.1%ether1` (CORE-1) y `10.30.4.1%ether2` (CORE-2).
+   - Evidencia: `capturas/f2/ospf/dist-2-ecmp-edge-loopback.png`.
+
+3. **Propagación de las LAN en CORE-1:** `192.168.10.0/24` y `192.168.20.0/24` se aprenden por ambos routers DIST, a través de `10.30.1.2%ether3` y `10.30.2.2%ether4`.
+   - Evidencia: `capturas/f2/ospf/core-1-rutas-lan.png`.
+
+4. **Propagación de las LAN en CORE-2:** ambas redes se aprenden por DIST-1 y DIST-2, a través de `10.30.3.2%ether3` y `10.30.4.2%ether4`.
+   - Evidencia: `capturas/f2/ospf/core-2-rutas-lan.png`.
+
+5. **Propagación de las LAN en EDGE:** ambas redes se aprenden por CORE-1 (`10.10.1.2%ether3`) y CORE-2 (`10.10.2.2%ether4`).
+   - Evidencia: `capturas/f2/ospf/edge-rutas-lan.png`.
+
+Las entradas mostradas con la marca `+` confirman que RouterOS agrupa los caminos ECMP. No se alteraron los costes OSPF, dado que el resultado de múltiples próximos saltos activos ya está presente en la tabla de rutas. No se interpreta `distance=110` como un coste de interfaz OSPF: es la distancia administrativa mostrada por RouterOS para la ruta aprendida.
 
 ---
 
@@ -644,6 +665,8 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 | 25/10/2026 | Juan Ignacio Atencio (R4) | `b7b5c0d` — `docs(f2): agregar evidencias de VRRP, OSPF y conectividad` | Incorporar configuraciones OSPF Área 0 con MD5, grupos VRRP activo/activo y adyacencias OSPF iniciales. | `git revert b7b5c0d` |
 | 25/10/2026 | Patricio Borda (R2 + R5) | `80e400b` — `feat(f2): validar conectividad L3, resolucion ARP VRRP y balanceo de carga activo/activo` | Incorporar evidencias completas de Paso 3 de F2 (pings bidireccionales, resolución ARP a MACs virtuales VRRP y traceroutes cruzados demostrando load-sharing inter-VLAN vía DIST-1 y DIST-2), actualizar memoria técnica y backlog. | `git revert 80e400b` |
 | 25/10/2026 | Juan Ignacio Atencio (R4) | `44875a8` — `ops(backup): agregar exports saneados de F2` | Versionar los siete exports de RouterOS de F2 en `backups/f2/exports/`, sin incluir las claves sensibles ocultas por el export normal. | `git revert 44875a8` |
+| 25/10/2026 | Juan Ignacio Atencio (R4) | `cf16484` — `docs(f2): sincronizar memoria, backlog y README` | Actualizar el estado de F2, el árbol de directorios y las referencias documentales de evidencias y backups. | `git revert cf16484` |
+| 25/10/2026 | Juan Ignacio Atencio (R4) | `ec10e32` — `chore(backup): depurar metadatos de exports F2` | Retirar las líneas de `system id` de los siete exports de F2. | `git revert ec10e32` |
 
 ### 6.2 Política de Respaldo y Evidencia de Restauración
 
@@ -701,6 +724,11 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 - `capturas/f2/conectividad/pc-user-arp-vrrp.png` y `srv-arp-vrrp.png`: resolución ARP de las direcciones virtuales a sus MACs virtuales RFC 5798 (`00:00:5E:00:01:0A` para VRID 10 y `00:00:5E:00:01:14` para VRID 20).
 - `capturas/f2/conectividad/pc-user-trace-srv.png` y `srv-trace-pc-user.png`: verificación fehaciente de load-sharing activo/activo por traceroute; PC-USER enruta hacia la red de servidores a través de DIST-1 (`192.168.10.2`) y SRV enruta hacia la red de usuarios a través de DIST-2 (`192.168.20.3`).
 - `capturas/f2/conectividad/pc-user-arp-cache.png` y `srv-arp-cache.png`: tablas de caché ARP completas en ambos terminales evidenciando aprendizaje de MACs virtuales y físicas.
+- `capturas/f2/ospf/dist-2-ecmp-edge-loopback.png`: rutas OSPF ECMP de DIST-2 hacia la loopback de EDGE (`3.3.3.3/32`), con dos próximos saltos activos.
+- `capturas/f2/ospf/core-1-rutas-lan.png`: propagación de `192.168.10.0/24` y `192.168.20.0/24` por OSPF en CORE-1.
+- `capturas/f2/ospf/core-2-rutas-lan.png`: propagación de las dos LAN por OSPF en CORE-2.
+- `capturas/f2/ospf/edge-rutas-lan.png`: rutas a las dos LAN en EDGE por CORE-1 y CORE-2.
+- `capturas/f2/vrrp/quick-failover-pc-user-ping.png` y `quick-failover-dist2-master.png`: evidencia de la prueba rápida VRRP, con respuesta del gateway virtual y transición de DIST-2 a Master al perderse el enlace de DIST-1.
 
 ### F3 — Enrutamiento externo
 
@@ -714,7 +742,11 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 
 ---
 
-## 8. Referencias Técnicas Consultadas
+## 8. Conclusiones y lecciones aprendidas
+
+---
+
+## 9. Referencias Técnicas Consultadas
 
 1. **MikroTik RouterOS v7 Documentation:** _Routing Protocols (BGP, OSPF, VRRP)_ — [help.mikrotik.com](https://help.mikrotik.com/docs/)
 2. **RFC 2385:** _Protection of BGP Sessions via the TCP MD5 Signature Option_.
@@ -724,7 +756,7 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 
 ---
 
-## 9. Checklist de Autoverificación para el Gate F0
+## 10. Checklist de Entrega
 
 ### Diseño (F0) — Criterios de Aprobación Obligatorios:
 

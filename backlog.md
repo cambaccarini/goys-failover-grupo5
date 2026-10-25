@@ -100,11 +100,14 @@
 
 ## Epic F2 — VRRP + OSPF · _objetivo propuesto: mié 21/10/2026_ · [~]
 
-> **Avance F2 al 25/10/2026 — Paso 1 (OSPF), Paso 2 (VRRP) y Paso 3 (Verificación L3):**
-> 1. **OSPF Área 0 con MD5:** instancia `ospf1`, área `backbone` (0.0.0.0) e interface-templates aplicados en EDGE, CORE-1, CORE-2, DIST-1 y DIST-2 (router-id 3.3.3.3 a 7.7.7.7). Adyacencias en `Full` verificadas con `/routing ospf neighbor print`: EDGE 2/2, CORE-1 4/4, DIST-1 2/2 y DIST-2 2/2; CORE-2 verificado por adyacencias de vecinos. Evidencia en `capturas/f2/ospf/`.
-> 2. **VRRP Load-Sharing Activo/Activo con Auth:** VRID 10 (USERS) configurado en `vlan10` (DIST-1 Master `RM` prioridad 150, DIST-2 Backup `B` prioridad 100, IP virtual `192.168.10.1`). VRID 20 (SERVERS) configurado en `vlan20` (DIST-2 Master `RM` prioridad 150, DIST-1 Backup `B` prioridad 100, IP virtual `192.168.20.1`). Autenticación `simple`, `version=2`, `interval=1s` y `preempt-mode=yes` validados. Evidencias en `capturas/f2/vrrp/`.
-> 3. **Verificación L3 y Conectividad End-to-End (R5):** Hosts terminales configurados con direccionamiento estático y gateways virtuales. Pings 100% exitosos hacia las VIPs y pings bidireccionales intra-LAN entre PC-USER y SRV cruzando el Core (0% de pérdida, TTL 63). Resolución ARP de MACs virtuales VRRP confirmadas (`00:00:5E:00:01:0A` y `00:00:5E:00:01:14`). Load-sharing verificado fehacientemente por traceroute: PC-USER sale por DIST-1 (`192.168.10.2`) y SRV sale por DIST-2 (`192.168.20.3`). Evidencias en `capturas/f2/conectividad/`.
-> **Pendiente de F2:** verificar ECMP (Paso 4), documentar las tablas de rutas de CORE-1/CORE-2 y confirmar la propagación de `192.168.10.0/24` y `192.168.20.0/24` hasta CORE y EDGE.
+> **Avance F2 al 25/10/2026 — OSPF, VRRP, L3, propagación de rutas y ECMP:**
+> 1. **OSPF Área 0 con MD5:** instancia `ospf1`, área `backbone` (0.0.0.0) e interface-templates en EDGE, CORE-1, CORE-2, DIST-1 y DIST-2. Las adyacencias `Full` están verificadas. Evidencias en `capturas/f2/ospf/`.
+> 2. **Propagación de redes LAN:** `192.168.10.0/24` y `192.168.20.0/24` están aprendidas por CORE-1, CORE-2 y EDGE, con caminos OSPF a través de los dos routers de distribución.
+> 3. **ECMP:** desde DIST-1 y DIST-2, la ruta a `3.3.3.3/32` muestra dos próximos saltos activos de igual preferencia, uno hacia cada CORE. Evidencias en `capturas/f2/ospf/`.
+> 4. **VRRP activo/activo:** VRID 10 con DIST-1 Master (prioridad 150) y DIST-2 Backup (100); VRID 20 con DIST-2 Master (150) y DIST-1 Backup (100). Autenticación `simple`, `version=2` e `interval=1s`. Evidencias en `capturas/f2/vrrp/`.
+> 5. **Conectividad L3:** PC-USER y SRV alcanzan sus gateways virtuales y se comunican de manera bidireccional. El load-sharing fue verificado mediante ARP y traceroutes. Evidencias en `capturas/f2/conectividad/`.
+> 6. **Backups:** los siete exports saneados de F2 están versionados en `backups/f2/exports/`.
+> **Pendiente para el cierre:** ejecutar y documentar la prueba rápida de failover de VRRP de este plan; el drill formal de contingencia corresponde a F4.
 
 ### VRRP (2 Grupos, Load-Sharing Activo/Activo, Auth)
 
@@ -115,15 +118,16 @@
 ### OSPF v2 Área 0 (Backbone con Autenticación MD5)
 
 - [x] [R3] Configurar instancia OSPF v2 en CORE-1 y CORE-2 con router-id 4.4.4.4 y 5.5.5.5 en Área 0 (0.0.0.0), habilitando interface-template con autenticación MD5 en enlace core-core (10.20.1.0/30). Criterio: `/routing ospf neighbor print` muestra adyacencia 'Full' entre ambos cores.
-- [~] [R3] Configurar adyacencias OSPF MD5 en enlaces CORE hacia DIST-1 y DIST-2 con costo balanceado. Criterio: tabla de rutas `/ip route print` muestra rutas de distribución con flag 'Do' (Dynamic OSPF). _Hecho: adyacencias CORE-1 y CORE-2 con DIST-1 y DIST-2 en `Full`. Pendiente: adjuntar `/ip route print where ospf` de CORE-1 y CORE-2 y definir/verificar el costo OSPF explícito si forma parte del criterio final._
+- [x] [R3] Verificar adyacencias OSPF MD5 en los enlaces CORE hacia DIST-1 y DIST-2, con caminos de igual preferencia. Criterio: los vecinos están en `Full` y las tablas de rutas muestran ambos próximos saltos activos cuando corresponde. Evidencias: `capturas/f2/ospf/core-1-rutas-lan.png` y `capturas/f2/ospf/core-2-rutas-lan.png`.
 - [x] [R1] Configurar instancia OSPF en EDGE (router-id 3.3.3.3) en Área 0 con plantillas MD5 hacia CORE-1 y CORE-2. Criterio: adyacencias OSPF con CORE-1 y CORE-2 en estado 'Full'.
-- [~] [R4] Configurar OSPF en DIST-1 y DIST-2 publicando las redes de usuarios (192.168.10.0/24) y servidores (192.168.20.0/24) como interfaces pasivas (`passive=yes`) para evitar LSA flooding no deseado hacia el acceso. Criterio: redes LAN visibles en CORE y EDGE sin tráfico multicast OSPF en switches de acceso. _Hecho: `vlan10`, `vlan20` y `lo` en OSPF como `passive` en DIST-1 y DIST-2. Pendiente: confirmar 192.168.10.0/24 y 192.168.20.0/24 en la tabla de rutas de CORE y EDGE._
+- [x] [R4] Configurar OSPF en DIST-1 y DIST-2 publicando las redes de usuarios (`192.168.10.0/24`) y servidores (`192.168.20.0/24`) como interfaces pasivas. Criterio: `vlan10`, `vlan20` y `lo` aparecen como pasivas en las plantillas OSPF; ambas LAN se aprenden en CORE-1, CORE-2 y EDGE. Evidencias de configuración y rutas en `capturas/f2/ospf/`.
 
 ### Verificación L3 y Conectividad End-to-End
 
 - [x] [R4/R5] Configurar direccionamiento estático en PC-USER (192.168.10.100/24 GW 192.168.10.1) y SRV (192.168.20.100/24 GW 192.168.20.1). Criterio: ping exitoso de cada host a su respectiva IP virtual VRRP.
 - [x] [R4/R5] Realizar ping bidireccional intra-LAN entre PC-USER y SRV. Criterio: 0% de pérdida de paquetes a través del enrutamiento inter-VLAN de distribución.
-- [ ] [R3] Verificar ECMP (Equal-Cost Multi-Path) o convergencia simétrica desde DIST hacia EDGE a través de ambos cores. Criterio: `/ip route print detail` muestra dos gateways activos en rutas transitivas.
+- [x] [R3] Verificar ECMP desde DIST-1 y DIST-2 hacia la loopback de EDGE (`3.3.3.3/32`). Criterio: `/ip route print detail where dst-address=3.3.3.3/32` muestra dos próximos saltos OSPF activos de igual preferencia en ambos DIST. Evidencias: `capturas/f2/ospf/dist-1-ping-edge-loopback.png` y `capturas/f2/ospf/dist-2-ecmp-edge-loopback.png`.
+- [ ] [R4/R5] Ejecutar una prueba de failover rápida: mantener ping a `192.168.10.1`, deshabilitar temporalmente `ether3` de DIST-1, verificar que DIST-2 pasa a Master para VRID 10 y reactivar el enlace. Criterio: el gateway virtual vuelve a responder por DIST-2 durante la caída de DIST-1 y el estado original se recupera al reactivar el enlace. Evidencias: `capturas/f2/vrrp/quick-failover-pc-user-ping.png` y `quick-failover-dist2-master.png`.
 
 ---
 

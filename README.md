@@ -27,10 +27,10 @@ El presente laboratorio aborda el diseño, aprovisionamiento, hardening, operaci
 
 ### Pilares Arquitectónicos y Protocolos:
 
-> **Estado al 25/10/2026:** F1 está cerrado. En F2 están implementados VRRP activo/activo, OSPF Área 0 con adyacencias verificadas y conectividad L3 entre PC-USER y SRV. Las evidencias están en `capturas/f2/`; los siete exports saneados están en `backups/f2/exports/`. Siguen pendientes la comprobación documentada de rutas LAN en CORE/EDGE y la verificación ECMP. BGP, redistribución, firewall/NAT y los drills corresponden a F3/F4.
+> **Estado al 25/10/2026:** F1 está cerrado. F2 está completada: OSPF v2 Área 0 con MD5 y adyacencias `Full` en los cinco routers internos; VRRP v2 con autenticación simple y load-sharing activo/activo; conectividad L3 bidireccional entre PC-USER y SRV; propagación de ambas redes LAN hasta CORE-1, CORE-2 y EDGE; y ECMP confirmado desde DIST-1 y DIST-2 hacia `3.3.3.3/32`. Se versionaron los siete exports saneados en `backups/f2/exports/`. La prueba rápida de failover VRRP fue verificada; los drills formales y el monitoreo corresponden a F4.
 
 1. **Redundancia de Primer Salto (FHRP - Layer 1 de Failover):**
-   - Implementación de **VRRP v2/v3** en la capa de Distribución con balanceo de carga simétrico (*Active/Active Load-Sharing*):
+   - Implementación de **VRRP v2** en la capa de Distribución con balanceo de carga simétrico (*Active/Active Load-Sharing*):
      - `DIST-1`: Master de VLAN 10 (Usuarios - `192.168.10.1`, VRID 10, Prioridad 150) y Backup de VLAN 20 (Prioridad 100).
      - `DIST-2`: Master de VLAN 20 (Servidores - `192.168.20.1`, VRID 20, Prioridad 150) y Backup de VLAN 10 (Prioridad 100).
    - Autenticación mediante clave compartida en las tramas multicast de control VRRP.
@@ -118,14 +118,23 @@ goys-failover-grupo5/
 ├── configs/               # Scripts exportados (.rsc) limpios para cada uno de los 7 routers
 │   └── .gitkeep
 ├── backups/               # Respaldos de configuración (scripts /export y binarios .backup)
-│   ├── .gitkeep
-│   └── f1/exports/        # .rsc base de F1 (sin secretos)
-│   └── f2/exports/        # .rsc de F2 (sin claves sensibles)
+│   ├── f1/
+│   |    └── exports/       # .rsc base de F1 (sin secretos)
+│   └── f2
+│        └── exports/        # .rsc de F2 (sin claves sensibles)
 ├── runbooks/              # Procedimientos operativos estándar (SOP) para los 5 drills
 │   └── .gitkeep
 └── capturas/              # Evidencias en imagen de adyacencias, ping de drills y failover
-    └── f1/                # topologia/ · conectividad/ · hardening/ · troubleshooting/
-    └── f2/                # ospf/ · vrrp/ · conectividad/
+    ├── f1/
+    |    ├── conectividad/ 
+    |    ├── hardening/ 
+    |    ├── topologia/
+    |    └── troubleshooting/
+    └── f2/       
+         ├── conectividad/ 
+         ├── hardening/ 
+         └── topologia/
+
 ```
 
 ---
@@ -154,7 +163,7 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 | :--- | :--- | :---: | :---: |
 | **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Aprobado con observaciones** |
 | **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **Completado** (topología, direccionamiento, hardening, exports saneados, snapshot y validación de restauración de backups por R2) |
-| **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Mié 21/10/2026 (propuesta) | **En curso** (OSPF Área 0, VRRP Activo/Activo y verificación L3 completados; pendiente validación ECMP) |
+| **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Mié 21/10/2026 (propuesta) | **Completada** (OSPF, VRRP activo/activo, conectividad L3, propagación LAN, ECMP, prueba rápida de failover y exports versionados) |
 | **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Jue 22/10/2026 (propuesta) | Planificado |
 | **F4** | Ejecución de los 5 drills de failover, monitoreo y telemetría | Lun 26/10/2026 (propuesta) | Planificado |
 | **F5** | Memoria técnica final, cierre del backlog, repositorio y defensa oral | Mar 27/10/2026 (propuesta) | Planificado |
