@@ -1,5 +1,4 @@
 # 2026-10-25 14:07:44 by RouterOS 7.24.1
-# system id = D6Yit/cij8D
 #
 /interface ethernet
 set [ find default-name=ether1 ] disable-running-check=no
