@@ -131,17 +131,25 @@
 
 ---
 
-## Epic F3 — BGP + Firewall · _objetivo propuesto: jue 22/10/2026_ · [ ]
+## Epic F3 — BGP + Firewall · _objetivo propuesto: jue 22/10/2026_ · [~]
+
+> **Avance F3 al 25/10/2026 — eBGP multi-homing y publicación de LANs:**
+> 1. **Sesiones eBGP con TCP-MD5:** EDGE (AS 65000) mantiene dos sesiones en `established`, con ISP-1 (AS 65001) e ISP-2 (AS 65002). Cada router usa la instancia `bgp1` con su `router-id`. Evidencias en `capturas/f3/bgp/`.
+> 2. **Rutas por defecto:** EDGE recibe `0.0.0.0/0` de ambos proveedores; la de ISP-1 queda activa y la de ISP-2 inactiva (`local-pref` 200 contra 100 mediante los filtros `ISP1-IN` e `ISP2-IN`).
+> 3. **Publicación de LANs:** con `output.redistribute=ospf` y el filtro `BGP-OUT`, ISP-1 e ISP-2 aprenden `192.168.10.0/24` y `192.168.20.0/24`.
+> 4. **Default hacia OSPF:** `originate-default=if-installed` está configurado en EDGE; la recepción de la ruta en CORE y DIST todavía no fue verificada.
+> **Pendiente:** verificar el default en CORE/DIST, pings desde los hosts a las loopbacks de los ISP, NAT y firewall de EDGE, y exports de F3 en `backups/f3/exports/`.
+
 ### eBGP Multi-Homing (2 Sesiones Independientes, TCP-MD5)
 
-- [ ] [R2] Configurar en ISP-1 (AS 65001) sesión eBGP hacia EDGE (10.100.1.2) con protección TCP-MD5 y originación de ruta por defecto (`default-originate=always`). Criterio: `/routing bgp session print` muestra sesión 'established'.
-- [ ] [R2] Configurar en ISP-2 (AS 65002) sesión eBGP hacia EDGE (10.200.1.2) con protección TCP-MD5 y originación de ruta por defecto (`default-originate=always`). Criterio: `/routing bgp session print` muestra sesión 'established'.
-- [ ] [R1] Configurar en EDGE (AS 65000) sesiones eBGP hacia ISP-1 e ISP-2 configurando router-id 3.3.3.3 y claves TCP-MD5 idénticas a los proveedores. Criterio: EDGE recibe dos rutas por defecto 0.0.0.0/0 vía eBGP.
+- [x] [R2] Configurar en ISP-1 (AS 65001) sesión eBGP hacia EDGE (10.100.1.2) con protección TCP-MD5 y originación de ruta por defecto (`default-originate=always`). Criterio: `/routing bgp session print` muestra sesión 'established'. Evidencias: `capturas/f3/bgp/isp-1-bgp-config.png` e `isp-1-bgp-session-routes.png`.
+- [x] [R2] Configurar en ISP-2 (AS 65002) sesión eBGP hacia EDGE (10.200.1.2) con protección TCP-MD5 y originación de ruta por defecto (`default-originate=always`). Criterio: `/routing bgp session print` muestra sesión 'established'. Evidencias: `capturas/f3/bgp/isp-2-bgp-config.png` e `isp-2-bgp-session-routes.png`.
+- [x] [R1] Configurar en EDGE (AS 65000) sesiones eBGP hacia ISP-1 e ISP-2 configurando router-id 3.3.3.3 y claves TCP-MD5 idénticas a los proveedores. Criterio: EDGE recibe dos rutas por defecto 0.0.0.0/0 vía eBGP. Evidencias: `capturas/f3/bgp/edge-filtros-bgp.png`, `edge-bgp-instancia.png` y `edge-bgp-session-routes.png`.
 
 ### Redistribución OSPF↔BGP y Propagación
 
-- [ ] [R1] Configurar inyección de ruta por defecto desde EDGE hacia el dominio OSPF Área 0 (`originate-default=if-installed` o redistribución controlada). Criterio: CORE-1, CORE-2, DIST-1 y DIST-2 reciben ruta 0.0.0.0/0 con flag 'Do'.
-- [ ] [R1] Publicar los prefijos LAN corporativos (192.168.10.0/24 y 192.168.20.0/24) hacia ISP-1 e ISP-2 mediante BGP network advertisements. Criterio: ISP-1 e ISP-2 tienen rutas hacia las LANs internas en sus tablas de ruteo.
+- [~] [R1] Configurar inyección de ruta por defecto desde EDGE hacia el dominio OSPF Área 0 (`originate-default=if-installed` o redistribución controlada). Criterio: CORE-1, CORE-2, DIST-1 y DIST-2 reciben ruta 0.0.0.0/0 con flag 'Do'. Estado: comando aplicado en EDGE (`capturas/f3/bgp/edge-ospf-originate-default.png`); falta verificar la recepción en CORE y DIST.
+- [x] [R1] Publicar los prefijos LAN corporativos (192.168.10.0/24 y 192.168.20.0/24) hacia ISP-1 e ISP-2 mediante BGP network advertisements. Criterio: ISP-1 e ISP-2 tienen rutas hacia las LANs internas en sus tablas de ruteo. Se resolvió con `output.redistribute=ospf` y el filtro `BGP-OUT`. Evidencias: `capturas/f3/bgp/isp-1-bgp-session-routes.png` e `isp-2-bgp-session-routes.png`.
 
 ### Firewall Perimetral y Salida a Internet
 

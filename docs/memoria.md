@@ -559,6 +559,39 @@ Las rutas OSPF de F2 fueron verificadas en los routers de distribución, núcleo
 
 Las entradas mostradas con la marca `+` confirman que RouterOS agrupa los caminos ECMP. No se alteraron los costes OSPF, dado que el resultado de múltiples próximos saltos activos ya está presente en la tabla de rutas. No se interpreta `distance=110` como un coste de interfaz OSPF: es la distancia administrativa mostrada por RouterOS para la ruta aprendida.
 
+### 3.12 eBGP multi-homing con TCP-MD5 y salida por defecto (F3, avance al 25/10/2026)
+
+Se configuraron las dos sesiones eBGP entre EDGE (AS 65000) y los proveedores ISP-1 (AS 65001) e ISP-2 (AS 65002), con protección TCP-MD5 en cada peering. Esta versión de RouterOS 7 utiliza **instancias BGP**: el AS local y el `router-id` se definen en `/routing bgp instance`, y cada conexión referencia la instancia con `instance=bgp1`.
+
+| Router | AS | Instancia / Router-ID | Conexión | Vecino | Política aplicada |
+| :--- | :---: | :---: | :--- | :--- | :--- |
+| ISP-1 | 65001 | `bgp1` / `1.1.1.1` | `to-EDGE` | EDGE `10.100.1.2` (AS 65000) | `default-originate=always`; anuncia `1.1.1.1/32` mediante la lista `NET-ISP1`. |
+| ISP-2 | 65002 | `bgp1` / `2.2.2.2` | `to-EDGE` | EDGE `10.200.1.2` (AS 65000) | `default-originate=always`; anuncia `2.2.2.2/32` mediante la lista `NET-ISP2`. |
+| EDGE | 65000 | `bgp1` / `3.3.3.3` | `to-ISP1` y `to-ISP2` | ISP-1 `10.100.1.1` y ISP-2 `10.200.1.1` | `input.filter` `ISP1-IN` / `ISP2-IN`, `output.filter-chain=BGP-OUT` y `output.redistribute=ospf`. |
+
+**Política de rutas en EDGE (filtros de `/routing filter rule`):**
+
+- `ISP1-IN`: `set bgp-local-pref 200; accept` (proveedor primario).
+- `ISP2-IN`: `set bgp-local-pref 100; accept` (proveedor de respaldo).
+- `BGP-OUT`: acepta únicamente prefijos dentro de `192.168.0.0/16` (las LAN de USERS y SERVERS aprendidas por OSPF) y rechaza el resto, de modo que no se filtran loopbacks ni enlaces internos hacia los proveedores.
+
+**Default hacia el dominio OSPF:** en EDGE se ejecutó `/routing ospf instance set ospf1 originate-default=if-installed`, para que la ruta por defecto aprendida por BGP se anuncie hacia CORE y DIST.
+
+**Verificación realizada:**
+
+1. **Sesiones en EDGE:** `/routing bgp session print` muestra las dos sesiones en estado `E` (*established*): `to-ISP1-1` con el vecino `10.100.1.1` (AS 65001, id `1.1.1.1`) y `to-ISP2-1` con el vecino `10.200.1.1` (AS 65002, id `2.2.2.2`). Ambas muestran los filtros `ISP1-IN` / `ISP2-IN` y `BGP-OUT` aplicados y `prefix-count=2`.
+2. **Rutas BGP en EDGE:** `/ip route print where bgp` muestra dos rutas `0.0.0.0/0`, una por `10.100.1.1` (ISP-1, activa, flag `A`) y otra por `10.200.1.1` (ISP-2, inactiva), ambas con distancia 20. También aparecen activas `1.1.1.1/32` (por ISP-1) y `2.2.2.2/32` (por ISP-2). La elección de ISP-1 como salida por defecto es coherente con el `local-pref` 200 frente a 100.
+3. **Sesiones y rutas en los ISP:** ISP-1 e ISP-2 muestran su sesión con EDGE en `E` (*established*) y aprenden por BGP `192.168.10.0/24` y `192.168.20.0/24` con próximo salto `10.100.1.2` y `10.200.1.2`, respectivamente. Esto confirma la redistribución OSPF→BGP con el filtro `BGP-OUT`.
+
+**Observaciones:**
+
+- Durante la configuración de ISP-1 se registró el error `bad parameter router-id (line 1 column 135)`: en esta versión de RouterOS el `router-id` no es un parámetro de `/routing bgp connection`. Al omitirlo, el comando solicitó el parámetro `instance:`. Se resolvió creando primero la instancia `bgp1` (AS y `router-id`) y referenciándola en la conexión. El error y la corrección quedan visibles en `capturas/f3/bgp/isp-1-bgp-config.png`.
+- El orden de configuración en EDGE fue: filtros (`ISP1-IN`, `ISP2-IN`, `BGP-OUT`), instancia y conexiones, y por último `originate-default`.
+
+**Pendiente de F3 (no verificado a esta fecha):** recepción de la ruta por defecto con flag `Do` en CORE-1, CORE-2, DIST-1 y DIST-2; ping y traceroute desde PC-USER y SRV hacia `1.1.1.1` y `2.2.2.2`; firewall de EDGE (cadenas `input` y `forward`); prueba negativa de clave TCP-MD5 incorrecta; y exports de F3 en `backups/f3/exports/`.
+
+**Evidencias en `capturas/f3/bgp/`:** `isp-1-bgp-config.png`, `isp-2-bgp-config.png`, `edge-filtros-bgp.png`, `edge-bgp-instancia.png`, `edge-ospf-originate-default.png`, `edge-bgp-session-routes.png`, `isp-1-bgp-session-routes.png` e `isp-2-bgp-session-routes.png`.
+
 ---
 
 ## 4. Verificación y Batería de Drills de Failover (F4)
@@ -698,7 +731,7 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 
 ## 7. Repositorio de Evidencias Gráficas y Capturas
 
-Las evidencias visuales se organizan en la carpeta `capturas/`, separadas por etapa del proyecto y tipo de verificación. Las capturas de F1 y F2 enumeradas abajo están incorporadas al repositorio. Las referencias a F3 y F4 son ubicaciones previstas y se sumarán después de realizar las pruebas.
+Las evidencias visuales se organizan en la carpeta `capturas/`, separadas por etapa del proyecto y tipo de verificación. Las capturas de F1 y F2 enumeradas abajo están incorporadas al repositorio, al igual que las de F3 correspondientes al avance de BGP. Las demás referencias de F3 y las de F4 son ubicaciones previstas y se sumarán después de realizar las pruebas.
 
 ### F1 — Topología, conectividad y hardening
 
@@ -732,7 +765,13 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 
 ### F3 — Enrutamiento externo
 
-- `capturas/f3/bgp/bgp-sessions.png`: evidencia de las sesiones eBGP y sus estados.
+- `capturas/f3/bgp/isp-1-bgp-config.png` e `isp-2-bgp-config.png`: configuración de la lista de direcciones, la instancia `bgp1` y la conexión `to-EDGE` con TCP-MD5 en cada ISP. En ISP-1 se observa además el error `bad parameter router-id` y su corrección.
+- `capturas/f3/bgp/edge-filtros-bgp.png`: filtros `ISP1-IN`, `ISP2-IN` y `BGP-OUT` en EDGE.
+- `capturas/f3/bgp/edge-bgp-instancia.png`: creación de la instancia `bgp1` (AS 65000, `router-id` 3.3.3.3) en EDGE.
+- `capturas/f3/bgp/edge-ospf-originate-default.png`: `originate-default=if-installed` en la instancia `ospf1` de EDGE.
+- `capturas/f3/bgp/edge-bgp-session-routes.png`: sesiones eBGP en `established` y rutas BGP (`0.0.0.0/0`, `1.1.1.1/32`, `2.2.2.2/32`) en EDGE.
+- `capturas/f3/bgp/isp-1-bgp-session-routes.png` e `isp-2-bgp-session-routes.png`: sesión `established` y rutas `192.168.10.0/24` y `192.168.20.0/24` aprendidas por BGP en cada ISP.
+- _Previstas, aún sin incorporar:_ `pc-user-ping-isp.png` y `srv-ping-isp.png` (salida a «Internet»), `edge-firewall.png` (firewall de EDGE) y `bgp-clave-incorrecta.png` (prueba negativa TCP-MD5).
 
 ### F4 — Pruebas de contingencia
 

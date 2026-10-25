@@ -28,6 +28,8 @@ El presente laboratorio aborda el diseño, aprovisionamiento, hardening, operaci
 ### Pilares Arquitectónicos y Protocolos:
 
 > **Estado al 25/10/2026:** F1 está cerrado. F2 está completada: OSPF v2 Área 0 con MD5 y adyacencias `Full` en los cinco routers internos; VRRP v2 con autenticación simple y load-sharing activo/activo; conectividad L3 bidireccional entre PC-USER y SRV; propagación de ambas redes LAN hasta CORE-1, CORE-2 y EDGE; y ECMP confirmado desde DIST-1 y DIST-2 hacia `3.3.3.3/32`. Se versionaron los siete exports saneados en `backups/f2/exports/`. La prueba rápida de failover VRRP fue verificada; los drills formales y el monitoreo corresponden a F4.
+>
+> **Avance F3 al 25/10/2026:** las dos sesiones eBGP de EDGE con ISP-1 (AS 65001) e ISP-2 (AS 65002) están en `established` con TCP-MD5; EDGE recibe dos rutas por defecto (activa por ISP-1) y ambos ISP aprenden las LAN `192.168.10.0/24` y `192.168.20.0/24`. Falta verificar el default en CORE/DIST, la salida desde los hosts, el firewall de EDGE y la prueba negativa de clave. Evidencias en `capturas/f3/bgp/`.
 
 1. **Redundancia de Primer Salto (FHRP - Layer 1 de Failover):**
    - Implementación de **VRRP v2** en la capa de Distribución con balanceo de carga simétrico (*Active/Active Load-Sharing*):
@@ -130,10 +132,12 @@ goys-failover-grupo5/
     |    ├── hardening/ 
     |    ├── topologia/
     |    └── troubleshooting/
-    └── f2/       
-         ├── conectividad/ 
-         ├── hardening/ 
-         └── topologia/
+    ├── f2/       
+    |    ├── conectividad/ 
+    |    ├── ospf/ 
+    |    └── vrrp/
+    └── f3/
+         └── bgp/
 
 ```
 
@@ -164,7 +168,7 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 | **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Aprobado con observaciones** |
 | **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **Completado** (topología, direccionamiento, hardening, exports saneados, snapshot y validación de restauración de backups por R2) |
 | **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Mié 21/10/2026 (propuesta) | **Completada** (OSPF, VRRP activo/activo, conectividad L3, propagación LAN, ECMP, prueba rápida de failover y exports versionados) |
-| **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Jue 22/10/2026 (propuesta) | Planificado |
+| **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Jue 22/10/2026 (propuesta) | **En curso** (eBGP con TCP-MD5 y publicación de LAN verificados; pendientes default en CORE/DIST, salida de hosts, firewall y exports) |
 | **F4** | Ejecución de los 5 drills de failover, monitoreo y telemetría | Lun 26/10/2026 (propuesta) | Planificado |
 | **F5** | Memoria técnica final, cierre del backlog, repositorio y defensa oral | Mar 27/10/2026 (propuesta) | Planificado |
 
