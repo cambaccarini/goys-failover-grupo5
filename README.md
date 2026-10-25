@@ -27,7 +27,7 @@ El presente laboratorio aborda el diseño, aprovisionamiento, hardening, operaci
 
 ### Pilares Arquitectónicos y Protocolos:
 
-> **Estado de implementación al cierre de F1 (19/10/2026):** los apartados siguientes describen la arquitectura objetivo del laboratorio, no una declaración de que todos esos protocolos ya estén desplegados. En F1 se verificaron la topología, el direccionamiento, las loopbacks, las VLAN de distribución, el hardening y las pruebas de conectividad documentadas. VRRP/OSPF corresponden a F2; BGP, redistribución, firewall y NAT se configurarán y verificarán en F3; los drills pertenecen a F4.
+> **Estado al 25/10/2026:** F1 está cerrado. En F2 están implementados VRRP activo/activo, OSPF Área 0 con adyacencias verificadas y conectividad L3 entre PC-USER y SRV. Las evidencias están en `capturas/f2/`; los siete exports saneados están en `backups/f2/exports/`. Siguen pendientes la comprobación documentada de rutas LAN en CORE/EDGE y la verificación ECMP. BGP, redistribución, firewall/NAT y los drills corresponden a F3/F4.
 
 1. **Redundancia de Primer Salto (FHRP - Layer 1 de Failover):**
    - Implementación de **VRRP v2/v3** en la capa de Distribución con balanceo de carga simétrico (*Active/Active Load-Sharing*):
@@ -120,10 +120,12 @@ goys-failover-grupo5/
 ├── backups/               # Respaldos de configuración (scripts /export y binarios .backup)
 │   ├── .gitkeep
 │   └── f1/exports/        # .rsc base de F1 (sin secretos)
+│   └── f2/exports/        # .rsc de F2 (sin claves sensibles)
 ├── runbooks/              # Procedimientos operativos estándar (SOP) para los 5 drills
 │   └── .gitkeep
 └── capturas/              # Evidencias en imagen de adyacencias, ping de drills y failover
     └── f1/                # topologia/ · conectividad/ · hardening/ · troubleshooting/
+    └── f2/                # ospf/ · vrrp/ · conectividad/
 ```
 
 ---
