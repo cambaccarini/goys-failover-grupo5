@@ -27,7 +27,7 @@ El presente laboratorio aborda el diseño, aprovisionamiento, hardening, operaci
 
 ### Pilares Arquitectónicos y Protocolos:
 
-> **Estado al 25/10/2026:** F1 y F2 están completados. F3 (eBGP Multi-Homing + Firewall en EDGE) ha sido completado y verificado al 100%: sesiones eBGP establecidas con TCP-MD5 hacia ISP-1 e ISP-2, preferencia local (200 para ISP-1 y 100 para ISP-2), redistribución OSPF a BGP y filtrado BGP-OUT de LANs, inyección de ruta default hacia OSPF (`originate-default=if-installed`), conectividad verificada desde PC-USER y SRV hacia loopbacks de ISP, firewall perimetral en EDGE con inspección con estado, anti-spoofing y restricción de gestión por WAN, prueba de seguridad negativa de clave incorrecta en BGP, y backups exportados en `backups/F3/`. Evidencias en `capturas/f3/`.
+> **Estado al 26/10/2026:** F1 y F2 están completados. F3 (eBGP Multi-Homing + Firewall en EDGE) ha sido completado y verificado al 100%: sesiones eBGP establecidas con TCP-MD5 hacia ISP-1 e ISP-2, preferencia local (200 para ISP-1 y 100 para ISP-2), redistribución OSPF a BGP y filtrado BGP-OUT de LANs, inyección de ruta default hacia OSPF (`originate-default=if-installed`), conectividad verificada desde PC-USER y SRV hacia loopbacks de ISP, firewall perimetral en EDGE con inspección con estado, anti-spoofing y restricción de gestión por WAN, prueba de seguridad negativa de clave incorrecta en BGP, y backups exportados en `backups/F3/`. Evidencias en `capturas/f3/`.
 
 1. **Redundancia de Primer Salto (FHRP - Layer 1 de Failover):**
    - Implementación de **VRRP v2** en la capa de Distribución con balanceo de carga simétrico (*Active/Active Load-Sharing*):
@@ -119,23 +119,33 @@ goys-failover-grupo5/
 │   └── .gitkeep
 ├── backups/               # Respaldos de configuración (scripts /export y binarios .backup)
 │   ├── f1/
-│   |    └── exports/       # .rsc base de F1 (sin secretos)
-│   └── f2
-│        └── exports/        # .rsc de F2 (sin claves sensibles)
+│   |   └── exports/       # .rsc base de F1 (sin secretos)
+│   ├── f2
+│   |   └── exports/        # .rsc de F2 (sin claves sensibles)
+│   └── F3/
+│       ├── EDGE-F3.rsc
+│       ├── ISP-1-F3.rsc
+│       ├── ISP-2-F3.rsc
+│       ├── core-1-f3.rsc
+│       ├── core-2-f3.rsc
+│       ├── dist-1-f3.rsc
+│       └── dist-2-f3.rsc
 ├── runbooks/              # Procedimientos operativos estándar (SOP) para los 5 drills
 │   └── .gitkeep
 └── capturas/              # Evidencias en imagen de adyacencias, ping de drills y failover
     ├── f1/
-    |    ├── conectividad/ 
-    |    ├── hardening/ 
-    |    ├── topologia/
-    |    └── troubleshooting/
+    |   ├── conectividad/ 
+    |   ├── hardening/ 
+    |   ├── topologia/
+    |   └── troubleshooting/
     ├── f2/       
-    |    ├── conectividad/ 
-    |    ├── ospf/ 
-    |    └── vrrp/
+    |   ├── conectividad/ 
+    |   ├── ospf/ 
+    |   └── vrrp/
     └── f3/
-         └── bgp/
+        ├── bgp/
+        ├── conectividad/
+        └── firewall/
 
 ```
 
@@ -166,7 +176,7 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 | **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Aprobado con observaciones** |
 | **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **Completado** (topología, direccionamiento, hardening, exports saneados, snapshot y validación de restauración de backups por R2) |
 | **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Mié 21/10/2026 (propuesta) | **Completada** (OSPF, VRRP activo/activo, conectividad L3, propagación LAN, ECMP, prueba rápida de failover y exports versionados) |
-| **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Jue 22/10/2026 (propuesta) | **En curso** (eBGP con TCP-MD5 y publicación de LAN verificados; pendientes default en CORE/DIST, salida de hosts, firewall y exports) |
+| **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Jue 22/10/2026 (propuesta) | **Completada** (eBGP con TCP-MD5 y publicación de LAN verificados; pendientes default en CORE/DIST, salida de hosts, firewall y exports) |
 | **F4** | Ejecución de los 5 drills de failover, monitoreo y telemetría | Lun 26/10/2026 (propuesta) | Planificado |
 | **F5** | Memoria técnica final, cierre del backlog, repositorio y defensa oral | Mar 27/10/2026 (propuesta) | Planificado |
 

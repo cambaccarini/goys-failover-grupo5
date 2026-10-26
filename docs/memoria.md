@@ -635,7 +635,7 @@ add topics=bgp
 ### 3.4 Router CORE-1
 
 - **Rol:** Núcleo de tránsito puro A (OSPF Área 0).
-- **Script asociado:** `configs/core-1.rsc`
+- **Script asociado:** `backups/F3/core-1-f3.rsc`
 - **Parámetros clave:** Loopback `4.4.4.4/32`, enlace inter-Core `10.20.1.1/30` con OSPF MD5, uplinks a EDGE y downlinks a Distribución.
 
 ```routeros
@@ -686,7 +686,7 @@ set note="ACCESO RESTRINGIDO - Solo personal autorizado. Toda actividad es reg\
 ### 3.5 Router CORE-2
 
 - **Rol:** Núcleo de tránsito puro B (OSPF Área 0).
-- **Script asociado:** `configs/core-2.rsc`
+- **Script asociado:** `backups/F3/core-2-f3.rsc`
 - **Parámetros clave:** Loopback `5.5.5.5/32`, enlace inter-Core `10.20.1.2/30` con OSPF MD5, uplinks a EDGE y downlinks a Distribución.
 
 ```routeros
@@ -737,7 +737,7 @@ set note="ACCESO RESTRINGIDO - Solo personal autorizado. Toda actividad es reg\
 ### 3.6 Router DIST-1
 
 - **Rol:** Distribución y Gateway de primer salto.
-- **Script asociado:** `configs/dist-1.rsc`
+- **Script asociado:** `backups/F3/dist-1-f3.rsc`
 - **Parámetros clave:** Loopback `6.6.6.6/32`, VRRP Master en VLAN 10 (Prio 150), VRRP Backup en VLAN 20 (Prio 100), OSPF pasivo en LANs.
 
 ```routeros
@@ -798,7 +798,7 @@ set name=DIST-1
 ### 3.7 Router DIST-2
 
 - **Rol:** Distribución y Gateway de primer salto.
-- **Script asociado:** `configs/dist-2.rsc`
+- **Script asociado:** `backups/F3/dist-2-f3.rsc`
 - **Parámetros clave:** Loopback `7.7.7.7/32`, VRRP Master en VLAN 20 (Prio 150), VRRP Backup en VLAN 10 (Prio 100), OSPF pasivo en LANs.
 
 ```routeros
@@ -971,7 +971,7 @@ Se completó al 100% la implementación y verificación de la Fase 3, integrando
    - Al restablecer la clave correcta (`CLAVE_BGP_ISP2`), la sesión restableció su estado `ESTABLISHED` automáticamente.
    - Evidencia: `capturas/f3/bgp/bgp-clave-incorrecta.png`.
 
-6. **Exports de Respaldo:** Las configuraciones resultantes libres de datos sensibles fueron resguardadas en `backups/F3/`: `EDGE-F3.rsc`, `ISP-1-F3.rsc` e `ISP-2-F3.rsc`.
+6. **Exports de respaldo:** los siete exports saneados de F3 están versionados en `backups/F3/`: `EDGE-F3.rsc`, `ISP-1-F3.rsc`, `ISP-2-F3.rsc`, `core-1-f3.rsc`, `core-2-f3.rsc`, `dist-1-f3.rsc` y `dist-2-f3.rsc`
 
 ---
 
@@ -1081,18 +1081,22 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 | 25/10/2026 | Juan Ignacio Atencio (R4) | `44875a8` — `ops(backup): agregar exports saneados de F2` | Versionar los siete exports de RouterOS de F2 en `backups/f2/exports/`, sin incluir las claves sensibles ocultas por el export normal. | `git revert 44875a8` |
 | 25/10/2026 | Juan Ignacio Atencio (R4) | `cf16484` — `docs(f2): sincronizar memoria, backlog y README` | Actualizar el estado de F2, el árbol de directorios y las referencias documentales de evidencias y backups. | `git revert cf16484` |
 | 25/10/2026 | Juan Ignacio Atencio (R4) | `ec10e32` — `chore(backup): depurar metadatos de exports F2` | Retirar las líneas de `system id` de los siete exports de F2. | `git revert ec10e32` |
-| 25/10/2026 | Ian Vidmar (R3) | `3020adf` — `docs(f3): agrego evidencias de eBGP multi-homing y actualizo memoria y backlog` | Incorporar configuraciones iniciales de peering BGP en ISP-1, ISP-2 y EDGE, y avance de documentación F3. | `git revert 3020adf` |
-| 25/10/2026 | Patricio Borda (R2) | `feat(bgp): agrego eBGP con TCP-MD5 en ISP-1` | Incorporar rutas aprendidas de LANs corporativas por BGP en ISP-1 con autenticación TCP-MD5 verificada. | `git revert HEAD~4` |
-| 25/10/2026 | Patricio Borda (R2) | `feat(bgp): agrego eBGP con TCP-MD5 en ISP-2` | Incorporar rutas aprendidas de LANs corporativas por BGP en ISP-2 con autenticación TCP-MD5 verificada. | `git revert HEAD~3` |
-| 25/10/2026 | Patricio Borda (R2) | `feat(bgp): agrego eBGP multi-homing y redistribución OSPF BGP en EDGE` | Consolidar sesiones BGP en estado ESTABLISHED, tabla de rutas con preferencia por ISP-1, conectividad a Internet desde hosts y prueba de seguridad negativa ante clave errónea. | `git revert HEAD~2` |
-| 25/10/2026 | Patricio Borda (R2) | `feat(firewall): agrego filtros de input y forward en EDGE` | Implementar y evidenciar el conjunto completo de reglas de firewall con estado en EDGE (input y forward con contadores activos). | `git revert HEAD~1` |
-| 25/10/2026 | Patricio Borda (R2 + R5) | `ops(backup): backup post-F3` | Versionar exports saneados de F3 en backups/F3/ y consolidar memoria técnica, backlog y README para el cierre formal de la Fase 3. | `git revert HEAD` |
+| 25/10/2026 | Ian Vidmar (R3) | `3020adf` — `docs(f3): agrego evidencias de eBGP multi-homing y actualizo memoria y backlog` | Incorporar evidencias iniciales de BGP y actualizar la documentación de F3. | `git revert 3020adf` |
+| 25/10/2026 | Patricio Borda (R2 + R5) | `3137f02` — `feat(bgp): agrego eBGP con TCP-MD5 en ISP-1` | Configurar eBGP entre ISP-1 y EDGE con autenticación TCP-MD5. | `git revert 3137f02` |
+| 25/10/2026 | Patricio Borda (R2 + R5) | `c5987ad` — `feat(bgp): agrego eBGP con TCP-MD5 en ISP-2` | Configurar eBGP entre ISP-2 y EDGE con autenticación TCP-MD5. | `git revert c5987ad` |
+| 25/10/2026 | Patricio Borda (R2 + R5) | `b8f6a9d` — `feat(bgp): agrego eBGP multi-homing y redistribución OSPF BGP en EDGE` | Consolidar los peerings eBGP, filtros de preferencia WAN y publicación de prefijos corporativos. | `git revert b8f6a9d` |
+| 25/10/2026 | Patricio Borda (R2 + R5) | `cedee4a` — `feat(firewall): agrego filtros de input y forward en EDGE` | Incorporar reglas perimetrales de entrada y tránsito en EDGE. | `git revert cedee4a` |
+| 25/10/2026 | Patricio Borda (R2 + R5) | `f71fd6f` — `ops(backup): backup post-F3` | Versionar los exports iniciales de F3 de EDGE, ISP-1 e ISP-2. | `git revert f71fd6f` |
+| 26/10/2026 | Juan Ignacio Atencio (R4) | `c4c0ec6` — `docs(f3): agregar capturas del firewall de EDGE` | Incorporar capturas de la configuración y los contadores del firewall en EDGE. | `git revert c4c0ec6` |
+| 26/10/2026 | Juan Ignacio Atencio (R4) | `ba97757` — `ops(backup): completar exports F3 de CORE y distribución` | Completar los exports de CORE-1, CORE-2, DIST-1 y DIST-2 en `backups/F3/`. | `git revert ba97757` |
+| 26/10/2026 | Juan Ignacio Atencio (R4) | `4017e2b` — `docs(f3): cerrar memoria y backlog de F3` | Sincronizar el estado documental de F3 con las evidencias y backups incorporados. | `git revert 4017e2b` |
+
 
 ### 6.2 Política de Respaldo y Evidencia de Restauración
 
 - **Exports de F1:** los siete archivos `.rsc` se versionan en `backups/f1/exports/`. Se generaron sin `show-sensitive` y se revisaron para confirmar la ausencia de secretos y metadatos de hardware de simulación (`system id`).
 - **Exports de F2 (25/10/2026):** los siete archivos `.rsc` están versionados en `backups/f2/exports/`: `isp-1-f2.rsc`, `isp-2-f2.rsc`, `edge-f2.rsc`, `core-1-f2.rsc`, `core-2-f2.rsc`, `dist-1-f2.rsc` y `dist-2-f2.rsc`. Se generaron mediante `/export` sin `show-sensitive` y se incorporaron en el commit `44875a8` (`ops(backup): agregar exports saneados de F2`). Los exports documentan los parámetros no sensibles que RouterOS muestra por defecto; las claves ocultas deben conservarse por separado fuera del repositorio público.
-- **Exports de F3 (25/10/2026):** los tres archivos de configuración `.rsc` correspondientes a la capa de borde y proveedores WAN están versionados en `backups/F3/`: `EDGE-F3.rsc`, `ISP-1-F3.rsc` e `ISP-2-F3.rsc`. Se generaron sin `show-sensitive` y se depuraron metadatos de hardware de simulación (`system id`), verificando la protección de secretos conforme a las normas de seguridad del laboratorio.
+- **Exports de F3 (25/10/2026):** los siete archivos de configuración `.rsc` correspondientes a la capa de borde y proveedores WAN están versionados en `backups/F3/`: `EDGE-F3.rsc`, `ISP-1-F3.rsc`, `ISP-2-F3.rsc`, `core-1-f3.rsc`, `core-2-f3.rsc`, `dist-1-f3.rsc` y `dist-2-f3.rsc`. Se generaron sin `show-sensitive` y se depuraron metadatos de hardware de simulación (`system id`), verificando la protección de secretos conforme a las normas de seguridad del laboratorio.
 - **Backups binarios:** los siete archivos `*-F1-post-hardening.backup` fueron generados en cada uno de los routers y almacenados en un repositorio offline privado cifrado, fuera del alcance del control de versiones público para resguardar credenciales y configuraciones sensibles del plano de gestión.
 - **Validación de Restauración en Nodo de Test (R2 - Patricio Borda):** para dar estricto cumplimiento al criterio de aceptación de F1, se desplegó una instancia MikroTik CHR aislada (`TEST-RESTORE-CHR`) conectada únicamente a una red host-only de gestión. Se procedió a cargar el archivo binario `isp-1-F1-post-hardening.backup` mediante SFTP/WinBox y se ejecutó:
   ```routeros
@@ -1163,6 +1167,8 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 - `capturas/f3/bgp/edge-filtros-bgp.png`: filtros de ruteo `ISP1-IN`, `ISP2-IN` y `BGP-OUT` en EDGE.
 - `capturas/f3/bgp/edge-bgp-instancia.png`: creación de la instancia `bgp1` (AS 65000, `router-id` 3.3.3.3) en EDGE.
 - `capturas/f3/bgp/edge-ospf-originate-default.png`: inyección de ruta por defecto condicional `originate-default=if-installed` en la instancia OSPF de EDGE.
+- `capturas/f3/firewall/edge-firewall-config.png`: evidencia de la configuración de las reglas del firewall en EDGE.
+- `capturas/f3/firewall/edge-firewall-updated.png`: evidencia de las reglas actualizadas y sus contadores de paquetes.
 
 ### F4 — Pruebas de contingencia
 
