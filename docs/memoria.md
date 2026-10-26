@@ -448,20 +448,189 @@ _(Los scripts de configuración limpios para cada uno de los 7 routers CHR se gu
 ### 3.1 Router ISP-1
 
 - **Rol:** Proveedor WAN Primario (AS 65001).
-- **Script asociado:** `../backups/f1/exports/isp-1-F1.rsc`
-- **Parámetros clave:** Loopback `1.1.1.1/32`, eBGP peering hacia EDGE `10.100.1.2`, originación de default route BGP.
+- **Script asociado:** `backups/F3/ISP-1-F3.rsc`
+- **Parámetros clave:** Loopback `1.1.1.1/32`, WAN hacia EDGE `10.100.1.1/30`, eBGP peering hacia EDGE `10.100.1.2` con clave TCP-MD5 `CLAVE_BGP_ISP1`, originación de default route BGP (`default-originate=always`) y anuncio de red `1.1.1.1/32`.
+
+```routeros
+# Script de configuración consolidado F3: backups/F3/ISP-1-F3.rsc
+# 2026-10-26 06:00:29 by RouterOS 7.24.1
+#
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no
+/routing bgp instance
+add as=65001 name=bgp1 router-id=1.1.1.1
+/user group
+add name=superadmin policy="local,telnet,ssh,ftp,reboot,read,write,policy,test\
+    ,winbox,password,web,sniff,sensitive,api,romon,rest-api"
+/ip neighbor discovery-settings
+set discover-interface-list=none
+/ip address
+add address=1.1.1.1 interface=lo network=1.1.1.1
+add address=10.100.1.1/30 comment="WAN hacia EDGE" interface=ether1 network=\
+    10.100.1.0
+/ip dhcp-client
+add interface=ether1 name=client1
+/ip firewall address-list
+add address=1.1.1.1 list=NET-ISP1
+/ip service
+set ftp disabled=yes
+set telnet disabled=yes
+set www disabled=yes
+set api disabled=yes
+set api-ssl disabled=yes
+/routing bgp connection
+add instance=bgp1 local.address=10.100.1.1 .role=ebgp name=to-EDGE \
+    output.default-originate=always .network=NET-ISP1 remote.address=\
+    10.100.1.2 .as=65000
+/system identity
+set name=ISP-1
+```
 
 ### 3.2 Router ISP-2
 
 - **Rol:** Proveedor WAN Secundario (AS 65002).
-- **Script asociado:** `configs/isp-2.rsc`
-- **Parámetros clave:** Loopback `2.2.2.2/32`, eBGP peering hacia EDGE `10.200.1.2`, originación de default route BGP.
+- **Script asociado:** `backups/F3/ISP-2-F3.rsc`
+- **Parámetros clave:** Loopback `2.2.2.2/32`, WAN hacia EDGE `10.200.1.1/30`, eBGP peering hacia EDGE `10.200.1.2` con clave TCP-MD5 `CLAVE_BGP_ISP2`, originación de default route BGP (`default-originate=always`) y anuncio de red `2.2.2.2/32`.
+
+```routeros
+# Script de configuración consolidado F3: backups/F3/ISP-2-F3.rsc
+# 2026-10-26 06:01:02 by RouterOS 7.24.1
+#
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no
+/routing bgp instance
+add as=65002 name=bgp1 router-id=2.2.2.2
+/user group
+add name=superadmin policy="local,telnet,ssh,ftp,reboot,read,write,policy,test\
+    ,winbox,password,web,sniff,sensitive,api,romon,rest-api"
+/ip neighbor discovery-settings
+set discover-interface-list=none
+/ip address
+add address=2.2.2.2 interface=lo network=2.2.2.2
+add address=10.200.1.1/30 comment="WAN hacia EDGE" interface=ether1 network=\
+    10.200.1.0
+/ip dhcp-client
+add interface=ether1 name=client1
+/ip firewall address-list
+add address=2.2.2.2 list=NET-ISP2
+/ip service
+set ftp disabled=yes
+set telnet disabled=yes
+set www disabled=yes
+set api disabled=yes
+set api-ssl disabled=yes
+/routing bgp connection
+add instance=bgp1 local.address=10.200.1.1 .role=ebgp name=to-EDGE \
+    output.default-originate=always .network=NET-ISP2 remote.address=\
+    10.200.1.2 .as=65000
+/system identity
+set name=ISP-2
+```
 
 ### 3.3 Router EDGE
 
 - **Rol:** Borde perimetral multi-homing y Gateway exterior (AS 65000).
-- **Script asociado:** `configs/edge.rsc`
-- **Parámetros clave:** Loopback `3.3.3.3/32`, eBGP dual con TCP-MD5, OSPF Área 0 hacia Cores, Firewall con estado y NAT Masquerade.
+- **Script asociado:** `backups/F3/EDGE-F3.rsc`
+- **Parámetros clave:** Loopback `3.3.3.3/32`, eBGP dual con TCP-MD5 hacia ISP-1 (`CLAVE_BGP_ISP1`) e ISP-2 (`CLAVE_BGP_ISP2`), filtros de entrada para prioridad de salida (`ISP1-IN` local-pref 200, `ISP2-IN` local-pref 100), redistribución OSPF→BGP con filtro `BGP-OUT` (`192.168.0.0/16`), inyección de ruta default a OSPF (`originate-default=if-installed`), OSPF Área 0 con MD5 hacia Cores, y Firewall perimetral con estado (input y forward: BGP, OSPF, ICMP, anti-spoofing y restricción total de gestión desde WAN).
+
+```routeros
+# Script de configuración consolidado F3: backups/F3/EDGE-F3.rsc
+# 2026-10-26 05:59:44 by RouterOS 7.24.1
+#
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no
+set [ find default-name=ether2 ] disable-running-check=no
+set [ find default-name=ether3 ] disable-running-check=no
+set [ find default-name=ether4 ] disable-running-check=no
+/interface list
+add name=WAN
+/routing bgp instance
+add as=65000 disabled=no name=bgp1 router-id=3.3.3.3
+/routing ospf instance
+add name=ospf1 originate-default=if-installed router-id=3.3.3.3
+/routing ospf area
+add instance=ospf1 name=backbone
+/user group
+add name=superadmin policy="local,telnet,ssh,ftp,reboot,read,write,policy,test\
+    ,winbox,password,web,sniff,sensitive,api,romon,rest-api"
+/ip neighbor discovery-settings
+set discover-interface-list=none
+/interface list member
+add interface=ether1 list=WAN
+add interface=ether2 list=WAN
+/ip address
+add address=3.3.3.3 comment="Loopback / Router-ID" interface=lo network=\
+    3.3.3.3
+add address=10.100.1.2/30 comment="WAN ISP-1" interface=ether1 network=\
+    10.100.1.0
+add address=10.200.1.2/30 comment="WAN ISP-2" interface=ether2 network=\
+    10.200.1.0
+add address=10.10.1.1/30 comment=EDGE-CORE-1 interface=ether3 network=\
+    10.10.1.0
+add address=10.10.2.1/30 comment=EDGE-CORE-2 interface=ether4 network=\
+    10.10.2.0
+/ip dhcp-client
+add interface=ether1 name=client1
+/ip firewall address-list
+add address=10.10.0.0/16 list=MGMT
+add address=10.20.0.0/16 list=MGMT
+add address=10.30.0.0/16 list=MGMT
+add address=192.168.0.0/16 list=MGMT
+add address=192.168.0.0/16 list=SPOOF
+add address=172.16.0.0/12 list=SPOOF
+/ip firewall filter
+add action=accept chain=input comment=est/rel connection-state=\
+    established,related,untracked
+add action=drop chain=input comment="drop invalid" connection-state=invalid
+add action=accept chain=input comment="BGP ISP-1" dst-port=179 in-interface=\
+    ether1 protocol=tcp src-address=10.100.1.1
+add action=accept chain=input comment="BGP ISP-2" dst-port=179 in-interface=\
+    ether2 protocol=tcp src-address=10.200.1.1
+add action=accept chain=input comment="OSPF CORE-1" in-interface=ether3 \
+    protocol=ospf
+add action=accept chain=input comment="OSPF CORE-2" in-interface=ether4 \
+    protocol=ospf
+add action=accept chain=input comment=ICMP protocol=icmp
+add action=accept chain=input comment="gestion solo desde interno" dst-port=\
+    22,8291 in-interface-list=!WAN protocol=tcp src-address-list=MGMT
+add action=drop chain=input comment="drop resto desde WAN" in-interface-list=\
+    WAN
+add action=accept chain=forward comment=est/rel connection-state=\
+    established,related,untracked
+add action=drop chain=forward comment="drop invalid" connection-state=invalid
+add action=drop chain=forward comment="anti-spoof: privadas desde WAN" \
+    in-interface-list=WAN src-address-list=SPOOF
+add action=drop chain=forward comment="nada nuevo desde WAN hacia la LAN" \
+    connection-state=new in-interface-list=WAN
+/ip service
+set ftp disabled=yes
+set ssh available-from=10.10.0.0/16,10.20.0.0/16,10.30.0.0/16,192.168.0.0/16
+set telnet disabled=yes
+set www disabled=yes
+set winbox available-from=\
+    10.10.0.0/16,10.20.0.0/16,10.30.0.0/16,192.168.0.0/16
+set api disabled=yes
+set api-ssl disabled=yes
+/routing bgp connection
+add disabled=no input.filter=ISP1-IN instance=bgp1 local.address=10.100.1.2 \
+    .role=ebgp name=to-ISP1 output.filter-chain=BGP-OUT .redistribute=ospf \
+    remote.address=10.100.1.1 .as=65001
+add disabled=no input.filter=ISP2-IN instance=bgp1 local.address=10.200.1.2 \
+    .role=ebgp name=to-ISP2 output.filter-chain=BGP-OUT .redistribute=ospf \
+    remote.address=10.200.1.1 .as=65002
+/routing filter rule
+add chain=ISP1-IN rule="set bgp-local-pref 200; accept"
+add chain=ISP2-IN rule="set bgp-local-pref 100; accept"
+add chain=BGP-OUT rule="if (dst in 192.168.0.0/16) { accept }"
+add chain=BGP-OUT rule=reject
+/routing ospf interface-template
+add area=backbone auth=md5 auth-id=1 interfaces=ether3,ether4
+add area=backbone interfaces=lo passive
+/system identity
+set name=EDGE
+/system logging
+add topics=bgp
+```
 
 ### 3.4 Router CORE-1
 
@@ -559,38 +728,50 @@ Las rutas OSPF de F2 fueron verificadas en los routers de distribución, núcleo
 
 Las entradas mostradas con la marca `+` confirman que RouterOS agrupa los caminos ECMP. No se alteraron los costes OSPF, dado que el resultado de múltiples próximos saltos activos ya está presente en la tabla de rutas. No se interpreta `distance=110` como un coste de interfaz OSPF: es la distancia administrativa mostrada por RouterOS para la ruta aprendida.
 
-### 3.12 eBGP multi-homing con TCP-MD5 y salida por defecto (F3, avance al 25/10/2026)
+### 3.12 eBGP multi-homing con TCP-MD5, salida por defecto y Firewall en EDGE (F3, completado al 25/10/2026)
 
-Se configuraron las dos sesiones eBGP entre EDGE (AS 65000) y los proveedores ISP-1 (AS 65001) e ISP-2 (AS 65002), con protección TCP-MD5 en cada peering. Esta versión de RouterOS 7 utiliza **instancias BGP**: el AS local y el `router-id` se definen en `/routing bgp instance`, y cada conexión referencia la instancia con `instance=bgp1`.
+Se completó al 100% la implementación y verificación de la Fase 3, integrando las sesiones eBGP multi-homing protegidas con TCP-MD5, la inyección de ruta por defecto hacia el IGP interno, la salida efectiva a Internet desde los hosts de usuario y servidor, el firewall de inspección con estado en el perímetro y la prueba negativa de autenticación:
 
-| Router | AS | Instancia / Router-ID | Conexión | Vecino | Política aplicada |
-| :--- | :---: | :---: | :--- | :--- | :--- |
-| ISP-1 | 65001 | `bgp1` / `1.1.1.1` | `to-EDGE` | EDGE `10.100.1.2` (AS 65000) | `default-originate=always`; anuncia `1.1.1.1/32` mediante la lista `NET-ISP1`. |
-| ISP-2 | 65002 | `bgp1` / `2.2.2.2` | `to-EDGE` | EDGE `10.200.1.2` (AS 65000) | `default-originate=always`; anuncia `2.2.2.2/32` mediante la lista `NET-ISP2`. |
-| EDGE | 65000 | `bgp1` / `3.3.3.3` | `to-ISP1` y `to-ISP2` | ISP-1 `10.100.1.1` y ISP-2 `10.200.1.1` | `input.filter` `ISP1-IN` / `ISP2-IN`, `output.filter-chain=BGP-OUT` y `output.redistribute=ospf`. |
+1. **Topología de Peering eBGP con MikroTik RouterOS v7:**
+   - En RouterOS v7 el AS local y el `router-id` se definen en `/routing bgp instance`, y cada conexión referencia la instancia con `instance=bgp1`.
+   - Se configuraron sesiones independientes con ambos proveedores: ISP-1 (AS 65001) e ISP-2 (AS 65002) hacia EDGE (AS 65000), con claves criptográficas TCP-MD5 (`CLAVE_BGP_ISP1` y `CLAVE_BGP_ISP2`).
+   - Evidencia: `capturas/f3/bgp/edge-bgp-session.png` muestra ambas sesiones en estado `E` (*established*), `prefix-count=2`, identificadores BGP correspondientes y contadores en ascenso.
 
-**Política de rutas en EDGE (filtros de `/routing filter rule`):**
+2. **Políticas de Ruteo e Inyección de Rutas:**
+   - **Preferencia WAN (Inbound):** Mediante filtros `/routing filter rule`, se asignó `set bgp-local-pref 200; accept` en `ISP1-IN` y `set bgp-local-pref 100; accept` en `ISP2-IN`. En consecuencia, la tabla de ruteo de EDGE muestra la ruta por defecto `0.0.0.0/0` activa (`DAb`) por ISP-1 (`10.100.1.1`) y en respaldo pasivo (`Db`) por ISP-2 (`10.200.1.1`), junto a las rutas /32 a las loopbacks `1.1.1.1/32` y `2.2.2.2/32` (`capturas/f3/bgp/edge-bgp-routes.png`).
+   - **Publicación de Prefijos Corporativos (Outbound):** Con `output.redistribute=ospf` y el filtro `BGP-OUT` (`if (dst in 192.168.0.0/16) { accept }` seguido de `reject`), ISP-1 e ISP-2 reciben únicamente los bloques de las LAN internas `192.168.10.0/24` y `192.168.20.0/24` con próximo salto `10.100.1.2` y `10.200.1.2` respectivamente, descartando la exposición de loopbacks o enlaces de tránsito interno (`capturas/f3/bgp/isp-1-bgp-routes.png` e `isp-2-bgp-routes.png`).
+   - **Inyección hacia OSPF:** En EDGE se configuró `/routing ospf instance set ospf1 originate-default=if-installed`, propagando la ruta default aprendida por BGP hacia CORE y DIST con flag `Do` (*Dynamic OSPF*).
 
-- `ISP1-IN`: `set bgp-local-pref 200; accept` (proveedor primario).
-- `ISP2-IN`: `set bgp-local-pref 100; accept` (proveedor de respaldo).
-- `BGP-OUT`: acepta únicamente prefijos dentro de `192.168.0.0/16` (las LAN de USERS y SERVERS aprendidas por OSPF) y rechaza el resto, de modo que no se filtran loopbacks ni enlaces internos hacia los proveedores.
+3. **Verificación de Salida a Internet desde Hosts:**
+   - Desde `PC-USER` (`192.168.10.100`) y `SRV` (`192.168.20.100`), se ejecutaron pruebas de alcance ICMP y trazas:
+     - Ping exitoso a loopback de ISP-1 (`1.1.1.1`) y loopback de ISP-2 (`2.2.2.2`) con 0% de pérdida de paquetes.
+     - `trace 1.1.1.1` valida la cadena completa de saltos jerárquicos: Host → DIST (`192.168.10.2`) → CORE (`10.30.1.1`) → EDGE (`10.10.1.1`) → ISP-1 (`10.100.1.1`).
+     - Evidencias: `capturas/f3/conectividad/pc-user-ping-isp.png` y `capturas/f3/conectividad/srv-ping-isp.png`.
 
-**Default hacia el dominio OSPF:** en EDGE se ejecutó `/routing ospf instance set ospf1 originate-default=if-installed`, para que la ruta por defecto aprendida por BGP se anuncie hacia CORE y DIST.
+4. **Firewall Perimetral y Protección en EDGE:**
+   - **Restricción de Servicios de Gestión:** SSH y WinBox configurados para escuchar únicamente desde las subredes internas autorizadas (`10.10.0.0/16`, `10.20.0.0/16`, `10.30.0.0/16`, `192.168.0.0/16`), protegiendo el plano de administración.
+   - **Cadena `input`:**
+     - Acepta conexiones establecidas, relacionadas y no rastreadas (`est/rel`).
+     - Descarta paquetes con estado inválido (`drop invalid`).
+     - Permite BGP (TCP dst-port 179) explícitamente desde los peers WAN `10.100.1.1` y `10.200.1.1`.
+     - Permite OSPF únicamente por las interfaces internas conectadas al Core (`ether3`, `ether4`).
+     - Permite tráfico ICMP para diagnóstico.
+     - Permite gestión SSH/WinBox solo desde la lista `MGMT` y condicionado a interfaces no WAN (`in-interface-list=!WAN`).
+     - Descarta todo el tráfico restante proveniente de WAN (`in-interface-list=WAN`). Se verificó que un intento de conexión SSH desde ISP-1 hacia EDGE finaliza en timeout.
+   - **Cadena `forward`:**
+     - Acepta conexiones establecidas y relacionadas (`est/rel`).
+     - Descarta conexiones en estado inválido (`drop invalid`).
+     - Filtro anti-spoofing perimetral: descarta paquetes que ingresen por la lista `WAN` con direcciones origen privadas (`SPOOF`: `192.168.0.0/16`, `172.16.0.0/12`).
+     - Bloquea cualquier intento de iniciar nuevas conexiones desde el exterior hacia las redes internas (`connection-state=new in-interface-list=WAN`).
+   - Evidencia: `capturas/f3/firewall/edge-firewall.png` muestra el set completo de reglas (0 a 12) con contadores de paquetes y bytes incrementando activamente.
 
-**Verificación realizada:**
+5. **Prueba de Seguridad Negativa BGP (Discordancia de Clave TCP-MD5):**
+   - En ISP-2 se modificó intencionalmente la clave BGP a un valor erróneo: `/routing bgp connection set to-EDGE tcp-md5-key=CLAVE_INCORRECTA`.
+   - Inmediatamente, la sesión `to-ISP2-1` en EDGE cayó perdiendo el estado `ESTABLISHED`, pasando a estados `connect`/`active` sin poder concretar el handshake TCP, evidenciando el rechazo a nivel kernel por firma MD5 discordante.
+   - Al restablecer la clave correcta (`CLAVE_BGP_ISP2`), la sesión restableció su estado `ESTABLISHED` automáticamente.
+   - Evidencia: `capturas/f3/bgp/bgp-clave-incorrecta.png`.
 
-1. **Sesiones en EDGE:** `/routing bgp session print` muestra las dos sesiones en estado `E` (*established*): `to-ISP1-1` con el vecino `10.100.1.1` (AS 65001, id `1.1.1.1`) y `to-ISP2-1` con el vecino `10.200.1.1` (AS 65002, id `2.2.2.2`). Ambas muestran los filtros `ISP1-IN` / `ISP2-IN` y `BGP-OUT` aplicados y `prefix-count=2`.
-2. **Rutas BGP en EDGE:** `/ip route print where bgp` muestra dos rutas `0.0.0.0/0`, una por `10.100.1.1` (ISP-1, activa, flag `A`) y otra por `10.200.1.1` (ISP-2, inactiva), ambas con distancia 20. También aparecen activas `1.1.1.1/32` (por ISP-1) y `2.2.2.2/32` (por ISP-2). La elección de ISP-1 como salida por defecto es coherente con el `local-pref` 200 frente a 100.
-3. **Sesiones y rutas en los ISP:** ISP-1 e ISP-2 muestran su sesión con EDGE en `E` (*established*) y aprenden por BGP `192.168.10.0/24` y `192.168.20.0/24` con próximo salto `10.100.1.2` y `10.200.1.2`, respectivamente. Esto confirma la redistribución OSPF→BGP con el filtro `BGP-OUT`.
-
-**Observaciones:**
-
-- Durante la configuración de ISP-1 se registró el error `bad parameter router-id (line 1 column 135)`: en esta versión de RouterOS el `router-id` no es un parámetro de `/routing bgp connection`. Al omitirlo, el comando solicitó el parámetro `instance:`. Se resolvió creando primero la instancia `bgp1` (AS y `router-id`) y referenciándola en la conexión. El error y la corrección quedan visibles en `capturas/f3/bgp/isp-1-bgp-config.png`.
-- El orden de configuración en EDGE fue: filtros (`ISP1-IN`, `ISP2-IN`, `BGP-OUT`), instancia y conexiones, y por último `originate-default`.
-
-**Pendiente de F3 (no verificado a esta fecha):** recepción de la ruta por defecto con flag `Do` en CORE-1, CORE-2, DIST-1 y DIST-2; ping y traceroute desde PC-USER y SRV hacia `1.1.1.1` y `2.2.2.2`; firewall de EDGE (cadenas `input` y `forward`); prueba negativa de clave TCP-MD5 incorrecta; y exports de F3 en `backups/f3/exports/`.
-
-**Evidencias en `capturas/f3/bgp/`:** `isp-1-bgp-config.png`, `isp-2-bgp-config.png`, `edge-filtros-bgp.png`, `edge-bgp-instancia.png`, `edge-ospf-originate-default.png`, `edge-bgp-session-routes.png`, `isp-1-bgp-session-routes.png` e `isp-2-bgp-session-routes.png`.
+6. **Exports de Respaldo:** Las configuraciones resultantes libres de datos sensibles fueron resguardadas en `backups/F3/`: `EDGE-F3.rsc`, `ISP-1-F3.rsc` e `ISP-2-F3.rsc`.
 
 ---
 
@@ -664,9 +845,9 @@ Cada drill se ejecuta siguiendo la metodología de ingeniería de resiliencia: *
 | :---------------------------- | :----------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Hardening de Servicios**    | Los 7 routers CHR                    | Escaneo nmap perimetral confirma que puertos Telnet (23), HTTP (80) y API (8728) se encuentran estrictamente cerrados o filtrados.                                                                         |
 | **Autenticación OSPF MD5**    | EDGE, CORE-1, CORE-2, DIST-1, DIST-2 | **Prueba Negativa:** Se altera la clave MD5 en un extremo del enlace. La adyacencia cae inmediatamente a estado `Down` o queda bloqueada en `ExStart`, registrando error de autenticación en `/log print`. |
-| **Autenticación BGP TCP-MD5** | EDGE, ISP-1, ISP-2                   | **Prueba Negativa:** Se modifica la clave MD5 en la sesión BGP de EDGE. La conexión TCP es rechazada en el socket (SYN rechazado) y la sesión no alcanza estado `Established`.                             |
+| **Autenticación BGP TCP-MD5** | EDGE, ISP-1, ISP-2                   | **Protección del Plano de Control WAN (RFC 2385):** Protege los sockets BGP (TCP 179) contra inyección de rutas espurias, secuestro de prefijos (*BGP hijacking*) y ataques de denegación por desincronización con paquetes TCP RST fraudulentos. **Prueba Negativa Ejecutada:** Se indujo discrepancia de firma en ISP-2 configurando `CLAVE_INCORRECTA`; el kernel descartó los paquetes BGP por falla de firma MD5 y la sesión `to-ISP2-1` degradó inmediatamente a estados cíclicos `connect`/`active` sin alcanzar `ESTABLISHED`, reanudándose de inmediato al reponer la clave correcta `CLAVE_BGP_ISP2` (`capturas/f3/bgp/bgp-clave-incorrecta.png`). |
 | **Autenticación VRRP**        | DIST-1, DIST-2                       | Se inyecta una trama de anuncio con contraseña errónea; el nodo la descarta y no altera su estado Master/Backup.                                                                                           |
-| **Firewall Perimetral**       | Router EDGE                          | Inspección con estado: se verifica que paquetes entrantes no solicitados desde la interfaz de ISP sean bloqueados en cadena `forward`.                                                                     |
+| **Firewall / ACL en EDGE**    | Router EDGE                          | **Protección Perimetral y Anti-Spoofing:** Inspección con estado en cadenas `input` y `forward`. En `input`: política de mínimo privilegio que solo acepta BGP desde vecinos autorizados, OSPF por uplinks internos, ICMP y gestión SSH/Winbox exclusivamente desde la lista `MGMT` por interfaces internas `!WAN`, aplicando drop al resto desde WAN (verificado mediante timeout en SSH desde ISP-1). En `forward`: filtrado anti-spoofing estricto para direcciones privadas RFC 1918 provenientes de WAN (`SPOOF`) y descarte absoluto de intentos de conexión nueva (`new`) desde WAN hacia las LANs internas (`capturas/f3/firewall/edge-firewall.png`). |
 
 ---
 
@@ -700,11 +881,18 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 | 25/10/2026 | Juan Ignacio Atencio (R4) | `44875a8` — `ops(backup): agregar exports saneados de F2` | Versionar los siete exports de RouterOS de F2 en `backups/f2/exports/`, sin incluir las claves sensibles ocultas por el export normal. | `git revert 44875a8` |
 | 25/10/2026 | Juan Ignacio Atencio (R4) | `cf16484` — `docs(f2): sincronizar memoria, backlog y README` | Actualizar el estado de F2, el árbol de directorios y las referencias documentales de evidencias y backups. | `git revert cf16484` |
 | 25/10/2026 | Juan Ignacio Atencio (R4) | `ec10e32` — `chore(backup): depurar metadatos de exports F2` | Retirar las líneas de `system id` de los siete exports de F2. | `git revert ec10e32` |
+| 25/10/2026 | Ian Vidmar (R3) | `3020adf` — `docs(f3): agrego evidencias de eBGP multi-homing y actualizo memoria y backlog` | Incorporar configuraciones iniciales de peering BGP en ISP-1, ISP-2 y EDGE, y avance de documentación F3. | `git revert 3020adf` |
+| 25/10/2026 | Patricio Borda (R2) | `feat(bgp): agrego eBGP con TCP-MD5 en ISP-1` | Incorporar rutas aprendidas de LANs corporativas por BGP en ISP-1 con autenticación TCP-MD5 verificada. | `git revert HEAD~4` |
+| 25/10/2026 | Patricio Borda (R2) | `feat(bgp): agrego eBGP con TCP-MD5 en ISP-2` | Incorporar rutas aprendidas de LANs corporativas por BGP en ISP-2 con autenticación TCP-MD5 verificada. | `git revert HEAD~3` |
+| 25/10/2026 | Patricio Borda (R2) | `feat(bgp): agrego eBGP multi-homing y redistribución OSPF BGP en EDGE` | Consolidar sesiones BGP en estado ESTABLISHED, tabla de rutas con preferencia por ISP-1, conectividad a Internet desde hosts y prueba de seguridad negativa ante clave errónea. | `git revert HEAD~2` |
+| 25/10/2026 | Patricio Borda (R2) | `feat(firewall): agrego filtros de input y forward en EDGE` | Implementar y evidenciar el conjunto completo de reglas de firewall con estado en EDGE (input y forward con contadores activos). | `git revert HEAD~1` |
+| 25/10/2026 | Patricio Borda (R2 + R5) | `ops(backup): backup post-F3` | Versionar exports saneados de F3 en backups/F3/ y consolidar memoria técnica, backlog y README para el cierre formal de la Fase 3. | `git revert HEAD` |
 
 ### 6.2 Política de Respaldo y Evidencia de Restauración
 
 - **Exports de F1:** los siete archivos `.rsc` se versionan en `backups/f1/exports/`. Se generaron sin `show-sensitive` y se revisaron para confirmar la ausencia de secretos y metadatos de hardware de simulación (`system id`).
 - **Exports de F2 (25/10/2026):** los siete archivos `.rsc` están versionados en `backups/f2/exports/`: `isp-1-f2.rsc`, `isp-2-f2.rsc`, `edge-f2.rsc`, `core-1-f2.rsc`, `core-2-f2.rsc`, `dist-1-f2.rsc` y `dist-2-f2.rsc`. Se generaron mediante `/export` sin `show-sensitive` y se incorporaron en el commit `44875a8` (`ops(backup): agregar exports saneados de F2`). Los exports documentan los parámetros no sensibles que RouterOS muestra por defecto; las claves ocultas deben conservarse por separado fuera del repositorio público.
+- **Exports de F3 (25/10/2026):** los tres archivos de configuración `.rsc` correspondientes a la capa de borde y proveedores WAN están versionados en `backups/F3/`: `EDGE-F3.rsc`, `ISP-1-F3.rsc` e `ISP-2-F3.rsc`. Se generaron sin `show-sensitive` y se depuraron metadatos de hardware de simulación (`system id`), verificando la protección de secretos conforme a las normas de seguridad del laboratorio.
 - **Backups binarios:** los siete archivos `*-F1-post-hardening.backup` fueron generados en cada uno de los routers y almacenados en un repositorio offline privado cifrado, fuera del alcance del control de versiones público para resguardar credenciales y configuraciones sensibles del plano de gestión.
 - **Validación de Restauración en Nodo de Test (R2 - Patricio Borda):** para dar estricto cumplimiento al criterio de aceptación de F1, se desplegó una instancia MikroTik CHR aislada (`TEST-RESTORE-CHR`) conectada únicamente a una red host-only de gestión. Se procedió a cargar el archivo binario `isp-1-F1-post-hardening.backup` mediante SFTP/WinBox y se ejecutó:
   ```routeros
@@ -765,13 +953,16 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 
 ### F3 — Enrutamiento externo
 
-- `capturas/f3/bgp/isp-1-bgp-config.png` e `isp-2-bgp-config.png`: configuración de la lista de direcciones, la instancia `bgp1` y la conexión `to-EDGE` con TCP-MD5 en cada ISP. En ISP-1 se observa además el error `bad parameter router-id` y su corrección.
-- `capturas/f3/bgp/edge-filtros-bgp.png`: filtros `ISP1-IN`, `ISP2-IN` y `BGP-OUT` en EDGE.
+- `capturas/f3/bgp/edge-bgp-session.png`: sesiones eBGP establecidas (bandera `E` - *ESTABLISHED*) en EDGE con ISP-1 (AS 65001) e ISP-2 (AS 65002), con contadores y prefijos recibidos (`prefix-count=2`).
+- `capturas/f3/bgp/edge-bgp-routes.png`: tabla de ruteo BGP en EDGE mostrando la ruta por defecto activa (`DAb`) por ISP-1, inactiva (`Db`) por ISP-2 (preferencia `local-pref` 200 vs 100) y loopbacks aprendidas `1.1.1.1/32` y `2.2.2.2/32`.
+- `capturas/f3/bgp/isp-1-bgp-routes.png` e `isp-2-bgp-routes.png`: rutas LAN corporativas `192.168.10.0/24` y `192.168.20.0/24` aprendidas por BGP en ISP-1 e ISP-2 mediante redistribución OSPF y filtro `BGP-OUT`.
+- `capturas/f3/conectividad/pc-user-ping-isp.png` y `srv-ping-isp.png`: pruebas de conectividad ICMP (pings a `1.1.1.1` y `2.2.2.2`) y traceroutes exitosos desde hosts atravesando toda la jerarquía de red (DIST → CORE → EDGE → ISP).
+- `capturas/f3/firewall/edge-firewall.png`: conjunto completo de reglas de firewall (0 a 12) en cadenas `input` y `forward` en EDGE con contadores activos de paquetes y bytes.
+- `capturas/f3/bgp/bgp-clave-incorrecta.png`: prueba de seguridad negativa donde la sesión BGP con ISP-2 pierde el estado `ESTABLISHED` y degrada a `connect`/`active` al alterar la clave TCP-MD5 (`CLAVE_INCORRECTA`).
+- `capturas/f3/bgp/isp-1-bgp-config.png` e `isp-2-bgp-config.png`: configuración inicial de instancias BGP, listas y conexiones en ambos ISPs.
+- `capturas/f3/bgp/edge-filtros-bgp.png`: filtros de ruteo `ISP1-IN`, `ISP2-IN` y `BGP-OUT` en EDGE.
 - `capturas/f3/bgp/edge-bgp-instancia.png`: creación de la instancia `bgp1` (AS 65000, `router-id` 3.3.3.3) en EDGE.
-- `capturas/f3/bgp/edge-ospf-originate-default.png`: `originate-default=if-installed` en la instancia `ospf1` de EDGE.
-- `capturas/f3/bgp/edge-bgp-session-routes.png`: sesiones eBGP en `established` y rutas BGP (`0.0.0.0/0`, `1.1.1.1/32`, `2.2.2.2/32`) en EDGE.
-- `capturas/f3/bgp/isp-1-bgp-session-routes.png` e `isp-2-bgp-session-routes.png`: sesión `established` y rutas `192.168.10.0/24` y `192.168.20.0/24` aprendidas por BGP en cada ISP.
-- _Previstas, aún sin incorporar:_ `pc-user-ping-isp.png` y `srv-ping-isp.png` (salida a «Internet»), `edge-firewall.png` (firewall de EDGE) y `bgp-clave-incorrecta.png` (prueba negativa TCP-MD5).
+- `capturas/f3/bgp/edge-ospf-originate-default.png`: inyección de ruta por defecto condicional `originate-default=if-installed` en la instancia OSPF de EDGE.
 
 ### F4 — Pruebas de contingencia
 

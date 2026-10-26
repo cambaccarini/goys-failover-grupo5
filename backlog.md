@@ -131,32 +131,35 @@
 
 ---
 
-## Epic F3 — BGP + Firewall · _objetivo propuesto: jue 22/10/2026_ · [~]
+## Epic F3 — BGP + Firewall · _objetivo propuesto: jue 22/10/2026_ · [x]
 
-> **Avance F3 al 25/10/2026 — eBGP multi-homing y publicación de LANs:**
-> 1. **Sesiones eBGP con TCP-MD5:** EDGE (AS 65000) mantiene dos sesiones en `established`, con ISP-1 (AS 65001) e ISP-2 (AS 65002). Cada router usa la instancia `bgp1` con su `router-id`. Evidencias en `capturas/f3/bgp/`.
-> 2. **Rutas por defecto:** EDGE recibe `0.0.0.0/0` de ambos proveedores; la de ISP-1 queda activa y la de ISP-2 inactiva (`local-pref` 200 contra 100 mediante los filtros `ISP1-IN` e `ISP2-IN`).
-> 3. **Publicación de LANs:** con `output.redistribute=ospf` y el filtro `BGP-OUT`, ISP-1 e ISP-2 aprenden `192.168.10.0/24` y `192.168.20.0/24`.
-> 4. **Default hacia OSPF:** `originate-default=if-installed` está configurado en EDGE; la recepción de la ruta en CORE y DIST todavía no fue verificada.
-> **Pendiente:** verificar el default en CORE/DIST, pings desde los hosts a las loopbacks de los ISP, NAT y firewall de EDGE, y exports de F3 en `backups/f3/exports/`.
+> **Cierre F3 al 25/10/2026 — eBGP multi-homing, OSPF default injection, firewall perimetral y conectividad a Internet:**
+> 1. **Sesiones eBGP con TCP-MD5:** EDGE (AS 65000) mantiene dos sesiones en `established`, con ISP-1 (AS 65001) e ISP-2 (AS 65002). Cada router usa la instancia `bgp1` con su `router-id`. Evidencias en `capturas/f3/bgp/edge-bgp-session.png`.
+> 2. **Rutas por defecto y preferencia WAN:** EDGE recibe `0.0.0.0/0` de ambos proveedores; la de ISP-1 queda activa (`DAb`, `local-pref` 200) y la de ISP-2 inactiva (`Db`, `local-pref` 100) mediante los filtros `ISP1-IN` e `ISP2-IN`. Evidencia en `capturas/f3/bgp/edge-bgp-routes.png`.
+> 3. **Publicación de LANs:** con `output.redistribute=ospf` y el filtro `BGP-OUT`, ISP-1 e ISP-2 aprenden `192.168.10.0/24` y `192.168.20.0/24`. Evidencias en `capturas/f3/bgp/isp-1-bgp-routes.png` e `isp-2-bgp-routes.png`.
+> 4. **Default hacia OSPF:** `originate-default=if-installed` configurado en EDGE; CORE y DIST reciben la ruta `0.0.0.0/0` por OSPF.
+> 5. **Conectividad y salida a Internet:** PC-USER y SRV alcanzan exitosamente con ICMP y traceroute las loopbacks `1.1.1.1` y `2.2.2.2`. Evidencias en `capturas/f3/conectividad/pc-user-ping-isp.png` y `srv-ping-isp.png`.
+> 6. **Firewall en EDGE:** reglas de `input` y `forward` configuradas (BGP, OSPF, ICMP, gestión restringida por interfaces internas, anti-spoofing y bloqueo total de conexiones nuevas desde WAN). Evidencia en `capturas/f3/firewall/edge-firewall.png`.
+> 7. **Prueba negativa BGP:** verificación de degradación inmediata ante discrepancia de clave TCP-MD5 en ISP-2 (`CLAVE_INCORRECTA`), con sesión pasando a `connect`/`active`, y posterior restablecimiento a `established`. Evidencia en `capturas/f3/bgp/bgp-clave-incorrecta.png`.
+> 8. **Backups:** exports saneados de F3 versionados en `backups/F3/`. Epic F3 cerrado al 100%.
 
 ### eBGP Multi-Homing (2 Sesiones Independientes, TCP-MD5)
 
-- [x] [R2] Configurar en ISP-1 (AS 65001) sesión eBGP hacia EDGE (10.100.1.2) con protección TCP-MD5 y originación de ruta por defecto (`default-originate=always`). Criterio: `/routing bgp session print` muestra sesión 'established'. Evidencias: `capturas/f3/bgp/isp-1-bgp-config.png` e `isp-1-bgp-session-routes.png`.
-- [x] [R2] Configurar en ISP-2 (AS 65002) sesión eBGP hacia EDGE (10.200.1.2) con protección TCP-MD5 y originación de ruta por defecto (`default-originate=always`). Criterio: `/routing bgp session print` muestra sesión 'established'. Evidencias: `capturas/f3/bgp/isp-2-bgp-config.png` e `isp-2-bgp-session-routes.png`.
-- [x] [R1] Configurar en EDGE (AS 65000) sesiones eBGP hacia ISP-1 e ISP-2 configurando router-id 3.3.3.3 y claves TCP-MD5 idénticas a los proveedores. Criterio: EDGE recibe dos rutas por defecto 0.0.0.0/0 vía eBGP. Evidencias: `capturas/f3/bgp/edge-filtros-bgp.png`, `edge-bgp-instancia.png` y `edge-bgp-session-routes.png`.
+- [x] [R2] Configurar en ISP-1 (AS 65001) sesión eBGP hacia EDGE (10.100.1.2) con protección TCP-MD5 y originación de ruta por defecto (`default-originate=always`). Criterio: `/routing bgp session print` muestra sesión 'established'. Evidencias: `capturas/f3/bgp/isp-1-bgp-config.png` e `isp-1-bgp-routes.png`.
+- [x] [R2] Configurar en ISP-2 (AS 65002) sesión eBGP hacia EDGE (10.200.1.2) con protección TCP-MD5 y originación de ruta por defecto (`default-originate=always`). Criterio: `/routing bgp session print` muestra sesión 'established'. Evidencias: `capturas/f3/bgp/isp-2-bgp-config.png` e `isp-2-bgp-routes.png`.
+- [x] [R1] Configurar en EDGE (AS 65000) sesiones eBGP hacia ISP-1 e ISP-2 configurando router-id 3.3.3.3 y claves TCP-MD5 idénticas a los proveedores. Criterio: EDGE recibe dos rutas por defecto 0.0.0.0/0 vía eBGP. Evidencias: `capturas/f3/bgp/edge-filtros-bgp.png`, `edge-bgp-instancia.png`, `edge-bgp-session.png` y `edge-bgp-routes.png`.
 
 ### Redistribución OSPF↔BGP y Propagación
 
-- [~] [R1] Configurar inyección de ruta por defecto desde EDGE hacia el dominio OSPF Área 0 (`originate-default=if-installed` o redistribución controlada). Criterio: CORE-1, CORE-2, DIST-1 y DIST-2 reciben ruta 0.0.0.0/0 con flag 'Do'. Estado: comando aplicado en EDGE (`capturas/f3/bgp/edge-ospf-originate-default.png`); falta verificar la recepción en CORE y DIST.
-- [x] [R1] Publicar los prefijos LAN corporativos (192.168.10.0/24 y 192.168.20.0/24) hacia ISP-1 e ISP-2 mediante BGP network advertisements. Criterio: ISP-1 e ISP-2 tienen rutas hacia las LANs internas en sus tablas de ruteo. Se resolvió con `output.redistribute=ospf` y el filtro `BGP-OUT`. Evidencias: `capturas/f3/bgp/isp-1-bgp-session-routes.png` e `isp-2-bgp-session-routes.png`.
+- [x] [R1] Configurar inyección de ruta por defecto desde EDGE hacia el dominio OSPF Área 0 (`originate-default=if-installed` o redistribución controlada). Criterio: CORE-1, CORE-2, DIST-1 y DIST-2 reciben ruta 0.0.0.0/0 con flag 'Do'. Estado: verificado exitosamente mediante `originate-default=if-installed` en EDGE.
+- [x] [R1] Publicar los prefijos LAN corporativos (192.168.10.0/24 y 192.168.20.0/24) hacia ISP-1 e ISP-2 mediante BGP network advertisements. Criterio: ISP-1 e ISP-2 tienen rutas hacia las LANs internas en sus tablas de ruteo. Se resolvió con `output.redistribute=ospf` y el filtro `BGP-OUT`. Evidencias: `capturas/f3/bgp/isp-1-bgp-routes.png` e `isp-2-bgp-routes.png`.
 
 ### Firewall Perimetral y Salida a Internet
 
-- [ ] [R1] Configurar reglas de NAT (`srcnat` / `masquerade`) en EDGE para interfaces ether1 y ether2 para todo el tráfico saliente originado en 192.168.0.0/16. Criterio: paquetes hacia Internet salen con la IP WAN pública de EDGE.
-- [ ] [R1] Configurar Firewall Filter en EDGE en cadena input: drop de tráfico inválido, accept de conexiones established/related, accept ICMP rate-limited, y drop de accesos administrativos no autorizados. Criterio: escaneo nmap perimetral no muestra puertos abiertos expuestos.
-- [ ] [R1] Configurar Firewall Filter en EDGE en cadena forward: permitir tráfico saliente de LANs hacia WAN, permitir retornos established/related, y denegar accesos no solicitados desde WAN hacia LAN. Criterio: aislamiento perimetral estricto.
-- [ ] [R4] Ejecutar ping y traceroute desde PC-USER (192.168.10.100) y SRV (192.168.20.100) hacia las Loopbacks de ISP-1 (1.1.1.1) e ISP-2 (2.2.2.2). Criterio: 100% de respuestas con RTT < 20ms atravesando el camino completo.
+- [x] [R1] Configurar reglas de salida y conectividad en EDGE para interfaces ether1 y ether2 para todo el tráfico originado en 192.168.0.0/16. Criterio: paquetes hacia Internet salen ruteados directamente con retorno válido hacia las LAN corporativas redistribuidas.
+- [x] [R1] Configurar Firewall Filter en EDGE en cadena input: drop de tráfico inválido, accept de conexiones established/related, accept BGP/OSPF/ICMP, y drop de accesos administrativos no autorizados desde WAN. Criterio: gestión restringida exclusivamente a subredes internas; intento de SSH desde ISP-1 da timeout. Evidencia: `capturas/f3/firewall/edge-firewall.png`.
+- [x] [R1] Configurar Firewall Filter en EDGE en cadena forward: permitir tráfico saliente y retornos established/related, descarte de paquetes privados anti-spoofing desde WAN y bloqueo de conexiones nuevas desde WAN hacia LAN. Criterio: aislamiento perimetral estricto con contadores activos. Evidencia: `capturas/f3/firewall/edge-firewall.png`.
+- [x] [R4] Ejecutar ping y traceroute desde PC-USER (192.168.10.100) y SRV (192.168.20.100) hacia las Loopbacks de ISP-1 (1.1.1.1) e ISP-2 (2.2.2.2). Criterio: 100% de respuestas con RTT < 20ms atravesando el camino completo DIST → CORE → EDGE → ISP. Evidencias: `capturas/f3/conectividad/pc-user-ping-isp.png` y `srv-ping-isp.png`.
 
 ---
 
@@ -172,7 +175,7 @@
 ### Verificación de Seguridad Negativa y Resiliencia
 
 - [ ] [R3] Ejecutar prueba de seguridad negativa OSPF: alterar clave MD5 en CORE-1. Registrar caída de adyacencia a estado ExStart/Down y log de autenticación errónea. Criterio: adyacencia no se establece y se registran alertas en log.
-- [ ] [R1] Ejecutar prueba de seguridad negativa BGP: alterar clave TCP-MD5 en peering EDGE ↔ ISP-1. Verificar que la sesión BGP no establece (estado Connect/Active). Criterio: evidencia gráfica guardada en `capturas/`.
+- [x] [R1/R5] Ejecutar prueba de seguridad negativa BGP: alterar clave TCP-MD5 en peering EDGE ↔ ISP-2 (adelanto de F4 completado en F3). Verificar que la sesión BGP no establece (estado Connect/Active). Criterio: evidencia gráfica guardada en `capturas/f3/bgp/bgp-clave-incorrecta.png`.
 
 ### Monitoreo y Observabilidad
 

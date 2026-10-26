@@ -27,9 +27,7 @@ El presente laboratorio aborda el diseño, aprovisionamiento, hardening, operaci
 
 ### Pilares Arquitectónicos y Protocolos:
 
-> **Estado al 25/10/2026:** F1 está cerrado. F2 está completada: OSPF v2 Área 0 con MD5 y adyacencias `Full` en los cinco routers internos; VRRP v2 con autenticación simple y load-sharing activo/activo; conectividad L3 bidireccional entre PC-USER y SRV; propagación de ambas redes LAN hasta CORE-1, CORE-2 y EDGE; y ECMP confirmado desde DIST-1 y DIST-2 hacia `3.3.3.3/32`. Se versionaron los siete exports saneados en `backups/f2/exports/`. La prueba rápida de failover VRRP fue verificada; los drills formales y el monitoreo corresponden a F4.
->
-> **Avance F3 al 25/10/2026:** las dos sesiones eBGP de EDGE con ISP-1 (AS 65001) e ISP-2 (AS 65002) están en `established` con TCP-MD5; EDGE recibe dos rutas por defecto (activa por ISP-1) y ambos ISP aprenden las LAN `192.168.10.0/24` y `192.168.20.0/24`. Falta verificar el default en CORE/DIST, la salida desde los hosts, el firewall de EDGE y la prueba negativa de clave. Evidencias en `capturas/f3/bgp/`.
+> **Estado al 25/10/2026:** F1 y F2 están completados. F3 (eBGP Multi-Homing + Firewall en EDGE) ha sido completado y verificado al 100%: sesiones eBGP establecidas con TCP-MD5 hacia ISP-1 e ISP-2, preferencia local (200 para ISP-1 y 100 para ISP-2), redistribución OSPF a BGP y filtrado BGP-OUT de LANs, inyección de ruta default hacia OSPF (`originate-default=if-installed`), conectividad verificada desde PC-USER y SRV hacia loopbacks de ISP, firewall perimetral en EDGE con inspección con estado, anti-spoofing y restricción de gestión por WAN, prueba de seguridad negativa de clave incorrecta en BGP, y backups exportados en `backups/F3/`. Evidencias en `capturas/f3/`.
 
 1. **Redundancia de Primer Salto (FHRP - Layer 1 de Failover):**
    - Implementación de **VRRP v2** en la capa de Distribución con balanceo de carga simétrico (*Active/Active Load-Sharing*):
