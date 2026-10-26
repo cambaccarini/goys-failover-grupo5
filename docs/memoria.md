@@ -3,25 +3,25 @@
 **Cátedra:** Gestión Operativa y Seguridad en Redes (GOYS)  
 **Comisión:** 2026  
 **Grupo:** 5  
-**Fecha de Entrega F0 (Re-entrega):** 10/10/2026  
-**Fecha de Entrega Final (F5):** 23/10/2026  
+**Fecha de Entrega Final (F5):** 23/10/2026 (reajustar por demoras de entrega)      
 **Entorno de Simulación:** GNS3 · MikroTik CHR (RouterOS v7)
 
 ---
 
 ## Integrantes y Matriz de Roles
+# Reasignación de roles del equipo — 26/10/2026
 
-> **Aclaración sobre la composición del equipo y las funciones operativas:**  
-> El Grupo 5 está compuesto por cuatro integrantes: Camila Baccarini (R1), Patricio Borda (R2), Ian Vidmar (R3) y Juan Ignacio Atencio Barrenechea (R4). R5 se conserva como función operativa transversal y no representa a un quinto integrante.
+Desde que empezamos a trabajar con la epic F2, Camila Baccarini (R1) dejó de cursar la materia. Para garantizar la continuidad del laboratorio, reorganizamos las responsabilidades técnicas y operativas de las fases pendientes.
 
-> **Responsable nominal de R5:** Alesandro Patricio Borda (R2), como responsabilidad adicional. Coordina backups y restauraciones, Change Log, registro de evidencias de drills y consolidación de post-mortems. Los responsables técnicos R1–R4 mantienen la ejecución de sus respectivos módulos y entregan los resultados a R5.
+| Integrante | Rol | Responsabilidad técnica | Responsabilidades transversales |
+| :--- | :---: | :--- | :--- |
+| **Juan Ignacio Atencio** | **R1 + R4** | **R1 — Borde/WAN:** EDGE, eBGP multi-homing, filtros BGP, redistribución OSPF↔BGP y firewall/NAT. **R4 — Distribución:** DIST-1/DIST-2, VRRP, VLAN 10/20 y conectividad de los hosts. | Coordinación técnica y documental, integración de entregables, control de consistencia de memoria, README, backlog, evidencias y exports. |
+| **Alesandro Patricio Borda** | **R2 + R5 operativo** | **R2 — Proveedores:** ISP-1/ISP-2, sesiones eBGP del lado de los proveedores y rutas por defecto. | Coordinación de backups y restauraciones, Change Log, recopilación de evidencias y consolidación de post-mortems. |
+| **Ian Vidmar** | **R3** | **Core/Backbone:** CORE-1/CORE-2, OSPF Área 0, enlace Core-Core y autenticación MD5. | QA independiente de configuraciones, exports y criterios de aceptación; seguimiento de logging y telemetría; revisión cruzada de los cambios de integración. |
 
-| Integrante                           |  Rol   | Email Institucional / Git                           | Módulo de Infraestructura                                                                                                                                                     | Responsabilidades operativas complementarias                                                                                                                                                                              |
-| :----------------------------------- | :----: | :-------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Camila Baccarini**                 | **R1** | `cambaccarini01@gmail.com`                          | **Líder / Borde-WAN:** Router EDGE (AS 65000), dual-homing eBGP con ISP-1 e ISP-2, redistribución controlada OSPF↔BGP, BGP TCP-MD5, Firewall perimetral y NAT.                | Gobernanza del repositorio Git, control de calidad documental y elaboración del Runbook para Drill 3 (BGP Failover por caída de ISP).                                                                                     |
-| **Alesandro Patricio Borda** | **R2 + R5 operativo** | `PATOEDA@HOTMAIL.COM` | **Proveedores (ISP):** Routers ISP-1 (AS 65001) e ISP-2 (AS 65002), inyección de default route (`default-originate`), eBGP peerings hacia EDGE y loopbacks públicas simuladas. | Responsable operativo de R5: coordina backups/restores, Change Log, evidencias de drills y post-mortems. Conserva la ejecución técnica de backups y restauraciones y el Runbook para Drill 4. |                                                    |
-| **Ian Vidmar**                       | **R3** | `ividmar@alu.frlp.utn.edu.ar`                       | **Core / Backbone:** Routers CORE-1 y CORE-2, OSPF v2 Área 0 backbone en tránsito puro, enlace dedicado `core-core`, autenticación OSPF criptográfica con MD5.                | Aseguramiento de Calidad (QA) de configuraciones, monitoreo y telemetría de red (SNMP / syslog de eventos de adyacencia) y Runbook para Drill 2 (Corte de enlace interno OSPF).                                           |
-| **Juan Ignacio Atencio Barrenechea** | **R4** | `juanignacioatenciobarrenechea@alu.frlp.utn.edu.ar` | **Distribución & FHRP:** Routers DIST-1 y DIST-2, VRRP v2/v3 activo/activo (_load-sharing_ entre VLAN 10 y VLAN 20), autenticación VRRP simple y adyacencias OSPF uplink.     | Despliegue, configuración y pruebas de equipos terminales (PC-USER en VLAN 10 y SRV en VLAN 20), validación de conectividad de primer salto y Runbooks para Drill 1 (Caída de Master VRRP) y Drill 5 (Load-sharing VRRP). |
+R5 continúa como función operativa transversal y no representa un quinto integrante.
+
+La reasignación aplica a tareas futuras y no modifica la autoría histórica de commits, configuraciones ni evidencias. Los cambios críticos del borde y de la integración quedan sujetos a revisión técnica cruzada, para mantener la trazabilidad y la calidad de las entregas.
 
 ---
 
@@ -1018,7 +1018,7 @@ Cada drill se ejecuta siguiendo la metodología de ingeniería de resiliencia: *
 
 #### Drill 3 — BGP: Caída de Proveedor WAN Primario
 
-- **Responsable:** Camila Baccarini (R1)
+- **Responsable:** (R1)
 - **Procedimiento:** Deshabilitar la interfaz `ether1` en `EDGE` conectada a `ISP-1` mientras se monitorea ping hacia `1.1.1.1` y `8.8.8.8`.
 - **Comportamiento Esperado:** La sesión BGP con AS 65001 cae. La tabla de ruteo de `EDGE` conmuta la default route activa hacia el peer `ISP-2` (AS 65002).
 - **Runbook:** Documentado en `runbooks/drill-3.md`.
