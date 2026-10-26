@@ -98,7 +98,7 @@
 > **Cierre F1:** la topología, el direccionamiento, los exports `.rsc` saneados y el snapshot `SNAPSHOT-BASE-F1` están documentados; el snapshot fue restaurado y la conectividad ISP-1 ↔ EDGE quedó verificada. Las catorce capturas de hardening y auditoría fueron incorporadas. El responsable R2 ejecutó satisfactoriamente la prueba de restauración de un backup binario (`.backup`) en un nodo MikroTik CHR aislado de test y confirmó el resguardo offline privado de los 7 respaldos binarios. Epic F1 cerrado al 100%.
 ---
 
-## Epic F2 — VRRP + OSPF · _objetivo propuesto: mié 21/10/2026_ · [~]
+## Epic F2 — VRRP + OSPF · _objetivo propuesto: mié 21/10/2026_ · [x]
 
 > **Avance F2 al 25/10/2026 — OSPF, VRRP, L3, propagación de rutas y ECMP:**
 > 1. **OSPF Área 0 con MD5:** instancia `ospf1`, área `backbone` (0.0.0.0) e interface-templates en EDGE, CORE-1, CORE-2, DIST-1 y DIST-2. Las adyacencias `Full` están verificadas. Evidencias en `capturas/f2/ospf/`.
@@ -127,7 +127,7 @@
 - [x] [R4/R5] Configurar direccionamiento estático en PC-USER (192.168.10.100/24 GW 192.168.10.1) y SRV (192.168.20.100/24 GW 192.168.20.1). Criterio: ping exitoso de cada host a su respectiva IP virtual VRRP.
 - [x] [R4/R5] Realizar ping bidireccional intra-LAN entre PC-USER y SRV. Criterio: 0% de pérdida de paquetes a través del enrutamiento inter-VLAN de distribución.
 - [x] [R3] Verificar ECMP desde DIST-1 y DIST-2 hacia la loopback de EDGE (`3.3.3.3/32`). Criterio: `/ip route print detail where dst-address=3.3.3.3/32` muestra dos próximos saltos OSPF activos de igual preferencia en ambos DIST. Evidencias: `capturas/f2/ospf/dist-1-ping-edge-loopback.png` y `capturas/f2/ospf/dist-2-ecmp-edge-loopback.png`.
-- [ ] [R4/R5] Ejecutar una prueba de failover rápida: mantener ping a `192.168.10.1`, deshabilitar temporalmente `ether3` de DIST-1, verificar que DIST-2 pasa a Master para VRID 10 y reactivar el enlace. Criterio: el gateway virtual vuelve a responder por DIST-2 durante la caída de DIST-1 y el estado original se recupera al reactivar el enlace. Evidencias: `capturas/f2/vrrp/quick-failover-pc-user-ping.png` y `quick-failover-dist2-master.png`.
+- [x] [R4/R5] Ejecutar una prueba de failover rápida: mantener ping a `192.168.10.1`, deshabilitar temporalmente `ether3` de DIST-1, verificar que DIST-2 pasa a Master para VRID 10 y reactivar el enlace. Criterio: el gateway virtual vuelve a responder por DIST-2 durante la caída de DIST-1 y el estado original se recupera al reactivar el enlace. Evidencias: `capturas/f2/vrrp/quick-failover-pc-user-ping.png` y `quick-failover-dist2-master.png`.
 
 ---
 
@@ -153,6 +153,7 @@
 
 - [x] [R1] Configurar inyección de ruta por defecto desde EDGE hacia el dominio OSPF Área 0 (`originate-default=if-installed` o redistribución controlada). Criterio: CORE-1, CORE-2, DIST-1 y DIST-2 reciben ruta 0.0.0.0/0 con flag 'Do'. Estado: verificado exitosamente mediante `originate-default=if-installed` en EDGE.
 - [x] [R1] Publicar los prefijos LAN corporativos (192.168.10.0/24 y 192.168.20.0/24) hacia ISP-1 e ISP-2 mediante BGP network advertisements. Criterio: ISP-1 e ISP-2 tienen rutas hacia las LANs internas en sus tablas de ruteo. Se resolvió con `output.redistribute=ospf` y el filtro `BGP-OUT`. Evidencias: `capturas/f3/bgp/isp-1-bgp-routes.png` e `isp-2-bgp-routes.png`.
+- [x] [R1/R2] Ejecutar prueba negativa de autenticación BGP TCP-MD5 modificando temporalmente la clave en ISP-2. Criterio: EDGE pierde `established` hacia ISP-2, mantiene ISP-1 estable y la sesión recupera `established` al restaurar la clave original. Evidencia: `capturas/f3/bgp/bgp-clave-incorrecta.png`.
 
 ### Firewall Perimetral y Salida a Internet
 
