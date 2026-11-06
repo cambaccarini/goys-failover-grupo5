@@ -1170,11 +1170,24 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 - `capturas/f3/firewall/edge-firewall-config.png`: evidencia de la configuración de las reglas del firewall en EDGE.
 - `capturas/f3/firewall/edge-firewall-updated.png`: evidencia de las reglas actualizadas y sus contadores de paquetes.
 
+### F4 — Avance ejecutado al 06/11/2026
+
+La preparación y los dos primeros drills fueron ejecutados en el laboratorio. **Drill 1 y Drill 2 están completados:** se midieron los tiempos de recuperación correspondientes y los resultados cumplieron los umbrales de aceptación definidos para cada prueba.
+
+**Preparación:** EDGE presentó las dos sesiones eBGP (`ISP-1` y `ISP-2`) en `ESTABLISHED`, ambas con `prefix-count=2`, y las adyacencias OSPF hacia CORE-1 (`ether3`, Router-ID `4.4.4.4`) y CORE-2 (`ether4`, Router-ID `5.5.5.5`) en `Full`. Los roles VRRP iniciales fueron DIST-1 Master de VLAN 10 y DIST-2 Master de VLAN 20. Detalle: `runbooks/preparacion-f4.md`.
+
+**Drill 1 — VRRP:** se deshabilitó `vlan10` en DIST-1. DIST-2 pasó a Master de VRID 10 y quedó Master en ambos VRID durante la contingencia. El ping a `192.168.10.1` mostró respuestas consecutivas en el fragmento compartido. Tras reactivar `vlan10`, DIST-1 recuperó Master de VRID 10 y DIST-2 volvió a Backup. Se midieron el tiempo de interrupción y la pérdida de paquetes; ambos resultados cumplieron los criterios definidos: menos de 3 segundos y no más de 2 paquetes ICMP perdidos. Detalle: `runbooks/drill-1.md`.
+
+**Drill 2 — OSPF:** se deshabilitó `ether3` de EDGE, correspondiente al enlace EDGE–CORE-1 (`10.10.1.0/30`). La adyacencia hacia CORE-1 desapareció y la de CORE-2 por `ether4` permaneció `Full`. Desde PC-USER se recibieron respuestas de `2.2.2.2` para las secuencias 1286–1314 del fragmento aportado, sin pérdidas visibles dentro de ese fragmento; se registró un pico aislado de 41,550 ms. Al reactivar `ether3`, ambas adyacencias quedaron nuevamente `Full`. Se midió el intervalo de convergencia OSPF y el resultado cumplió el umbral establecido de menos de 5 segundos. Detalle: `runbooks/drill-2.md`.
+
+Capturas incorporadas en `capturas/f4/drills/`: preparación BGP/OSPF, roles VRRP y ping del Drill 1, estado OSPF antes/durante/después del corte del Drill 2.
+
 ### F4 — Pruebas de contingencia
 
-- `capturas/f4/drills/drill1-vrrp-failover.png`: evidencia de la conmutación ante la caída de DIST-1.
-- `capturas/f4/drills/drill2-ospf-failover.png`: evidencia de la reconvergencia ante una caída de enlace entre los Core.
-- `capturas/f4/drills/drill3-bgp-failover.png`: evidencia de la conmutación hacia ISP-2 ante la caída del enlace con ISP-1.
+- `capturas/f4/drills/preparacion-edge-bgp-ospf.png`: estado base de las sesiones BGP y vecinos OSPF de EDGE.
+- `capturas/f4/drills/drill-1-estados-vrrp.png` y `drill-1-ping-gateway-vrrp.png`: transición VRRP y respuestas al gateway virtual durante Drill 1.
+- `capturas/f4/drills/drill-2-ospf-antes-del-corte.png`, `drill-2-ospf-durante-el-corte.png` y `drill-2-ospf-enlace-restaurado.png`: caída de la adyacencia EDGE–CORE-1, permanencia de EDGE–CORE-2 y restauración de ambas adyacencias durante Drill 2.
+- Los drills 3 a 5 todavía no fueron ejecutados/documentados. Los valores numéricos puntuales de las mediciones de Drill 1 y Drill 2 no se incluyeron en el material recibido; se deja constancia del cumplimiento confirmado sin inventar cifras.
 
 ---
 

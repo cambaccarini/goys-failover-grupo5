@@ -164,11 +164,12 @@
 
 ---
 
-## Epic F4 — Drills + Monitoreo · _objetivo propuesto: lun 26/10/2026_ · [ ]
-### Los 5 Drills de Failover (Runbook + Medición + Post-Mortem)
+## Epic F4 — Drills + Monitoreo · _objetivo propuesto: lun 26/10/2026_ · [~]
+### Preparación y los 5 Drills de Failover (Runbook + Medición + Post-Mortem)
 
-- [ ] [R4] Ejecutar Drill 1 (VRRP: caída de gateway Master DIST-1): deshabilitar vlan10 en DIST-1 durante ping continuo desde PC-USER. Medir tiempo de conmutación a DIST-2 y registrar post-mortem en `runbooks/drill-1.md`. Criterio: recuperación en < 3s y pérdida <= 2 paquetes ICMP.
-- [ ] [R3] Ejecutar Drill 2 (OSPF: corte de enlace de tránsito interno): deshabilitar enlace EDGE-CORE-1 (10.10.1.0/30) o Core-Core durante tráfico sostenido. Medir tiempo de reconvergencia OSPF y registrar post-mortem en `runbooks/drill-2.md`. Criterio: reconvergencia automática en < 5s sin caída de conectividad de los hosts.
+- [x] [R3/R4/R5] Preparar F4: verificar ambas sesiones BGP y adyacencias OSPF en EDGE, y roles VRRP iniciales en DIST-1/DIST-2. Criterio: peers BGP `ESTABLISHED`, vecinos OSPF `Full` y roles VRRP coincidentes con el diseño. Evidencia: `runbooks/preparacion-f4.md`.
+- [x] [R4] Ejecutar Drill 1 (VRRP: caída de gateway Master DIST-1): deshabilitar `vlan10` en DIST-1 durante ping continuo desde PC-USER. **Completado:** DIST-2 asumió Master de VRID 10 y DIST-1 recuperó sus roles al restaurarse. Se midieron los tiempos y la pérdida de paquetes; los resultados cumplieron los criterios (< 3s de interrupción y <= 2 paquetes ICMP perdidos). Runbook y evidencias: `runbooks/drill-1.md` y `capturas/f4/drills/`.
+- [x] [R3] Ejecutar Drill 2 (OSPF: corte EDGE–CORE-1, `10.10.1.0/30`): deshabilitar `ether3` en EDGE durante ping sostenido. **Completado:** la adyacencia EDGE–CORE-1 cayó, EDGE–CORE-2 permaneció `Full`, se mantuvo la conectividad hacia `2.2.2.2` y ambas adyacencias se recuperaron al restaurar. Se midió el tiempo de convergencia y cumplió el criterio (< 5s). Runbook y evidencias: `runbooks/drill-2.md` y `capturas/f4/drills/`.
 - [ ] [R1] Ejecutar Drill 3 (BGP: caída de proveedor primario ISP-1): cortar ether1 de EDGE hacia ISP-1 durante streaming o ping continuo a 1.1.1.1 / 2.2.2.2. Medir failover hacia ISP-2 y registrar post-mortem en `runbooks/drill-3.md`. Criterio: tráfico redirigido por ISP-2 sin intervención manual.
 - [ ] [R2] Ejecutar Drill 4 (check-gateway: failover estático de enlace): configurar ruta estática con `check-gateway=ping` y forzar inalcanzabilidad. Registrar detección de caída y conmutación en `runbooks/drill-4.md`. Criterio: ruta inactiva en 30s (3 pings fallidos de 10s) y activación de ruta alternativa.
 - [ ] [R4] Ejecutar Drill 5 (Load-sharing VRRP: ambos DIST activos): generar tráfico concurrente desde PC-USER (VLAN 10) y SRV (VLAN 20) verificando mediante torch/capturas que el tráfico de usuarios sale por DIST-1 y el de servidores por DIST-2. Documentar en `runbooks/drill-5.md`. Criterio: distribución equitativa de ancho de banda y esquema activo/activo confirmado.
