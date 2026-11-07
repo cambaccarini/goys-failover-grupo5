@@ -1016,12 +1016,16 @@ Cada drill se ejecuta siguiendo la metodología de ingeniería de resiliencia: *
 - **Comportamiento Esperado:** OSPF detecta la pérdida de adyacencia, inunda un nuevo Router LSA por el enlace horizontal Core-Core (`10.20.1.0/30`), recalculando el árbol SPF. El tráfico fluye por `CORE-2` sin interrupción de las sesiones de los hosts.
 - **Runbook:** Documentado en `runbooks/drill-2.md`.
 
-#### Drill 3 — BGP: Caída de Proveedor WAN Primario
+#### Drill 3 — BGP: Caída de Proveedor WAN Primario (ejecutado el 07/11/2026)
 
-- **Responsable:** (R1)
-- **Procedimiento:** Deshabilitar la interfaz `ether1` en `EDGE` conectada a `ISP-1` mientras se monitorea ping hacia `1.1.1.1` y `8.8.8.8`.
-- **Comportamiento Esperado:** La sesión BGP con AS 65001 cae. La tabla de ruteo de `EDGE` conmuta la default route activa hacia el peer `ISP-2` (AS 65002).
-- **Runbook:** Documentado en `runbooks/drill-3.md`.
+- **Responsable:** Juan Ignacio Atencio (R1, también R4).
+- **Procedimiento:** se deshabilitó `ether1` de EDGE, enlace al ISP-1 (`10.100.1.1`, AS 65001), y se verificaron `/routing bgp session print` y `/ip route print detail where dst-address=0.0.0.0/0`. Se guardó una prueba de ping desde PC-USER a `2.2.2.2` y una captura posterior a restaurar la WAN primaria.
+- **Resultado comprobado:** con `ether1` deshabilitada, la default vía ISP-1 apareció `DIb` (inactiva); la default vía ISP-2 (`10.200.1.1`) pasó a `DAb` (activa), con `immediate-gw=10.200.1.1%ether2`. La selección automática del respaldo funcionó sin editar rutas manualmente.
+- **Observación:** la captura inmediata todavía mostraba ambas sesiones BGP como `E` (`ESTABLISHED`) y un `hold-time=3m`; esto no permite afirmar que la sesión primaria hubiera pasado a estado caído al instante. El ping a la loopback `2.2.2.2` es evidencia complementaria, no prueba aislada de la conmutación default (existen prefijos específicos).
+- **Medición:** no se conservó un tiempo de recuperación cuantificado ni un total de paquetes perdidos validado; no se afirma el umbral de 10 s de la matriz general.
+- **Estado:** **COMPLETADO funcionalmente, con limitación de medición cuantitativa**.
+- **Runbook:** `runbooks/drill-3.md`.
+- **Capturas:** `capturas/f4/drills/drill-3-bgp-failover-isp2.png`, `drill-3-ping-isp2.png` y `drill-3-bgp-restaurado.png`.
 
 #### Drill 4 — check-gateway: Failover Estático Recursivo
 
@@ -1030,12 +1034,17 @@ Cada drill se ejecuta siguiendo la metodología de ingeniería de resiliencia: *
 - **Comportamiento Esperado:** Tras 3 sondas fallidas espaciadas por 10 segundos (30s en total), RouterOS marca la ruta como inalcanzable y activa la ruta estática secundaria con mayor distancia administrativa.
 - **Runbook:** Documentado en `runbooks/drill-4.md`.
 
-#### Drill 5 — Load-Sharing VRRP: Ambos Routers de Distribución Activos
+#### Drill 5 — Load-Sharing VRRP: Ambos Routers de Distribución Activos (ejecutado el 07/11/2026)
 
-- **Responsable:** Juan Ignacio Atencio (R4)
-- **Procedimiento:** Generar tráfico simultáneo desde `PC-USER` hacia la WAN y desde `SRV` hacia la WAN, utilizando `/tool torch` en `DIST-1` y `DIST-2`.
-- **Comportamiento Esperado:** El flujo de `VLAN 10` atraviesa físicamente `DIST-1`, mientras que el flujo de `VLAN 20` atraviesa `DIST-2`. Ambos routers operan en modo activo sin enlaces ociosos.
-- **Runbook:** Documentado en `runbooks/drill-5.md`.
+- **Responsable:** Juan Ignacio Atencio (R4, también R1).
+- **Procedimiento:** se comprobaron los estados VRRP en DIST-1 y DIST-2, los traceroutes cruzados PC-USER ↔ SRV y tráfico de prueba desde PC-USER a `2.2.2.2` y desde SRV a `1.1.1.1`. Se generaron capturas de Torch en los dos routers de distribución.
+- **Resultado documentado:** DIST-1 mantiene `vrrp10` como Master (prioridad 150) y `vrrp20` como Backup (100); DIST-2 mantiene `vrrp10` como Backup (100) y `vrrp20` como Master (150). La VLAN 10 usa VIP `192.168.10.1` y la VLAN 20 VIP `192.168.20.1`. Los primeros saltos documentados desde F2 son `192.168.10.2` (DIST-1) y `192.168.20.3` (DIST-2), con nuevas capturas de traceroute y Torch en F4.
+- **Interpretación correcta:** el esquema es **activo/activo por VLAN**, no balanceo de tráfico flujo a flujo ni 50/50 de bytes; no se afirma una tasa de transferencia no medida.
+- **Restauración:** no se modificaron enlaces ni prioridades durante este drill, por lo que no requirió rollback.
+- **Estado:** **COMPLETADO**.
+- **Runbook:** `runbooks/drill-5.md`.
+- **Capturas:** `capturas/f4/drills/drill-5-roles-vrrp.png`, `drill-5-trace-pc-user.png`, `drill-5-trace-srv.png`, `drill-5-torch-dist1.png` y `drill-5-torch-dist2.png`.
+
 
 ---
 
@@ -1097,6 +1106,7 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 - **Exports de F1:** los siete archivos `.rsc` se versionan en `backups/f1/exports/`. Se generaron sin `show-sensitive` y se revisaron para confirmar la ausencia de secretos y metadatos de hardware de simulación (`system id`).
 - **Exports de F2 (25/10/2026):** los siete archivos `.rsc` están versionados en `backups/f2/exports/`: `isp-1-f2.rsc`, `isp-2-f2.rsc`, `edge-f2.rsc`, `core-1-f2.rsc`, `core-2-f2.rsc`, `dist-1-f2.rsc` y `dist-2-f2.rsc`. Se generaron mediante `/export` sin `show-sensitive` y se incorporaron en el commit `44875a8` (`ops(backup): agregar exports saneados de F2`). Los exports documentan los parámetros no sensibles que RouterOS muestra por defecto; las claves ocultas deben conservarse por separado fuera del repositorio público.
 - **Exports de F3 (25/10/2026):** los siete archivos de configuración `.rsc` correspondientes a la capa de borde y proveedores WAN están versionados en `backups/F3/`: `EDGE-F3.rsc`, `ISP-1-F3.rsc`, `ISP-2-F3.rsc`, `core-1-f3.rsc`, `core-2-f3.rsc`, `dist-1-f3.rsc` y `dist-2-f3.rsc`. Se generaron sin `show-sensitive` y se depuraron metadatos de hardware de simulación (`system id`), verificando la protección de secretos conforme a las normas de seguridad del laboratorio.
+- **Exports F4 (al 07/11/2026):** la recopilación de los siete archivos de RouterOS sigue pendiente de verificación y corresponde al cierre operativo R2/R5 (Patricio). Los resultados funcionales de los drills 3 y 5 están documentados, pero los `.rsc` finales no se generan a partir de capturas ni se sustituyen por los exports de F3. Instrucciones y manifiesto de pendientes en `backups/F4/README.md`.
 - **Backups binarios:** los siete archivos `*-F1-post-hardening.backup` fueron generados en cada uno de los routers y almacenados en un repositorio offline privado cifrado, fuera del alcance del control de versiones público para resguardar credenciales y configuraciones sensibles del plano de gestión.
 - **Validación de Restauración en Nodo de Test (R2 - Patricio Borda):** para dar estricto cumplimiento al criterio de aceptación de F1, se desplegó una instancia MikroTik CHR aislada (`TEST-RESTORE-CHR`) conectada únicamente a una red host-only de gestión. Se procedió a cargar el archivo binario `isp-1-F1-post-hardening.backup` mediante SFTP/WinBox y se ejecutó:
   ```routeros
@@ -1170,24 +1180,34 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 - `capturas/f3/firewall/edge-firewall-config.png`: evidencia de la configuración de las reglas del firewall en EDGE.
 - `capturas/f3/firewall/edge-firewall-updated.png`: evidencia de las reglas actualizadas y sus contadores de paquetes.
 
-### F4 — Avance ejecutado al 06/11/2026
+### F4 — Avance ejecutado al 07/11/2026
 
-La preparación y los dos primeros drills fueron ejecutados en el laboratorio. **Drill 1 y Drill 2 están completados:** se midieron los tiempos de recuperación correspondientes y los resultados cumplieron los umbrales de aceptación definidos para cada prueba.
+La preparación y **cuatro de los cinco drills** se encuentran documentados: Drill 1 (VRRP), Drill 2 (OSPF), Drill 3 (BGP; R1) y Drill 5 (VRRP activo/activo; R4). La fase global **F4 permanece en ejecución**, ya que el Drill 4 corresponde a Patricio (R2) y continúan pendientes los controles de seguridad/monitoreo y los exports finales.
 
-**Preparación:** EDGE presentó las dos sesiones eBGP (`ISP-1` y `ISP-2`) en `ESTABLISHED`, ambas con `prefix-count=2`, y las adyacencias OSPF hacia CORE-1 (`ether3`, Router-ID `4.4.4.4`) y CORE-2 (`ether4`, Router-ID `5.5.5.5`) en `Full`. Los roles VRRP iniciales fueron DIST-1 Master de VLAN 10 y DIST-2 Master de VLAN 20. Detalle: `runbooks/preparacion-f4.md`.
+**Preparación (06/11/2026):** EDGE tenía sesiones eBGP con ISP-1 e ISP-2 `ESTABLISHED`, adyacencias OSPF hacia CORE-1 y CORE-2 `Full`, y se registraron los roles VRRP previstos en DIST-1/DIST-2. Véase `runbooks/preparacion-f4.md`.
 
-**Drill 1 — VRRP:** se deshabilitó `vlan10` en DIST-1. DIST-2 pasó a Master de VRID 10 y quedó Master en ambos VRID durante la contingencia. El ping a `192.168.10.1` mostró respuestas consecutivas en el fragmento compartido. Tras reactivar `vlan10`, DIST-1 recuperó Master de VRID 10 y DIST-2 volvió a Backup. Se midieron el tiempo de interrupción y la pérdida de paquetes; ambos resultados cumplieron los criterios definidos: menos de 3 segundos y no más de 2 paquetes ICMP perdidos. Detalle: `runbooks/drill-1.md`.
+**Drill 1 — VRRP (06/11/2026):** tras deshabilitar `vlan10` en DIST-1, DIST-2 asumió Master de VRID 10; al restaurar la interfaz se recuperaron los roles de origen. El runbook informa cumplimiento de umbrales de tiempo y pérdida, aunque no consigna cifras puntuales reproducibles. Véase `runbooks/drill-1.md`.
 
-**Drill 2 — OSPF:** se deshabilitó `ether3` de EDGE, correspondiente al enlace EDGE–CORE-1 (`10.10.1.0/30`). La adyacencia hacia CORE-1 desapareció y la de CORE-2 por `ether4` permaneció `Full`. Desde PC-USER se recibieron respuestas de `2.2.2.2` para las secuencias 1286–1314 del fragmento aportado, sin pérdidas visibles dentro de ese fragmento; se registró un pico aislado de 41,550 ms. Al reactivar `ether3`, ambas adyacencias quedaron nuevamente `Full`. Se midió el intervalo de convergencia OSPF y el resultado cumplió el umbral establecido de menos de 5 segundos. Detalle: `runbooks/drill-2.md`.
+**Drill 2 — OSPF (06/11/2026):** se interrumpió `ether3` de EDGE hacia CORE-1; la adyacencia EDGE–CORE-2 permaneció `Full` y ambas adyacencias se recuperaron al restaurar el enlace. Se documentó ICMP hacia `2.2.2.2`, con RTT principalmente de 6 a 10 ms y un pico de 41,550 ms, sin pérdida visible en el fragmento conservado. Véase `runbooks/drill-2.md`.
 
-Capturas incorporadas en `capturas/f4/drills/`: preparación BGP/OSPF, roles VRRP y ping del Drill 1, estado OSPF antes/durante/después del corte del Drill 2.
+**Drill 3 — BGP (07/11/2026, Juan R1):** se deshabilitó `ether1` de EDGE. La default via ISP-1 (`10.100.1.1`) pasó a `DIb` y la default via ISP-2 (`10.200.1.1`) a `DAb`, con salida efectiva por `ether2`. Se registraron capturas de la conmutación, ping a `2.2.2.2` y restauración. La consulta inmediata seguía mostrando la sesión ISP-1 como `E`; el cambio de ruta no debe confundirse con la caída instantánea de la sesión. No hay cifras completas de convergencia ni pérdida de ICMP para afirmar el objetivo cuantitativo. Véase `runbooks/drill-3.md`.
 
-### F4 — Pruebas de contingencia
+**Drill 5 — VRRP activo/activo (07/11/2026, Juan R4):** se verificaron los roles Master cruzados (VLAN 10 en DIST-1, VLAN 20 en DIST-2), traceroutes desde ambos hosts y capturas de tráfico mediante Torch en ambos DIST. El reparto es lógico por VLAN, no un balanceo 50/50 del ancho de banda. No se necesitó modificar ni restaurar interfaces. Véase `runbooks/drill-5.md`.
 
-- `capturas/f4/drills/preparacion-edge-bgp-ospf.png`: estado base de las sesiones BGP y vecinos OSPF de EDGE.
-- `capturas/f4/drills/drill-1-estados-vrrp.png` y `drill-1-ping-gateway-vrrp.png`: transición VRRP y respuestas al gateway virtual durante Drill 1.
-- `capturas/f4/drills/drill-2-ospf-antes-del-corte.png`, `drill-2-ospf-durante-el-corte.png` y `drill-2-ospf-enlace-restaurado.png`: caída de la adyacencia EDGE–CORE-1, permanencia de EDGE–CORE-2 y restauración de ambas adyacencias durante Drill 2.
-- Los drills 3 a 5 todavía no fueron ejecutados/documentados. Los valores numéricos puntuales de las mediciones de Drill 1 y Drill 2 no se incluyeron en el material recibido; se deja constancia del cumplimiento confirmado sin inventar cifras.
+**Responsabilidades aún abiertas:** Drill 4 de rutas estáticas con `check-gateway=ping` y coordinación de backups/Change Log (Patricio, R2/R5); prueba negativa OSPF MD5, SNMP y logging (Ian, R3); exports finales `.rsc` de los siete routers y cierre integral de F4. No se declaran resultados ni respaldos no verificados.
+
+### F4 — Evidencias de contingencia
+
+Todas las capturas de los drills se agrupan en `capturas/f4/drills/`:
+
+- **Preparación:** `preparacion-edge-bgp-ospf.png` (sesiones BGP y vecinos OSPF previos a las pruebas).
+- **Drill 1:** `drill-1-estados-vrrp.png` y `drill-1-ping-gateway-vrrp.png`.
+- **Drill 2:** `drill-2-ospf-antes-del-corte.png`, `drill-2-ospf-durante-el-corte.png` y `drill-2-ospf-enlace-restaurado.png`.
+- **Drill 3:** `drill-3-bgp-failover-isp2.png`, `drill-3-ping-isp2.png` y `drill-3-bgp-restaurado.png`.
+- **Drill 5:** `drill-5-roles-vrrp.png`, `drill-5-trace-pc-user.png`, `drill-5-trace-srv.png`, `drill-5-torch-dist1.png` y `drill-5-torch-dist2.png`.
+
+No se registran todavía capturas del Drill 4 ni del despliegue F4 de SNMP/logging. Los tiempos exactos y los porcentajes de pérdida no se completan por inferencia a partir de capturas parciales.
+
 
 ---
 

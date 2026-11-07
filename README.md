@@ -176,8 +176,26 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 | **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Aprobado con observaciones** |
 | **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **Completado** (topología, direccionamiento, hardening, exports saneados, snapshot y validación de restauración de backups por R2) |
 | **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Mié 21/10/2026 (propuesta) | **Completada** (OSPF, VRRP activo/activo, conectividad L3, propagación LAN, ECMP, prueba rápida de failover y exports versionados) |
-| **F3** | eBGP Multi-homing, BGP TCP-MD5, redistribución de rutas y Firewall perimetral | Jue 22/10/2026 (propuesta) | **Completada** (eBGP con TCP-MD5 y publicación de LAN verificados; pendientes default en CORE/DIST, salida de hosts, firewall y exports) |
-| **F4** | Ejecución de los 5 drills de failover, monitoreo y telemetría | Lun 26/10/2026 (propuesta) | Planificado |
+| **F3** | eBGP multi-homing, TCP-MD5, rutas por defecto, distribución OSPF y firewall | Jue 22/10/2026 (propuesta) | **Completada** (sesiones ISP-1/ISP-2, rutas LAN y default, firewall y 7 exports saneados documentados) |
+| **F4** | Ejecución de 5 drills de failover, monitoreo y telemetría | Lun 26/10/2026 (propuesta) | **En ejecución** (4 de 5 drills documentados: 1, 2, 3 y 5; pendientes Drill 4, seguridad/monitoreo y backups F4) |
 | **F5** | Memoria técnica final, cierre del backlog, repositorio y defensa oral | Mar 27/10/2026 (propuesta) | Planificado |
 
 > **Replanificación solicitada:** las fechas objetivo de F2–F5 fueron propuestas al docente debido al retraso acumulado. Permanecen pendientes de aprobación y se actualizarán si el profesor propone otro cronograma.
+
+## 8. Estado operativo de F4 — 07/11/2026
+
+La fase F4 cuenta con **4 de 5 drills documentados**, sin que esto signifique el cierre total de la fase:
+
+| Drill | Protocolo / prueba | Responsable | Estado | Runbook |
+|---|---|---|---|---|
+| 1 | Failover de gateway VRRP VLAN 10 | Juan (R4) | Completado (06/11) | [`runbooks/drill-1.md`](runbooks/drill-1.md) |
+| 2 | Reconvergencia OSPF EDGE–CORE-1 | Ian (R3) | Completado (06/11) | [`runbooks/drill-2.md`](runbooks/drill-2.md) |
+| 3 | Caída ISP-1 / failover BGP a ISP-2 | Juan (R1) | Completado funcionalmente (07/11; sin medición numérica de tiempo/pérdida) | [`runbooks/drill-3.md`](runbooks/drill-3.md) |
+| 4 | Selección de ruta estática con `check-gateway=ping` | Patricio (R2) | Pendiente | — |
+| 5 | VRRP activo/activo por VLAN + Torch | Juan (R4) | Completado (07/11) | [`runbooks/drill-5.md`](runbooks/drill-5.md) |
+
+**Detalle de las pruebas de Juan:** en Drill 3, deshabilitar `ether1` de EDGE dejó inactiva (`DIb`) la default por ISP-1 y activó (`DAb`) la default por ISP-2 (`10.200.1.1%ether2`). Se conservaron capturas del failover, ping y restauración. En Drill 5 se registraron los estados VRRP (Master de VLAN 10 en DIST-1 y de VLAN 20 en DIST-2), traceroutes desde los hosts y Torch en los dos routers. El esquema es activo/activo **por VLAN**, no reparto 50/50 de ancho de banda.
+
+**Evidencias:** `capturas/f4/drills/`; memoria detallada: [`docs/memoria.md`](docs/memoria.md).
+
+**Pendientes de F4:** Drill 4 y coordinación de backups/exports saneados de los siete routers a cargo de Patricio (R2/R5); prueba negativa OSPF MD5, SNMP y logging a cargo de Ian (R3). Los archivos `.rsc` finales se deben generar en RouterOS, no reconstruir desde capturas o exports F3. Véase [`backups/F4/README.md`](backups/F4/README.md).
