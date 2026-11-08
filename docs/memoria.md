@@ -1099,6 +1099,8 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 | 26/10/2026 | Juan Ignacio Atencio (R4) | `c4c0ec6` — `docs(f3): agregar capturas del firewall de EDGE` | Incorporar capturas de la configuración y los contadores del firewall en EDGE. | `git revert c4c0ec6` |
 | 26/10/2026 | Juan Ignacio Atencio (R4) | `ba97757` — `ops(backup): completar exports F3 de CORE y distribución` | Completar los exports de CORE-1, CORE-2, DIST-1 y DIST-2 en `backups/F3/`. | `git revert ba97757` |
 | 26/10/2026 | Juan Ignacio Atencio (R4) | `4017e2b` — `docs(f3): cerrar memoria y backlog de F3` | Sincronizar el estado documental de F3 con las evidencias y backups incorporados. | `git revert 4017e2b` |
+| 07/11/2026 | Juan Ignacio Atencio (R1 + R4) | `7e5e91a` — `docs(f4): consolidar avance de R1 y R4` | Incorporar runbooks y evidencias de Drill 1, 2, 3 y 5, actualizar memoria técnica y preparar manifiesto de backups F4. | `git revert 7e5e91a` |
+| 08/11/2026 | Patricio Borda (R2 + R5) | `feat(f4): completar drill 4 de failover estatico y consolidar backups f4` | Ejecutar y documentar Drill 4 (check-gateway=ping hacia 2.2.2.2/32), incorporar evidencias gráficas, consolidar los 7 exports finales de RouterOS en backups/F4/ y actualizar memoria y backlog. | `git revert HEAD` |
 
 
 ### 6.2 Política de Respaldo y Evidencia de Restauración
@@ -1106,7 +1108,7 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 - **Exports de F1:** los siete archivos `.rsc` se versionan en `backups/f1/exports/`. Se generaron sin `show-sensitive` y se revisaron para confirmar la ausencia de secretos y metadatos de hardware de simulación (`system id`).
 - **Exports de F2 (25/10/2026):** los siete archivos `.rsc` están versionados en `backups/f2/exports/`: `isp-1-f2.rsc`, `isp-2-f2.rsc`, `edge-f2.rsc`, `core-1-f2.rsc`, `core-2-f2.rsc`, `dist-1-f2.rsc` y `dist-2-f2.rsc`. Se generaron mediante `/export` sin `show-sensitive` y se incorporaron en el commit `44875a8` (`ops(backup): agregar exports saneados de F2`). Los exports documentan los parámetros no sensibles que RouterOS muestra por defecto; las claves ocultas deben conservarse por separado fuera del repositorio público.
 - **Exports de F3 (25/10/2026):** los siete archivos de configuración `.rsc` correspondientes a la capa de borde y proveedores WAN están versionados en `backups/F3/`: `EDGE-F3.rsc`, `ISP-1-F3.rsc`, `ISP-2-F3.rsc`, `core-1-f3.rsc`, `core-2-f3.rsc`, `dist-1-f3.rsc` y `dist-2-f3.rsc`. Se generaron sin `show-sensitive` y se depuraron metadatos de hardware de simulación (`system id`), verificando la protección de secretos conforme a las normas de seguridad del laboratorio.
-- **Exports F4 (al 07/11/2026):** la recopilación de los siete archivos de RouterOS sigue pendiente de verificación y corresponde al cierre operativo R2/R5 (Patricio). Los resultados funcionales de los drills 3 y 5 están documentados, pero los `.rsc` finales no se generan a partir de capturas ni se sustituyen por los exports de F3. Instrucciones y manifiesto de pendientes en `backups/F4/README.md`.
+- **Exports F4 (al 08/11/2026):** los siete archivos de configuración `.rsc` de RouterOS están consolidados en `backups/F4/`: `EDGE-F4.rsc`, `ISP-1-F4.rsc`, `ISP-2-F4.rsc`, `CORE-1-F4.rsc`, `CORE-2-F4.rsc`, `DIST-1-F4.rsc` y `DIST-2-F4.rsc`. Fueron generados y saneados por Patricio Borda (R2 + R5), protegiendo secretos (claves OSPF/BGP `REDACTED`) y validando la consistencia de nombres con el manifiesto `backups/F4/README.md`.
 - **Backups binarios:** los siete archivos `*-F1-post-hardening.backup` fueron generados en cada uno de los routers y almacenados en un repositorio offline privado cifrado, fuera del alcance del control de versiones público para resguardar credenciales y configuraciones sensibles del plano de gestión.
 - **Validación de Restauración en Nodo de Test (R2 - Patricio Borda):** para dar estricto cumplimiento al criterio de aceptación de F1, se desplegó una instancia MikroTik CHR aislada (`TEST-RESTORE-CHR`) conectada únicamente a una red host-only de gestión. Se procedió a cargar el archivo binario `isp-1-F1-post-hardening.backup` mediante SFTP/WinBox y se ejecutó:
   ```routeros
@@ -1180,9 +1182,9 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 - `capturas/f3/firewall/edge-firewall-config.png`: evidencia de la configuración de las reglas del firewall en EDGE.
 - `capturas/f3/firewall/edge-firewall-updated.png`: evidencia de las reglas actualizadas y sus contadores de paquetes.
 
-### F4 — Avance ejecutado al 07/11/2026
+### F4 — Avance ejecutado al 08/11/2026
 
-La preparación y **cuatro de los cinco drills** se encuentran documentados: Drill 1 (VRRP), Drill 2 (OSPF), Drill 3 (BGP; R1) y Drill 5 (VRRP activo/activo; R4). La fase global **F4 permanece en ejecución**, ya que el Drill 4 corresponde a Patricio (R2) y continúan pendientes los controles de seguridad/monitoreo y los exports finales.
+La preparación y **los cinco drills de failover** se encuentran documentados: Drill 1 (VRRP), Drill 2 (OSPF), Drill 3 (BGP; R1), Drill 4 (check-gateway; R2) y Drill 5 (VRRP activo/activo; R4). Asimismo, se encuentran consolidados los siete backups finales en `backups/F4/`. Restan abiertos exclusivamente los controles de seguridad y monitoreo de R3 (OSPF MD5 negativo, SNMP y logging).
 
 **Preparación (06/11/2026):** EDGE tenía sesiones eBGP con ISP-1 e ISP-2 `ESTABLISHED`, adyacencias OSPF hacia CORE-1 y CORE-2 `Full`, y se registraron los roles VRRP previstos en DIST-1/DIST-2. Véase `runbooks/preparacion-f4.md`.
 
@@ -1192,9 +1194,11 @@ La preparación y **cuatro de los cinco drills** se encuentran documentados: Dri
 
 **Drill 3 — BGP (07/11/2026, Juan R1):** se deshabilitó `ether1` de EDGE. La default via ISP-1 (`10.100.1.1`) pasó a `DIb` y la default via ISP-2 (`10.200.1.1`) a `DAb`, con salida efectiva por `ether2`. Se registraron capturas de la conmutación, ping a `2.2.2.2` y restauración. La consulta inmediata seguía mostrando la sesión ISP-1 como `E`; el cambio de ruta no debe confundirse con la caída instantánea de la sesión. No hay cifras completas de convergencia ni pérdida de ICMP para afirmar el objetivo cuantitativo. Véase `runbooks/drill-3.md`.
 
+**Drill 4 — Failover de rutas estáticas con check-gateway=ping (08/11/2026, Patricio R2):** se aprovisionaron rutas de prueba hacia `2.2.2.2/32` con `distance=1` (primaria vía ISP-1, `10.100.1.1`) y `distance=2` (backup vía ISP-2, `10.200.1.1`). Al deshabilitar `ether1`, el mecanismo `check-gateway=ping` retiró la alcanzabilidad tras 3 fallos consecutivos (30 segundos exactos), pasando la primaria a `Is` (`immediate-gw=""`) y activando la de backup como `As`. Al restaurar `ether1`, la primaria recuperó el estado `As` por menor distancia, y se verificó la eliminación completa de las rutas de prueba. Véase `runbooks/drill-4.md`.
+
 **Drill 5 — VRRP activo/activo (07/11/2026, Juan R4):** se verificaron los roles Master cruzados (VLAN 10 en DIST-1, VLAN 20 en DIST-2), traceroutes desde ambos hosts y capturas de tráfico mediante Torch en ambos DIST. El reparto es lógico por VLAN, no un balanceo 50/50 del ancho de banda. No se necesitó modificar ni restaurar interfaces. Véase `runbooks/drill-5.md`.
 
-**Responsabilidades aún abiertas:** Drill 4 de rutas estáticas con `check-gateway=ping` y coordinación de backups/Change Log (Patricio, R2/R5); prueba negativa OSPF MD5, SNMP y logging (Ian, R3); exports finales `.rsc` de los siete routers y cierre integral de F4. No se declaran resultados ni respaldos no verificados.
+**Responsabilidades aún abiertas:** prueba negativa OSPF MD5, SNMP y logging (Ian, R3), y posterior cierre integral de F4. No se declaran resultados no verificados.
 
 ### F4 — Evidencias de contingencia
 
@@ -1204,9 +1208,10 @@ Todas las capturas de los drills se agrupan en `capturas/f4/drills/`:
 - **Drill 1:** `drill-1-estados-vrrp.png` y `drill-1-ping-gateway-vrrp.png`.
 - **Drill 2:** `drill-2-ospf-antes-del-corte.png`, `drill-2-ospf-durante-el-corte.png` y `drill-2-ospf-enlace-restaurado.png`.
 - **Drill 3:** `drill-3-bgp-failover-isp2.png`, `drill-3-ping-isp2.png` y `drill-3-bgp-restaurado.png`.
+- **Drill 4:** `drill-4-rutas-antes-del-corte.png`, `drill-4-failover-check-gateway.png`, `drill-4-enlace-restaurado.png` y `drill-4-rutas-limpias.png`.
 - **Drill 5:** `drill-5-roles-vrrp.png`, `drill-5-trace-pc-user.png`, `drill-5-trace-srv.png`, `drill-5-torch-dist1.png` y `drill-5-torch-dist2.png`.
 
-No se registran todavía capturas del Drill 4 ni del despliegue F4 de SNMP/logging. Los tiempos exactos y los porcentajes de pérdida no se completan por inferencia a partir de capturas parciales.
+Las capturas de los 5 drills se encuentran debidamente persistidas en el repositorio. Resta el despliegue F4 de SNMP/logging a cargo de R3.
 
 
 ---

@@ -182,20 +182,22 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 
 > **Replanificación solicitada:** las fechas objetivo de F2–F5 fueron propuestas al docente debido al retraso acumulado. Permanecen pendientes de aprobación y se actualizarán si el profesor propone otro cronograma.
 
-## 8. Estado operativo de F4 — 07/11/2026
+## 8. Estado operativo de F4 — 08/11/2026
 
-La fase F4 cuenta con **4 de 5 drills documentados**, sin que esto signifique el cierre total de la fase:
+La fase F4 cuenta con los **5 drills de failover completados y documentados**, y los 7 backups consolidados:
 
 | Drill | Protocolo / prueba | Responsable | Estado | Runbook |
 |---|---|---|---|---|
-| 1 | Failover de gateway VRRP VLAN 10 | Juan (R4) | Completado (06/11) | [`runbooks/drill-1.md`](runbooks/drill-1.md) |
+| 1 | Failover de gateway VRRP VLAN 10 | Juan / Ian (R4) | Completado (06/11) | [`runbooks/drill-1.md`](runbooks/drill-1.md) |
 | 2 | Reconvergencia OSPF EDGE–CORE-1 | Ian (R3) | Completado (06/11) | [`runbooks/drill-2.md`](runbooks/drill-2.md) |
 | 3 | Caída ISP-1 / failover BGP a ISP-2 | Juan (R1) | Completado funcionalmente (07/11; sin medición numérica de tiempo/pérdida) | [`runbooks/drill-3.md`](runbooks/drill-3.md) |
-| 4 | Selección de ruta estática con `check-gateway=ping` | Patricio (R2) | Pendiente | — |
-| 5 | VRRP activo/activo por VLAN + Torch | Juan (R4) | Completado (07/11) | [`runbooks/drill-5.md`](runbooks/drill-5.md) |
+| 4 | Selección de ruta estática con `check-gateway=ping` | Patricio (R2) | Completado (08/11; conmutación en 30s exactos y restauración) | [`runbooks/drill-4.md`](runbooks/drill-4.md) |
+| 5 | VRRP activo/activo por VLAN + Torch | Juan / Ian (R4) | Completado (07/11) | [`runbooks/drill-5.md`](runbooks/drill-5.md) |
 
-**Detalle de las pruebas de Juan:** en Drill 3, deshabilitar `ether1` de EDGE dejó inactiva (`DIb`) la default por ISP-1 y activó (`DAb`) la default por ISP-2 (`10.200.1.1%ether2`). Se conservaron capturas del failover, ping y restauración. En Drill 5 se registraron los estados VRRP (Master de VLAN 10 en DIST-1 y de VLAN 20 en DIST-2), traceroutes desde los hosts y Torch en los dos routers. El esquema es activo/activo **por VLAN**, no reparto 50/50 de ancho de banda.
+**Detalle de las pruebas de Juan y Patricio:** en Drill 3, deshabilitar `ether1` de EDGE dejó inactiva (`DIb`) la default por ISP-1 y activó (`DAb`) la default por ISP-2 (`10.200.1.1%ether2`). En Drill 4, Patricio (R2) validó la conmutación de ruta estática por `check-gateway=ping` hacia `2.2.2.2/32`, registrando la caída de la ruta primaria a los 30 segundos exactos (3 pings fallidos), la activación de la alternativa de backup y la posterior restauración y limpieza. En Drill 5 se registraron los estados VRRP (Master de VLAN 10 en DIST-1 y de VLAN 20 en DIST-2), traceroutes desde los hosts y Torch en los dos routers.
+
+**Backups F4 consolidados:** los siete archivos de configuración saneados de RouterOS (`EDGE-F4.rsc`, `ISP-1-F4.rsc`, `ISP-2-F4.rsc`, `CORE-1-F4.rsc`, `CORE-2-F4.rsc`, `DIST-1-F4.rsc`, `DIST-2-F4.rsc`) fueron generados y verificados por Patricio (R2/R5) en [`backups/F4/`](backups/F4/).
 
 **Evidencias:** `capturas/f4/drills/`; memoria detallada: [`docs/memoria.md`](docs/memoria.md).
 
-**Pendientes de F4:** Drill 4 y coordinación de backups/exports saneados de los siete routers a cargo de Patricio (R2/R5); prueba negativa OSPF MD5, SNMP y logging a cargo de Ian (R3). Los archivos `.rsc` finales se deben generar en RouterOS, no reconstruir desde capturas o exports F3. Véase [`backups/F4/README.md`](backups/F4/README.md).
+**Pendientes restantes de F4:** prueba negativa OSPF MD5, SNMP y logging a cargo de Ian (R3). Véase [`backups/F4/README.md`](backups/F4/README.md).
