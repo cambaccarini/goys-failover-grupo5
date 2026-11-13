@@ -1182,7 +1182,7 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 - `capturas/f3/firewall/edge-firewall-config.png`: evidencia de la configuración de las reglas del firewall en EDGE.
 - `capturas/f3/firewall/edge-firewall-updated.png`: evidencia de las reglas actualizadas y sus contadores de paquetes.
 
-### F4 — Avance ejecutado al 08/11/2026
+### F4 — Cierre ejecutado al 12/11/2026
 
 La preparación y **los cinco drills de failover** se encuentran documentados: Drill 1 (VRRP), Drill 2 (OSPF), Drill 3 (BGP; R1), Drill 4 (check-gateway; R2) y Drill 5 (VRRP activo/activo; R4). Asimismo, se encuentran consolidados los siete backups finales en `backups/F4/`. Restan abiertos exclusivamente los controles de seguridad y monitoreo de R3 (OSPF MD5 negativo, SNMP y logging).
 
@@ -1198,7 +1198,15 @@ La preparación y **los cinco drills de failover** se encuentran documentados: D
 
 **Drill 5 — VRRP activo/activo (07/11/2026, Juan R4):** se verificaron los roles Master cruzados (VLAN 10 en DIST-1, VLAN 20 en DIST-2), traceroutes desde ambos hosts y capturas de tráfico mediante Torch en ambos DIST. El reparto es lógico por VLAN, no un balanceo 50/50 del ancho de banda. No se necesitó modificar ni restaurar interfaces. Véase `runbooks/drill-5.md`.
 
-**Responsabilidades aún abiertas:** prueba negativa OSPF MD5, SNMP y logging (Ian, R3), y posterior cierre integral de F4. No se declaran resultados no verificados.
+**Cierre de seguridad y monitoreo (12/11/2026, Ian R3):** se ejecutó la prueba negativa OSPF MD5. En CORE-1 se observaron mensajes `authentication failed` y `md5 mismatch` ante paquetes de vecinos con clave discordante; las adyacencias no alcanzaron `Full` durante el desajuste. Tras restaurar la clave correcta, CORE-1 mostró sus cuatro vecinos (EDGE, CORE-2, DIST-1 y DIST-2) en estado `Full`. Las capturas y salidas se encuentran en `capturas/f4/seguridad/ospf-md5/`.
+
+Se configuró logging local persistente a disco en los siete routers mediante la acción `estadored`, con reglas para eventos `interface,info`, `ospf` y `bgp`. Se verificó la configuración en los equipos y se conservaron capturas de la aplicación y de eventos en `capturas/f4/monitoreo/logging/`.
+
+Se habilitó SNMP v2c en los siete routers con acceso de solo lectura (`read-access=yes`, `write-access=no`) y restricción de origen a `192.168.10.0/24` y `192.168.20.0/24`. Se verificaron `/snmp print` y `/snmp community print` en cada router. **La consulta `snmpwalk` no se ejecutó:** VPCS 0.8.4 no incorpora esa herramienta y no fue posible acceder desde el PC personal a la red de GNS3. En consecuencia, se valida la configuración del agente SNMP, pero no la consulta MIB-II de extremo a extremo desde un host.
+
+Los siete exports F4 se regeneraron incorporando SNMP y logging. La comunidad operativa fue saneada como `REDACTED` antes de versionar. Los archivos están en `backups/F4/`; las evidencias de exports están en `capturas/f4/monitoreo/exports/`. Procedimiento completo: `runbooks/seguridad-monitoreo-f4.md`.
+
+**Estado final:** los cinco drills, la prueba negativa OSPF MD5, la configuración de logging, la configuración SNMP en los siete routers, los exports saneados y la documentación quedaron completados. La única comprobación pendiente por limitación del entorno es ejecutar `snmpwalk` desde un host con conectividad a la topología; no se registra como exitosa.
 
 ### F4 — Evidencias de contingencia
 
@@ -1211,7 +1219,7 @@ Todas las capturas de los drills se agrupan en `capturas/f4/drills/`:
 - **Drill 4:** `drill-4-rutas-antes-del-corte.png`, `drill-4-failover-check-gateway.png`, `drill-4-enlace-restaurado.png` y `drill-4-rutas-limpias.png`.
 - **Drill 5:** `drill-5-roles-vrrp.png`, `drill-5-trace-pc-user.png`, `drill-5-trace-srv.png`, `drill-5-torch-dist1.png` y `drill-5-torch-dist2.png`.
 
-Las capturas de los 5 drills se encuentran debidamente persistidas en el repositorio. Resta el despliegue F4 de SNMP/logging a cargo de R3.
+Las capturas de los cinco drills se encuentran persistidas en `capturas/f4/drills/`. Las evidencias adicionales de cierre están en `capturas/f4/seguridad/ospf-md5/` y `capturas/f4/monitoreo/` (logging, SNMP y exports). La consulta `snmpwalk` quedó sin ejecutar por las limitaciones documentadas; no se presenta como validada.
 
 
 ---

@@ -164,7 +164,7 @@
 
 ---
 
-## Epic F4 — Drills + Monitoreo · _objetivo propuesto: lun 26/10/2026_ · [~]
+## Epic F4 — Drills + Monitoreo · _objetivo propuesto: lun 26/10/2026_ · [x]
 ### Preparación y los 5 Drills de Failover (Runbook + Medición + Post-Mortem)
 
 - [x] [R3/R4/R5] Preparar F4: verificar ambas sesiones BGP y adyacencias OSPF en EDGE, y roles VRRP iniciales en DIST-1/DIST-2. Criterio: peers BGP `ESTABLISHED`, vecinos OSPF `Full` y roles VRRP coincidentes con el diseño. Evidencia: `runbooks/preparacion-f4.md`.
@@ -176,13 +176,13 @@
 
 ### Verificación de Seguridad Negativa y Resiliencia
 
-- [ ] [R3] Ejecutar prueba de seguridad negativa OSPF: alterar clave MD5 en CORE-1. Registrar caída de adyacencia a estado ExStart/Down y log de autenticación errónea. Criterio: adyacencia no se establece y se registran alertas en log.
+- [x] [R3] Ejecutar prueba de seguridad negativa OSPF: se verificó el rechazo de vecinos con clave MD5 discordante mediante mensajes `authentication failed` / `md5 mismatch` en CORE-1. Tras corregir la clave, las cuatro adyacencias de CORE-1 quedaron `Full`. Evidencias y detalle: `runbooks/seguridad-monitoreo-f4.md` y `capturas/f4/seguridad/ospf-md5/`.
 - [x] [R1/R5] Ejecutar prueba de seguridad negativa BGP: alterar clave TCP-MD5 en peering EDGE ↔ ISP-2 (adelanto de F4 completado en F3). Verificar que la sesión BGP no establece (estado Connect/Active). Criterio: evidencia gráfica guardada en `capturas/f3/bgp/bgp-clave-incorrecta.png`.
 
 ### Monitoreo y Observabilidad
 
-- [ ] [R3] Configurar servicio SNMP v2c (`/snmp set enabled=yes`) y comunidad de lectura en los 7 routers. Criterio: consulta snmpwalk exitosa sobre árbol MIB-II de interfaces.
-- [ ] [R3] Configurar reglas de logging local para eventos de cambio de estado en interfaces, adyacencias OSPF y sesiones BGP. Criterio: registros de conmutación documentados en memoria.
+- [x] [R3] Configurar SNMP v2c en los 7 routers con comunidad de solo lectura, restringida a `192.168.10.0/24` y `192.168.20.0/24`; `write-access=no`. Se verificó `/snmp print` y `/snmp community print` en los siete equipos. **Limitación documentada:** no se ejecutó `snmpwalk` porque VPCS 0.8.4 no incluye esa utilidad y no se pudo alcanzar la red GNS3 desde el PC personal; por lo tanto, la consulta MIB-II queda sin validar desde un host. Evidencias: `capturas/f4/monitoreo/snmp/`.
+- [x] [R3] Configurar logging local persistente en los 7 routers: acción `estadored` con destino disk, y reglas para `interface`, `ospf` y `bgp`. Se verificaron las reglas y se observó registro de eventos de interfaz/OSPF. Evidencias: `capturas/f4/monitoreo/logging/` y `runbooks/seguridad-monitoreo-f4.md`.
 
 ---
 

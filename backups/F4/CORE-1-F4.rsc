@@ -1,4 +1,5 @@
-# 2026-11-08 02:48:00 by RouterOS 7.24.1
+# 2026-11-13 01:24:52 by RouterOS 7.24.1
+# system id = HAOvaD9PytC
 #
 /interface ethernet
 set [ find default-name=ether1 ] disable-running-check=no
@@ -9,21 +10,20 @@ set [ find default-name=ether4 ] disable-running-check=no
 add name=ospf1 router-id=4.4.4.4
 /routing ospf area
 add instance=ospf1 name=backbone
+/snmp community
+set [ find default=yes ] addresses=192.168.10.0/24,192.168.20.0/24 name=REDACTED
+/system logging action
+add disk-file-name=estadored disk-lines-per-file=500 name=estadored target=disk
 /user group
-add name=superadmin policy="local,telnet,ssh,ftp,reboot,read,write,policy,test\
-    ,winbox,password,web,sniff,sensitive,api,romon,rest-api"
+add name=superadmin policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,sniff,sensitive,api,romon,rest-api
 /ip neighbor discovery-settings
 set discover-interface-list=none
 /ip address
-add address=4.4.4.4 comment="Loopback / Router-ID" interface=lo network=\
-    4.4.4.4
-add address=10.10.1.2/30 comment=EDGE-CORE-1 interface=ether1 network=\
-    10.10.1.0
+add address=4.4.4.4 comment="Loopback / Router-ID" interface=lo network=4.4.4.4
+add address=10.10.1.2/30 comment=EDGE-CORE-1 interface=ether1 network=10.10.1.0
 add address=10.20.1.1/30 comment=Core-Core interface=ether2 network=10.20.1.0
-add address=10.30.1.1/30 comment=CORE-1-DIST-1 interface=ether3 network=\
-    10.30.1.0
-add address=10.30.2.1/30 comment=CORE-1-DIST-2 interface=ether4 network=\
-    10.30.2.0
+add address=10.30.1.1/30 comment=CORE-1-DIST-1 interface=ether3 network=10.30.1.0
+add address=10.30.2.1/30 comment=CORE-1-DIST-2 interface=ether4 network=10.30.2.0
 /ip dhcp-client
 add interface=ether1 name=client1
 /ip service
@@ -33,11 +33,15 @@ set www disabled=yes
 set api disabled=yes
 set api-ssl disabled=yes
 /routing ospf interface-template
-add area=backbone auth=md5 auth-id=1 interfaces=ether1,ether2,ether3,ether4 auth-key=REDACTED
+add area=backbone auth=md5 auth-id=1 interfaces=ether1,ether2,ether3,ether4
 add area=backbone interfaces=lo passive
+/snmp
+set contact=grupo5 enabled=yes location=GNS3-lab
 /system identity
 set name=CORE-1
+/system logging
+add action=estadored topics=interface,info
+add action=estadored topics=ospf
+add action=estadored topics=bgp
 /system note
-set note="ACCESO RESTRINGIDO - Solo personal autorizado. Toda actividad es reg\
-    istrada y auditada."
-
+set note="ACCESO RESTRINGIDO - Solo personal autorizado. Toda actividad es registrada y auditada."

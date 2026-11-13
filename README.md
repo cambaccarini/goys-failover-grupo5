@@ -177,12 +177,12 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 | **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **Completado** (topología, direccionamiento, hardening, exports saneados, snapshot y validación de restauración de backups por R2) |
 | **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Mié 21/10/2026 (propuesta) | **Completada** (OSPF, VRRP activo/activo, conectividad L3, propagación LAN, ECMP, prueba rápida de failover y exports versionados) |
 | **F3** | eBGP multi-homing, TCP-MD5, rutas por defecto, distribución OSPF y firewall | Jue 22/10/2026 (propuesta) | **Completada** (sesiones ISP-1/ISP-2, rutas LAN y default, firewall y 7 exports saneados documentados) |
-| **F4** | Ejecución de 5 drills de failover, monitoreo y telemetría | Lun 26/10/2026 (propuesta) | **En ejecución** (4 de 5 drills documentados: 1, 2, 3 y 5; pendientes Drill 4, seguridad/monitoreo y backups F4) |
+| **F4** | Ejecución de 5 drills de failover, monitoreo y telemetría | Lun 26/10/2026 (propuesta) | **Cerrada**: 5 drills, OSPF MD5 negativo, logging y SNMP configurados; `snmpwalk` no ejecutado por limitación del entorno. |
 | **F5** | Memoria técnica final, cierre del backlog, repositorio y defensa oral | Mar 27/10/2026 (propuesta) | Planificado |
 
 > **Replanificación solicitada:** las fechas objetivo de F2–F5 fueron propuestas al docente debido al retraso acumulado. Permanecen pendientes de aprobación y se actualizarán si el profesor propone otro cronograma.
 
-## 8. Estado operativo de F4 — 08/11/2026
+## 8. Estado operativo de F4 — 12/11/2026
 
 La fase F4 cuenta con los **5 drills de failover completados y documentados**, y los 7 backups consolidados:
 
@@ -198,6 +198,10 @@ La fase F4 cuenta con los **5 drills de failover completados y documentados**, y
 
 **Backups F4 consolidados:** los siete archivos de configuración saneados de RouterOS (`EDGE-F4.rsc`, `ISP-1-F4.rsc`, `ISP-2-F4.rsc`, `CORE-1-F4.rsc`, `CORE-2-F4.rsc`, `DIST-1-F4.rsc`, `DIST-2-F4.rsc`) fueron generados y verificados por Patricio (R2/R5) en [`backups/F4/`](backups/F4/).
 
-**Evidencias:** `capturas/f4/drills/`; memoria detallada: [`docs/memoria.md`](docs/memoria.md).
+**Seguridad y monitoreo (12/11/2026, Ian R3):** se comprobó el rechazo de adyacencias OSPF ante discordancia de clave MD5 mediante logs `authentication failed` / `md5 mismatch`; luego de restaurar la clave, CORE-1 mostró sus cuatro vecinos en estado `Full`. Se habilitó SNMP v2c en los siete routers con comunidad de solo lectura restringida a las dos LAN. La consulta `snmpwalk` quedó sin ejecutar: VPCS 0.8.4 no incorpora la herramienta y no fue posible acceder a la red GNS3 desde el PC personal. También se configuró logging persistente a disco para eventos `interface`, `ospf` y `bgp` en los siete routers.
 
-**Pendientes restantes de F4:** prueba negativa OSPF MD5, SNMP y logging a cargo de Ian (R3). Véase [`backups/F4/README.md`](backups/F4/README.md).
+**Backups F4 actualizados:** los siete exports se regeneraron desde las configuraciones de cierre e incluyen SNMP y logging. El nombre de la comunidad SNMP fue reemplazado por `REDACTED` en los archivos versionados. Véase [`backups/F4/README.md`](backups/F4/README.md).
+
+**Cierre de F4:** los cinco drills, la prueba negativa OSPF MD5, la configuración de SNMP y logging, las evidencias y los exports están incorporados. La única validación no realizada es la consulta SNMP desde un host (`snmpwalk`); se deja explícita como limitación del entorno, no como resultado exitoso.
+
+**Evidencias:** `capturas/f4/drills/`, `capturas/f4/seguridad/` y `capturas/f4/monitoreo/`; procedimiento: [`runbooks/seguridad-monitoreo-f4.md`](runbooks/seguridad-monitoreo-f4.md); memoria: [`docs/memoria.md`](docs/memoria.md).
