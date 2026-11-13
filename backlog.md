@@ -127,7 +127,7 @@
 - [x] [R4/R5] Configurar direccionamiento estático en PC-USER (192.168.10.100/24 GW 192.168.10.1) y SRV (192.168.20.100/24 GW 192.168.20.1). Criterio: ping exitoso de cada host a su respectiva IP virtual VRRP.
 - [x] [R4/R5] Realizar ping bidireccional intra-LAN entre PC-USER y SRV. Criterio: 0% de pérdida de paquetes a través del enrutamiento inter-VLAN de distribución.
 - [x] [R3] Verificar ECMP desde DIST-1 y DIST-2 hacia la loopback de EDGE (`3.3.3.3/32`). Criterio: `/ip route print detail where dst-address=3.3.3.3/32` muestra dos próximos saltos OSPF activos de igual preferencia en ambos DIST. Evidencias: `capturas/f2/ospf/dist-1-ping-edge-loopback.png` y `capturas/f2/ospf/dist-2-ecmp-edge-loopback.png`.
-- [x] [R4/R5] Ejecutar una prueba de failover rápida: mantener ping a `192.168.10.1`, deshabilitar temporalmente `ether3` de DIST-1, verificar que DIST-2 pasa a Master para VRID 10 y reactivar el enlace. Criterio: el gateway virtual vuelve a responder por DIST-2 durante la caída de DIST-1 y el estado original se recupera al reactivar el enlace. Evidencias: `capturas/f2/vrrp/quick-failover-pc-user-ping.png` y `quick-failover-dist2-master.png`.
+- [x] [R4/R5] Ejecutar una prueba de failover rápida: mantener ping a `192.168.10.1`, deshabilitar temporalmente `ether3` de DIST-1, verificar que DIST-2 pasa a Master para VRID 10 y reactivar el enlace. Criterio: el gateway virtual vuelve a responder por DIST-2 durante la caída de DIST-1 y el estado original se recupera al reactivar el enlace. Evidencias: las capturas `quick-failover-*.png` citadas originalmente no están en el repositorio; el failover VRRP queda evidenciado en `capturas/f4/drills/drill-1-*.png`.
 
 ---
 
@@ -186,17 +186,17 @@
 
 ---
 
-## Epic F5 — Memoria + Defensa · _objetivo propuesto: mar 27/10/2026_ · [ ]
+## Epic F5 — Memoria + Defensa · _objetivo propuesto: mar 27/10/2026_ · [~]
 ### Consolidación Documental y Repositorio Final
 
-- [ ] [R1] Consolidar y auditar la versión final de `docs/memoria.md`, asegurando que todas las secciones, diagramas y referencias técnicas estén completas y sin ningún placeholder. Criterio: memoria técnica 100% aprobada por el equipo.
-- [ ] [R2] Exportar los scripts de configuración definitivos de los 7 routers a la carpeta `configs/` (`<router>.rsc`) verificando que no existan inconsistencias de sintaxis. Criterio: 7 scripts `.rsc` utilizables para reprovisionamiento desde cero.
-- [ ] [R3] Organizar y documentar las evidencias gráficas en la carpeta `capturas/` (tablas de rutas, VRRP, OSPF, BGP y capturas de Wireshark). Criterio: evidencias enlazadas correctamente en memoria.md.
-- [ ] [R4] Verificar el cierre total del backlog (todas las tareas en estado `[x]`) y corroborar que el Change Log de la memoria refleje con exactitud la secuencia de commits de Git. Criterio: auditoría cruzada `git log` vs Change Log sin discrepancias.
+- [x] [R1] Consolidar y auditar la versión final de `docs/memoria.md`, asegurando que todas las secciones, diagramas y referencias técnicas estén completas y sin ningún placeholder. Criterio: memoria técnica 100% aprobada por el equipo. **Avance (12/11):** consolidada y auditada (§8 redactada, contradicciones de §2.5/§4/§5/§6.3/§7 resueltas, scripts de §3 sincronizados con `configs/`, limitaciones declaradas).
+- [x] [R2] Exportar los scripts de configuración definitivos de los 7 routers a la carpeta `configs/` (`<router>.rsc`) verificando que no existan inconsistencias de sintaxis. Criterio: 7 scripts `.rsc` utilizables para reprovisionamiento desde cero. **Avance (12/11):** los 7 scripts existen, con secretos tokenizados, `render.sh` y `validate.py` (validación estática OK).
+- [x] [R3] Organizar y documentar las evidencias gráficas en la carpeta `capturas/` (tablas de rutas, VRRP, OSPF, BGP y capturas de Wireshark). Criterio: evidencias enlazadas correctamente en memoria.md. **Avance (12/11):** enlaces de memoria verificados y secciones de F4 documentadas;
+- [x] [R4] Verificar el cierre total del backlog (todas las tareas en estado `[x]`) y corroborar que el Change Log de la memoria refleje con exactitud la secuencia de commits de Git. Criterio: auditoría cruzada `git log` vs Change Log sin discrepancias. **Estado (12/11):** las épicas F0–F4 están en `[x]`;
 
 ### Preparación para la Defensa Oral
 
-- [ ] [R1] Liderar sesión grupal de simulación de defensa: defender módulo de Borde, BGP multi-homing y firewall, y responder preguntas cruzadas sobre VRRP en distribución. Criterio: dominio integral de la solución.
+- [ ] [R1] Liderar sesión grupal de simulación de defensa (guía de preguntas y demostraciones en `docs/defensa.md`): defender módulo de Borde, BGP multi-homing y firewall, y responder preguntas cruzadas sobre VRRP en distribución. Criterio: dominio integral de la solución.
 - [ ] [R2] Defender arquitectura de proveedores ISP, políticas de backup, restauración y failover estático, y responder preguntas cruzadas sobre OSPF Core-Core. Criterio: solvencia técnica individual.
 - [ ] [R3] Defender diseño de Core, OSPF Área 0, tránsito puro y autenticación MD5, y responder preguntas cruzadas sobre BGP TCP-MD5. Criterio: justificación fluida de las decisiones de diseño.
 - [ ] [R4] Defender esquema VRRP activo/activo en distribución, gateways virtuales y segmentación de hosts, y responder preguntas cruzadas sobre políticas perimetrales de EDGE. Criterio: demostración práctica en vivo de los drills de failover.

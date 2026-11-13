@@ -1,0 +1,5 @@
+# Secretos y salidas renderizadas: nunca versionar
+configs/secrets.env
+configs/*.rendered.rsc
+# Backups binarios de RouterOS
+*.backup

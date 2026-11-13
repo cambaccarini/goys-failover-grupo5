@@ -2,7 +2,7 @@
 
 **Responsable:** R1 — Juan Ignacio Atencio
 **Fecha:** 07/11/2026
-**Estado:** COMPLETADO. Se ejecutó el corte controlado de la WAN primaria, se comprobó la selección automática de la ruta de respaldo por ISP-2, se registró el ping de prueba y se documentó la restauración del enlace.
+**Estado:** COMPLETADO. Se ejecutó el corte controlado de la WAN primaria, se comprobó la selección automática de la ruta de respaldo por ISP-2, se ejecutó el ping de prueba (sin captura conservada) y se documentó la restauración del enlace.
 
 ## Objetivo
 
@@ -35,7 +35,7 @@ Se consultaron las sesiones eBGP y las rutas por defecto:
 /ip route print detail where dst-address=0.0.0.0/0
 ```
 
-Se registró el estado de EDGE durante el corte y una captura del ping desde PC-USER. A continuación, se restauró la interfaz primaria:
+Se registró el estado de EDGE durante el corte; la captura del ping desde PC-USER no se conservó. A continuación, se restauró la interfaz primaria:
 
 ```routeros
 /interface enable [find name=ether1]
@@ -68,7 +68,7 @@ La restauración busca recuperar ambas sesiones BGP y la preferencia original po
 
 - `capturas/f4/drills/preparacion-edge-bgp-ospf.png`: sesiones BGP y adyacencias OSPF en la preparación de F4.
 - `capturas/f4/drills/drill-3-bgp-failover-isp2.png`: corte de `ether1` y tabla de rutas con ISP-1 inactivo e ISP-2 activo.
-- `capturas/f4/drills/drill-3-ping-isp2.png`: prueba ICMP desde PC-USER durante el ensayo.
+- El ping desde PC-USER a `2.2.2.2` durante el ensayo no tiene captura en el repositorio (`drill-3-ping-isp2.png` fue citada pero no se conservó).
 - `capturas/f4/drills/drill-3-bgp-restaurado.png`: verificaciones posteriores a la restauración de la WAN primaria.
 
 ## Medición y conclusión

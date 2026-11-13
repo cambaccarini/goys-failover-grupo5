@@ -2,7 +2,7 @@
 
 **Responsable:** R4 — Juan Ignacio Atencio
 **Fecha:** 07/11/2026
-**Estado:** COMPLETADO. Se verificaron los roles VRRP, las rutas desde ambos hosts y la observación de tráfico mediante Torch en los routers de distribución.
+**Estado:** COMPLETADO. Se verificaron los roles VRRP, las rutas desde ambos hosts y la observación de tráfico mediante Torch (captura conservada de DIST-1).
 
 ## Objetivo
 
@@ -49,14 +49,14 @@ Durante la prueba se inspeccionaron las interfaces VLAN en los routers de distri
 /tool torch interface=vlan20
 ```
 
-Se guardaron capturas del estado VRRP, de los traceroutes y de Torch en DIST-1 y DIST-2.
+Se guardaron capturas del estado VRRP, de los traceroutes y de Torch en DIST-1 (la de DIST-2 no se conservó).
 
 ## Resultados observados
 
 - Los roles VRRP configurados corresponden a un esquema activo/activo por VLAN: DIST-1 es Master de VRID 10 y DIST-2 es Master de VRID 20.
 - El traceroute de PC-USER hacia SRV utiliza `192.168.10.2` (DIST-1) como primer salto, según el comportamiento documentado en F2.
 - El traceroute de SRV hacia PC-USER utiliza `192.168.20.3` (DIST-2) como primer salto, según el comportamiento documentado en F2.
-- Se registraron evidencias de tráfico observado con Torch en ambos routers de distribución durante la prueba de F4.
+- Se conserva evidencia de tráfico observado con Torch en DIST-1 durante la prueba de F4.
 - La combinación de roles VRRP, selección de gateways de los hosts, traceroutes y capturas de tráfico documenta el funcionamiento de ambos routers como gateways activos de distintas VLAN.
 
 Las capturas de Torch se interpretan junto con los roles VRRP y las rutas: observar paquetes sobre una VLAN, aisladamente, no prueba qué router desempeña el rol Master.
@@ -76,7 +76,7 @@ El estado operativo esperado al finalizar permanece:
 - `capturas/f4/drills/drill-5-trace-pc-user.png`: primer salto desde PC-USER.
 - `capturas/f4/drills/drill-5-trace-srv.png`: primer salto desde SRV.
 - `capturas/f4/drills/drill-5-torch-dist1.png`: observación de tráfico mediante Torch en DIST-1.
-- `capturas/f4/drills/drill-5-torch-dist2.png`: observación de tráfico mediante Torch en DIST-2.
+- Torch en DIST-2: sin captura en el repositorio (`drill-5-torch-dist2.png` fue citada pero no se conservó); solo está documentado Torch en DIST-1.
 
 Como antecedentes de corroboración también se conservan las verificaciones de F2 en `capturas/f2/vrrp/` y `capturas/f2/conectividad/`.
 

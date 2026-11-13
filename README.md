@@ -111,42 +111,29 @@ El árbol de directorios del repositorio está estandarizado y cuenta con persis
 goys-failover-grupo5/
 ├── README.md              # Documentación de equipo, arquitectura y guía rápida
 ├── backlog.md             # Seguimiento granular de tareas y criterios de aceptación (F0-F5)
-├── docs/                  # Memoria técnica completa y diagramas de topología
+├── .gitignore             # Excluye secretos, .rendered.rsc y backups binarios
+├── docs/                  # Memoria técnica completa y guía de defensa
 │   ├── memoria.md         # Documento maestro de ingeniería, configs, drills y post-mortems
-│   └── diagramas/         # Diagramas lógicos, capturas GNS3 y matrices de tráfico
+│   ├── defensa.md         # Guía de preparación de la defensa oral (preguntas, demos, límites)
+│   └── diagramas/         # Diagramas lógicos y matrices de tráfico
 │       └── .gitkeep
-├── configs/               # Scripts exportados (.rsc) limpios para cada uno de los 7 routers
-│   └── .gitkeep
-├── backups/               # Respaldos de configuración (scripts /export y binarios .backup)
-│   ├── f1/
-│   |   └── exports/       # .rsc base de F1 (sin secretos)
-│   ├── f2
-│   |   └── exports/        # .rsc de F2 (sin claves sensibles)
-│   └── F3/
-│       ├── EDGE-F3.rsc
-│       ├── ISP-1-F3.rsc
-│       ├── ISP-2-F3.rsc
-│       ├── core-1-f3.rsc
-│       ├── core-2-f3.rsc
-│       ├── dist-1-f3.rsc
-│       └── dist-2-f3.rsc
-├── runbooks/              # Procedimientos operativos estándar (SOP) para los 5 drills
-│   └── .gitkeep
-└── capturas/              # Evidencias en imagen de adyacencias, ping de drills y failover
-    ├── f1/
-    |   ├── conectividad/ 
-    |   ├── hardening/ 
-    |   ├── topologia/
-    |   └── troubleshooting/
-    ├── f2/       
-    |   ├── conectividad/ 
-    |   ├── ospf/ 
-    |   └── vrrp/
-    └── f3/
-        ├── bgp/
-        ├── conectividad/
-        └── firewall/
-
+├── configs/               # Scripts definitivos de los 7 routers (secretos tokenizados)
+│   ├── EDGE.rsc · ISP-1.rsc · ISP-2.rsc · CORE-1.rsc · CORE-2.rsc · DIST-1.rsc · DIST-2.rsc
+│   ├── render.sh          # Sustituye los tokens __NOMBRE__ con configs/secrets.env
+│   ├── validate.py        # Validación estática (IPAM, pares BGP/OSPF/VRRP, tokens)
+│   ├── secrets.example.env
+│   └── README.md          # Procedimiento y diferencias respecto de los exports F4
+├── backups/               # Exports históricos por fase (sin secretos); binarios .backup fuera de Git
+│   ├── f1/exports/        # .rsc base de F1
+│   ├── f2/exports/        # .rsc de F2
+│   ├── F3/                # .rsc de F3
+│   └── F4/                # .rsc de cierre de F4 (+ README.md con el manifiesto)
+├── runbooks/              # Procedimientos y post-mortems: preparación F4, drills 1-5, seguridad y monitoreo
+└── capturas/              # Evidencias en imagen por fase
+    ├── f1/ (conectividad, hardening, topologia, troubleshooting)
+    ├── f2/ (conectividad, ospf, vrrp)
+    ├── f3/ (bgp, conectividad, firewall)
+    └── f4/ (drills, monitoreo/{snmp,logging,exports}, seguridad/ospf-md5)
 ```
 
 ---
@@ -178,7 +165,7 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 | **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Mié 21/10/2026 (propuesta) | **Completada** (OSPF, VRRP activo/activo, conectividad L3, propagación LAN, ECMP, prueba rápida de failover y exports versionados) |
 | **F3** | eBGP multi-homing, TCP-MD5, rutas por defecto, distribución OSPF y firewall | Jue 22/10/2026 (propuesta) | **Completada** (sesiones ISP-1/ISP-2, rutas LAN y default, firewall y 7 exports saneados documentados) |
 | **F4** | Ejecución de 5 drills de failover, monitoreo y telemetría | Lun 26/10/2026 (propuesta) | **Cerrada**: 5 drills, OSPF MD5 negativo, logging y SNMP configurados; `snmpwalk` no ejecutado por limitación del entorno. |
-| **F5** | Memoria técnica final, cierre del backlog, repositorio y defensa oral | Mar 27/10/2026 (propuesta) | Planificado |
+| **F5** | Memoria técnica final, cierre del backlog, repositorio y defensa oral | Mar 27/10/2026 (propuesta) | **En curso**: memoria consolidada y scripts definitivos en `configs/` (validación estática); pendientes la conciliación del Change Log con `git log`, la importación de `configs/` en un CHR limpio y la defensa oral |
 
 > **Replanificación solicitada:** las fechas objetivo de F2–F5 fueron propuestas al docente debido al retraso acumulado. Permanecen pendientes de aprobación y se actualizarán si el profesor propone otro cronograma.
 
@@ -194,7 +181,9 @@ La fase F4 cuenta con los **5 drills de failover completados y documentados**, y
 | 4 | Selección de ruta estática con `check-gateway=ping` | Patricio (R2) | Completado (08/11; conmutación en 30s exactos y restauración) | [`runbooks/drill-4.md`](runbooks/drill-4.md) |
 | 5 | VRRP activo/activo por VLAN + Torch | Juan / Ian (R4) | Completado (07/11) | [`runbooks/drill-5.md`](runbooks/drill-5.md) |
 
-**Detalle de las pruebas de Juan y Patricio:** en Drill 3, deshabilitar `ether1` de EDGE dejó inactiva (`DIb`) la default por ISP-1 y activó (`DAb`) la default por ISP-2 (`10.200.1.1%ether2`). En Drill 4, Patricio (R2) validó la conmutación de ruta estática por `check-gateway=ping` hacia `2.2.2.2/32`, registrando la caída de la ruta primaria a los 30 segundos exactos (3 pings fallidos), la activación de la alternativa de backup y la posterior restauración y limpieza. En Drill 5 se registraron los estados VRRP (Master de VLAN 10 en DIST-1 y de VLAN 20 en DIST-2), traceroutes desde los hosts y Torch en los dos routers.
+> Los Drills 1 y 2 declaran cumplidos sus umbrales (< 3 s y < 5 s) sin valores medidos registrados, y el Drill 3 no se cuantificó. Detalle y limitaciones en `docs/memoria.md` §4.3 y §8.3.
+
+**Detalle de las pruebas de Juan y Patricio:** en Drill 3, deshabilitar `ether1` de EDGE dejó inactiva (`DIb`) la default por ISP-1 y activó (`DAb`) la default por ISP-2 (`10.200.1.1%ether2`). En Drill 4, Patricio (R2) validó la conmutación de ruta estática por `check-gateway=ping` hacia `2.2.2.2/32`, registrando la caída de la ruta primaria a los 30 segundos exactos (3 pings fallidos), la activación de la alternativa de backup y la posterior restauración y limpieza. En Drill 5 se registraron los estados VRRP (Master de VLAN 10 en DIST-1 y de VLAN 20 en DIST-2), traceroutes desde los hosts y Torch en DIST-1.
 
 **Backups F4 consolidados:** los siete archivos de configuración saneados de RouterOS (`EDGE-F4.rsc`, `ISP-1-F4.rsc`, `ISP-2-F4.rsc`, `CORE-1-F4.rsc`, `CORE-2-F4.rsc`, `DIST-1-F4.rsc`, `DIST-2-F4.rsc`) fueron generados y verificados por Patricio (R2/R5) en [`backups/F4/`](backups/F4/).
 
