@@ -1,0 +1,65 @@
+# =====================================================================
+# CORE-1 — configuración definitiva (cierre F4 / entrega F5) · RouterOS 7.24.1
+# Base: backups/F4/CORE-1-F4.rsc + baseline de hardening de F1 (memoria §2.3).
+# Cambios respecto del export F4: ver configs/README.md.
+# Secretos: los tokens __NOMBRE__ se sustituyen con configs/render.sh.
+# NO importar este archivo sin renderizar y NO versionar el resultado.
+# =====================================================================
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no
+set [ find default-name=ether2 ] disable-running-check=no
+set [ find default-name=ether3 ] disable-running-check=no
+set [ find default-name=ether4 ] disable-running-check=no
+/routing ospf instance
+add name=ospf1 router-id=4.4.4.4
+/routing ospf area
+add instance=ospf1 name=backbone
+/snmp community
+set [ find default=yes ] addresses=192.168.10.0/24,192.168.20.0/24 name=__SNMP_COMMUNITY__
+/system logging action
+add disk-file-name=estadored disk-lines-per-file=500 name=estadored target=disk
+/user group
+add name=monitor-ro policy=local,ssh,winbox,read
+add name=superadmin policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,sniff,sensitive,api,romon,rest-api
+/ip neighbor discovery-settings
+set discover-interface-list=none
+/ip address
+add address=4.4.4.4 comment="Loopback / Router-ID" interface=lo network=4.4.4.4
+add address=10.10.1.2/30 comment=EDGE-CORE-1 interface=ether1 network=10.10.1.0
+add address=10.20.1.1/30 comment=Core-Core interface=ether2 network=10.20.1.0
+add address=10.30.1.1/30 comment=CORE-1-DIST-1 interface=ether3 network=10.30.1.0
+add address=10.30.2.1/30 comment=CORE-1-DIST-2 interface=ether4 network=10.30.2.0
+/ip dhcp-client
+add disabled=yes interface=ether1 name=client1
+/ip service
+set ftp disabled=yes
+set ssh available-from=10.0.0.0/8,192.168.0.0/16
+set telnet disabled=yes
+set www disabled=yes
+set reverse-proxy disabled=yes
+set winbox available-from=10.0.0.0/8,192.168.0.0/16
+set api disabled=yes
+set api-ssl disabled=yes
+/routing ospf interface-template
+add area=backbone auth=md5 auth-id=1 auth-key=__OSPF_MD5_KEY__ interfaces=ether1,ether2,ether3,ether4
+add area=backbone interfaces=lo passive
+/snmp
+set contact=grupo5 enabled=yes location=GNS3-lab
+/system identity
+set name=CORE-1
+/system logging
+add action=estadored topics=interface,info
+add action=estadored topics=ospf
+add action=estadored topics=bgp
+/system note
+set note="ACCESO RESTRINGIDO - Solo personal autorizado. Toda actividad es registrada y auditada."
+/tool mac-server
+set allowed-interface-list=none
+/tool mac-server mac-winbox
+set allowed-interface-list=none
+/tool mac-server ping
+set enabled=no
+/user
+add name=netadmin group=full password=__NETADMIN_PASSWORD__
+add name=monitor group=monitor-ro password=__MONITOR_PASSWORD__
+# Paso manual posterior (tras verificar login con netadmin): /user remove [find name=admin]
