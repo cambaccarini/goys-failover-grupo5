@@ -3,7 +3,8 @@
 **Cátedra:** Gestión Operativa y Seguridad en Redes (GOYS)  
 **Comisión:** 2026  
 **Grupo:** 5  
-**Fecha de Entrega Final (F5):** 23/10/2026 (reajustar por demoras de entrega)      
+**Fecha de Entrega Final (F5):** replanificada (la fecha original del 23/10/2026 venció; el cronograma vigente figura en el README, sección 7)
+**Versión:** cierre documental de F4 y consolidación de F5, 12/11/2026. Pendiente de F5: defensa oral y conciliación del Change Log contra `git log` (ver §6.1 y §10).
 **Entorno de Simulación:** GNS3 · MikroTik CHR (RouterOS v7)
 
 ---
@@ -199,6 +200,7 @@ La política de seguridad establece medidas técnicas de hardening perimetral y 
   ```routeros
   /user remove [find name=admin]
   ```
+- **Estado final implementado (§2.3):** `netadmin` en el grupo integrado `full` y `monitor` en el grupo de solo lectura `monitor-ro`; el grupo `superadmin` quedó definido con `sniff` en lugar de `snmp`. Los scripts definitivos están en `configs/`.
 
 #### 2. Hardening y Apagado de Servicios Inseguros
 
@@ -223,7 +225,7 @@ Para minimizar la superficie de ataque, se desactivan todos los servicios de adm
 
 - **OSPF v2 (Área 0):** Autenticación criptográfica obligatoria con **MD5** en todas las interfaces de tránsito. Las adyacencias rechazan paquetes hello o LSUs que no coincidan en la firma MD5.
   ```routeros
-  /routing ospf interface-template add area=backbone interfaces=INTERFACES_TRANSITO> auth=md5 auth-id=1 authentication_key="<DEFINIR_LOCALMENTE>"
+  /routing ospf interface-template add area=backbone interfaces=<INTERFACES_TRANSITO> auth=md5 auth-id=1 auth-key="<DEFINIR_LOCALMENTE>"
   ```
 - **BGP (eBGP Multi-Homing):** Protección a nivel de socket TCP mediante la opción **TCP-MD5 Signature** (RFC 2385) entre EDGE e ISPs:
 
@@ -396,7 +398,7 @@ Medidas específicas por capa:
 | Routers | Medida adicional | Evidencia |
 | :-- | :-- | :-- |
 | CORE-1 | Banner legal de acceso (`/system note set show-at-login=yes`) | `capturas/f1/hardening/core-1-banner-legal.png` |
-| CORE-2 | Banner legal de acceso (`/system note set show-at-login=yes`) | Pendiente de confirmar y documentar la evidencia. |
+| CORE-2 | Banner legal de acceso (`/system note set show-at-login=yes`) | Configurado: el `/system note` figura en `backups/F4/CORE-2-F4.rsc`. No hay captura dedicada en el repositorio (solo la de CORE-1). |
 | DIST-1 y DIST-2 | Acceso SSH/WinBox restringido a `10.0.0.0/8,192.168.0.0/16` | `capturas/f1/hardening/dist-1-hardening.png`, `capturas/f1/hardening/dist-2-hardening.png` |
 
 ![Banner legal en CORE-1](../capturas/f1/hardening/core-1-banner-legal.png)
@@ -435,108 +437,154 @@ Las capturas de `/ip address print` y de los pings a vecinos directos de cada ro
 | Estado incluido | Topología F1 con direccionamiento IP, loopbacks y hardening base, sin OSPF, BGP ni VRRP. |
 | Prueba de restauración del snapshot | Se restauró `SNAPSHOT-BASE-F1`. EDGE conservó su identidad y las direcciones IP esperadas. Los pings EDGE → ISP-1 (`10.100.1.1`) e ISP-1 → EDGE (`10.100.1.2`) respondieron 4/4, con 0 % de pérdida. La validación realizada cubre el enlace ISP-1–EDGE, no una auditoría completa de los siete routers. |
 | Exports `.rsc` | Generados mediante `/export` sin `show-sensitive` y versionados en `backups/f1/exports/`. Deben permanecer libres de contraseñas, claves y otros datos sensibles. |
-| Backups binarios `.backup` | Generados en los siete routers con nombres `*-F1-post-hardening`. Queda pendiente confirmar una copia fuera del proyecto y probar la restauración de un backup en un nodo aislado. No versionar estos archivos en Git. |
+| Backups binarios `.backup` | Generados en los siete routers con nombres `*-F1-post-hardening`. Se conservan fuera del repositorio público y su restauración se validó en un nodo aislado (véase §6.2). No versionar estos archivos en Git. |
 
 > La política de la sección 1.4 menciona `/export show-sensitive`; para F1 se utilizó `/export` sin `show-sensitive`, siguiendo el criterio más restrictivo para evitar exponer secretos en el repositorio público.
 
 ---
 
-## 3. Registro de Configuraciones de Dispositivos (F1 a F3)
+## 3. Registro de Configuraciones de Dispositivos (F1 a F4)
 
-_(Los scripts de configuración limpios para cada uno de los 7 routers CHR se guardan en el directorio `configs/<router>.rsc` y se incorporan formalmente al completar cada fase)._
+Los scripts definitivos de los siete routers están en `configs/<ROUTER>.rsc` y se reproducen abajo. Parten de los exports de cierre de F4 (`backups/F4/`) y se les aplicaron las correcciones listadas en `configs/README.md` (por ejemplo, `ether2` de EDGE habilitada y baseline de hardening de F1). Las claves, contraseñas y la comunidad SNMP no se versionan: aparecen como tokens `__NOMBRE__` que se sustituyen con `configs/render.sh`. Los exports crudos de cada fase se conservan en `backups/` como registro histórico.
 
 ### 3.1 Router ISP-1
 
 - **Rol:** Proveedor WAN Primario (AS 65001).
-- **Script asociado:** `backups/F3/ISP-1-F3.rsc`
+- **Script asociado:** `configs/ISP-1.rsc` (base: `backups/F4/ISP-1-F4.rsc`)
 - **Parámetros clave:** Loopback `1.1.1.1/32`, WAN hacia EDGE `10.100.1.1/30`, eBGP peering hacia EDGE `10.100.1.2` con clave TCP-MD5 `CLAVE_BGP_ISP1`, originación de default route BGP (`default-originate=always`) y anuncio de red `1.1.1.1/32`.
 
 ```routeros
-# Script de configuración consolidado F3: backups/F3/ISP-1-F3.rsc
-# 2026-10-26 06:00:29 by RouterOS 7.24.1
-#
+# configs/ISP-1.rsc — definitivo (cierre F4 / F5) · RouterOS 7.24.1
+# Base: backups/F4/ISP-1-F4.rsc + baseline de hardening de F1 (memoria §2.3).
+# Cambios respecto del export F4: ver configs/README.md.
+# Secretos: los tokens __NOMBRE__ se sustituyen con configs/render.sh.
+# NO importar este archivo sin renderizar y NO versionar el resultado.
 /interface ethernet
 set [ find default-name=ether1 ] disable-running-check=no
 /routing bgp instance
 add as=65001 name=bgp1 router-id=1.1.1.1
+/snmp community
+set [ find default=yes ] addresses=192.168.10.0/24,192.168.20.0/24 name=__SNMP_COMMUNITY__
+/system logging action
+add disk-file-name=estadored disk-lines-per-file=500 name=estadored target=disk
 /user group
-add name=superadmin policy="local,telnet,ssh,ftp,reboot,read,write,policy,test\
-    ,winbox,password,web,sniff,sensitive,api,romon,rest-api"
+add name=monitor-ro policy=local,ssh,winbox,read
+add name=superadmin policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,sniff,sensitive,api,romon,rest-api
 /ip neighbor discovery-settings
 set discover-interface-list=none
 /ip address
 add address=1.1.1.1 interface=lo network=1.1.1.1
-add address=10.100.1.1/30 comment="WAN hacia EDGE" interface=ether1 network=\
-    10.100.1.0
+add address=10.100.1.1/30 comment="WAN hacia EDGE" interface=ether1 network=10.100.1.0
 /ip dhcp-client
-add interface=ether1 name=client1
+add disabled=yes interface=ether1 name=client1
 /ip firewall address-list
 add address=1.1.1.1 list=NET-ISP1
 /ip service
 set ftp disabled=yes
+set ssh available-from=10.0.0.0/8,192.168.0.0/16
 set telnet disabled=yes
 set www disabled=yes
+set reverse-proxy disabled=yes
+set winbox available-from=10.0.0.0/8,192.168.0.0/16
 set api disabled=yes
 set api-ssl disabled=yes
 /routing bgp connection
-add instance=bgp1 local.address=10.100.1.1 .role=ebgp name=to-EDGE \
-    output.default-originate=always .network=NET-ISP1 remote.address=\
-    10.100.1.2 .as=65000
+add instance=bgp1 local.address=10.100.1.1 .role=ebgp name=to-EDGE output.default-originate=always .network=NET-ISP1 remote.address=10.100.1.2 .as=65000 tcp-md5-key=__BGP_KEY_ISP1__
+/snmp
+set contact=grupo5 enabled=yes location=GNS3-lab
 /system identity
 set name=ISP-1
+/system logging
+add action=estadored topics=interface,info
+add action=estadored topics=ospf
+add action=estadored topics=bgp
+/tool mac-server
+set allowed-interface-list=none
+/tool mac-server mac-winbox
+set allowed-interface-list=none
+/tool mac-server ping
+set enabled=no
+/user
+add name=netadmin group=full password=__NETADMIN_PASSWORD__
+add name=monitor group=monitor-ro password=__MONITOR_PASSWORD__
+# Paso manual posterior (tras verificar login con netadmin): /user remove [find name=admin]
 ```
 
 ### 3.2 Router ISP-2
 
 - **Rol:** Proveedor WAN Secundario (AS 65002).
-- **Script asociado:** `backups/F3/ISP-2-F3.rsc`
+- **Script asociado:** `configs/ISP-2.rsc` (base: `backups/F4/ISP-2-F4.rsc`)
 - **Parámetros clave:** Loopback `2.2.2.2/32`, WAN hacia EDGE `10.200.1.1/30`, eBGP peering hacia EDGE `10.200.1.2` con clave TCP-MD5 `CLAVE_BGP_ISP2`, originación de default route BGP (`default-originate=always`) y anuncio de red `2.2.2.2/32`.
 
 ```routeros
-# Script de configuración consolidado F3: backups/F3/ISP-2-F3.rsc
-# 2026-10-26 06:01:02 by RouterOS 7.24.1
-#
+# configs/ISP-2.rsc — definitivo (cierre F4 / F5) · RouterOS 7.24.1
+# Base: backups/F4/ISP-2-F4.rsc + baseline de hardening de F1 (memoria §2.3).
+# Cambios respecto del export F4: ver configs/README.md.
+# Secretos: los tokens __NOMBRE__ se sustituyen con configs/render.sh.
+# NO importar este archivo sin renderizar y NO versionar el resultado.
 /interface ethernet
 set [ find default-name=ether1 ] disable-running-check=no
 /routing bgp instance
 add as=65002 name=bgp1 router-id=2.2.2.2
+/snmp community
+set [ find default=yes ] addresses=192.168.10.0/24,192.168.20.0/24 name=__SNMP_COMMUNITY__
+/system logging action
+add disk-file-name=estadored disk-lines-per-file=500 name=estadored target=disk
 /user group
-add name=superadmin policy="local,telnet,ssh,ftp,reboot,read,write,policy,test\
-    ,winbox,password,web,sniff,sensitive,api,romon,rest-api"
+add name=monitor-ro policy=local,ssh,winbox,read
+add name=superadmin policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,sniff,sensitive,api,romon,rest-api
 /ip neighbor discovery-settings
 set discover-interface-list=none
 /ip address
 add address=2.2.2.2 interface=lo network=2.2.2.2
-add address=10.200.1.1/30 comment="WAN hacia EDGE" interface=ether1 network=\
-    10.200.1.0
+add address=10.200.1.1/30 comment="WAN hacia EDGE" interface=ether1 network=10.200.1.0
 /ip dhcp-client
-add interface=ether1 name=client1
+add disabled=yes interface=ether1 name=client1
 /ip firewall address-list
 add address=2.2.2.2 list=NET-ISP2
 /ip service
 set ftp disabled=yes
+set ssh available-from=10.0.0.0/8,192.168.0.0/16
 set telnet disabled=yes
 set www disabled=yes
+set reverse-proxy disabled=yes
+set winbox available-from=10.0.0.0/8,192.168.0.0/16
 set api disabled=yes
 set api-ssl disabled=yes
 /routing bgp connection
-add instance=bgp1 local.address=10.200.1.1 .role=ebgp name=to-EDGE \
-    output.default-originate=always .network=NET-ISP2 remote.address=\
-    10.200.1.2 .as=65000
+add instance=bgp1 local.address=10.200.1.1 .role=ebgp name=to-EDGE output.default-originate=always .network=NET-ISP2 remote.address=10.200.1.2 .as=65000 tcp-md5-key=__BGP_KEY_ISP2__
+/snmp
+set contact=grupo5 enabled=yes location=GNS3-lab
 /system identity
 set name=ISP-2
+/system logging
+add action=estadored topics=interface,info
+add action=estadored topics=ospf
+add action=estadored topics=bgp
+/tool mac-server
+set allowed-interface-list=none
+/tool mac-server mac-winbox
+set allowed-interface-list=none
+/tool mac-server ping
+set enabled=no
+/user
+add name=netadmin group=full password=__NETADMIN_PASSWORD__
+add name=monitor group=monitor-ro password=__MONITOR_PASSWORD__
+# Paso manual posterior (tras verificar login con netadmin): /user remove [find name=admin]
 ```
 
 ### 3.3 Router EDGE
 
 - **Rol:** Borde perimetral multi-homing y Gateway exterior (AS 65000).
-- **Script asociado:** `backups/F3/EDGE-F3.rsc`
+- **Script asociado:** `configs/EDGE.rsc` (base: `backups/F4/EDGE-F4.rsc`)
 - **Parámetros clave:** Loopback `3.3.3.3/32`, eBGP dual con TCP-MD5 hacia ISP-1 (`CLAVE_BGP_ISP1`) e ISP-2 (`CLAVE_BGP_ISP2`), filtros de entrada para prioridad de salida (`ISP1-IN` local-pref 200, `ISP2-IN` local-pref 100), redistribución OSPF→BGP con filtro `BGP-OUT` (`192.168.0.0/16`), inyección de ruta default a OSPF (`originate-default=if-installed`), OSPF Área 0 con MD5 hacia Cores, y Firewall perimetral con estado (input y forward: BGP, OSPF, ICMP, anti-spoofing y restricción total de gestión desde WAN).
 
 ```routeros
-# Script de configuración consolidado F3: backups/F3/EDGE-F3.rsc
-# 2026-10-26 05:59:44 by RouterOS 7.24.1
-#
+# configs/EDGE.rsc — definitivo (cierre F4 / F5) · RouterOS 7.24.1
+# Base: backups/F4/EDGE-F4.rsc + baseline de hardening de F1 (memoria §2.3).
+# Cambios respecto del export F4: ver configs/README.md.
+# Secretos: los tokens __NOMBRE__ se sustituyen con configs/render.sh.
+# NO importar este archivo sin renderizar y NO versionar el resultado.
 /interface ethernet
 set [ find default-name=ether1 ] disable-running-check=no
 set [ find default-name=ether2 ] disable-running-check=no
@@ -550,27 +598,26 @@ add as=65000 disabled=no name=bgp1 router-id=3.3.3.3
 add name=ospf1 originate-default=if-installed router-id=3.3.3.3
 /routing ospf area
 add instance=ospf1 name=backbone
+/snmp community
+set [ find default=yes ] addresses=192.168.10.0/24,192.168.20.0/24 name=__SNMP_COMMUNITY__
+/system logging action
+add disk-file-name=estadored disk-lines-per-file=500 name=estadored target=disk
 /user group
-add name=superadmin policy="local,telnet,ssh,ftp,reboot,read,write,policy,test\
-    ,winbox,password,web,sniff,sensitive,api,romon,rest-api"
+add name=monitor-ro policy=local,ssh,winbox,read
+add name=superadmin policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,sniff,sensitive,api,romon,rest-api
 /ip neighbor discovery-settings
 set discover-interface-list=none
 /interface list member
 add interface=ether1 list=WAN
 add interface=ether2 list=WAN
 /ip address
-add address=3.3.3.3 comment="Loopback / Router-ID" interface=lo network=\
-    3.3.3.3
-add address=10.100.1.2/30 comment="WAN ISP-1" interface=ether1 network=\
-    10.100.1.0
-add address=10.200.1.2/30 comment="WAN ISP-2" interface=ether2 network=\
-    10.200.1.0
-add address=10.10.1.1/30 comment=EDGE-CORE-1 interface=ether3 network=\
-    10.10.1.0
-add address=10.10.2.1/30 comment=EDGE-CORE-2 interface=ether4 network=\
-    10.10.2.0
+add address=3.3.3.3 comment="Loopback / Router-ID" interface=lo network=3.3.3.3
+add address=10.100.1.2/30 comment="WAN ISP-1" interface=ether1 network=10.100.1.0
+add address=10.200.1.2/30 comment="WAN ISP-2" interface=ether2 network=10.200.1.0
+add address=10.10.1.1/30 comment=EDGE-CORE-1 interface=ether3 network=10.10.1.0
+add address=10.10.2.1/30 comment=EDGE-CORE-2 interface=ether4 network=10.10.2.0
 /ip dhcp-client
-add interface=ether1 name=client1
+add disabled=yes interface=ether1 name=client1
 /ip firewall address-list
 add address=10.10.0.0/16 list=MGMT
 add address=10.20.0.0/16 list=MGMT
@@ -579,68 +626,76 @@ add address=192.168.0.0/16 list=MGMT
 add address=192.168.0.0/16 list=SPOOF
 add address=172.16.0.0/12 list=SPOOF
 /ip firewall filter
-add action=accept chain=input comment=est/rel connection-state=\
-    established,related,untracked
+add action=accept chain=input comment=est/rel connection-state=established,related,untracked
 add action=drop chain=input comment="drop invalid" connection-state=invalid
-add action=accept chain=input comment="BGP ISP-1" dst-port=179 in-interface=\
-    ether1 protocol=tcp src-address=10.100.1.1
-add action=accept chain=input comment="BGP ISP-2" dst-port=179 in-interface=\
-    ether2 protocol=tcp src-address=10.200.1.1
-add action=accept chain=input comment="OSPF CORE-1" in-interface=ether3 \
-    protocol=ospf
-add action=accept chain=input comment="OSPF CORE-2" in-interface=ether4 \
-    protocol=ospf
+add action=accept chain=input comment="BGP ISP-1" dst-port=179 in-interface=ether1 protocol=tcp src-address=10.100.1.1
+add action=accept chain=input comment="BGP ISP-2" dst-port=179 in-interface=ether2 protocol=tcp src-address=10.200.1.1
+add action=accept chain=input comment="OSPF CORE-1" in-interface=ether3 protocol=ospf
+add action=accept chain=input comment="OSPF CORE-2" in-interface=ether4 protocol=ospf
 add action=accept chain=input comment=ICMP protocol=icmp
-add action=accept chain=input comment="gestion solo desde interno" dst-port=\
-    22,8291 in-interface-list=!WAN protocol=tcp src-address-list=MGMT
-add action=drop chain=input comment="drop resto desde WAN" in-interface-list=\
-    WAN
-add action=accept chain=forward comment=est/rel connection-state=\
-    established,related,untracked
+add action=accept chain=input comment="gestion solo desde interno" dst-port=22,8291 in-interface-list=!WAN protocol=tcp src-address-list=MGMT
+add action=drop chain=input comment="drop resto desde WAN" in-interface-list=WAN
+add action=accept chain=forward comment=est/rel connection-state=established,related,untracked
 add action=drop chain=forward comment="drop invalid" connection-state=invalid
-add action=drop chain=forward comment="anti-spoof: privadas desde WAN" \
-    in-interface-list=WAN src-address-list=SPOOF
-add action=drop chain=forward comment="nada nuevo desde WAN hacia la LAN" \
-    connection-state=new in-interface-list=WAN
+add action=drop chain=forward comment="anti-spoof: privadas desde WAN" in-interface-list=WAN src-address-list=SPOOF
+add action=accept chain=forward comment="VLAN10 hacia WAN" connection-state=new out-interface-list=WAN src-address=192.168.10.0/24
+add action=accept chain=forward comment="VLAN20 hacia WAN" connection-state=new out-interface-list=WAN src-address=192.168.20.0/24
+add action=drop chain=forward comment="nada nuevo desde WAN hacia la LAN" connection-state=new in-interface-list=WAN
+/ip firewall nat
+add action=masquerade chain=srcnat comment="NAT LAN hacia ISPs" out-interface-list=WAN src-address=192.168.0.0/16
 /ip service
 set ftp disabled=yes
 set ssh available-from=10.10.0.0/16,10.20.0.0/16,10.30.0.0/16,192.168.0.0/16
 set telnet disabled=yes
 set www disabled=yes
-set winbox available-from=\
-    10.10.0.0/16,10.20.0.0/16,10.30.0.0/16,192.168.0.0/16
+set reverse-proxy disabled=yes
+set winbox available-from=10.10.0.0/16,10.20.0.0/16,10.30.0.0/16,192.168.0.0/16
 set api disabled=yes
 set api-ssl disabled=yes
 /routing bgp connection
-add disabled=no input.filter=ISP1-IN instance=bgp1 local.address=10.100.1.2 \
-    .role=ebgp name=to-ISP1 output.filter-chain=BGP-OUT .redistribute=ospf \
-    remote.address=10.100.1.1 .as=65001
-add disabled=no input.filter=ISP2-IN instance=bgp1 local.address=10.200.1.2 \
-    .role=ebgp name=to-ISP2 output.filter-chain=BGP-OUT .redistribute=ospf \
-    remote.address=10.200.1.1 .as=65002
+add disabled=no input.filter=ISP1-IN instance=bgp1 local.address=10.100.1.2 .role=ebgp name=to-ISP1 output.filter-chain=BGP-OUT .redistribute=ospf remote.address=10.100.1.1 .as=65001 tcp-md5-key=__BGP_KEY_ISP1__
+add disabled=no input.filter=ISP2-IN instance=bgp1 local.address=10.200.1.2 .role=ebgp name=to-ISP2 output.filter-chain=BGP-OUT .redistribute=ospf remote.address=10.200.1.1 .as=65002 tcp-md5-key=__BGP_KEY_ISP2__
 /routing filter rule
 add chain=ISP1-IN rule="set bgp-local-pref 200; accept"
 add chain=ISP2-IN rule="set bgp-local-pref 100; accept"
 add chain=BGP-OUT rule="if (dst in 192.168.0.0/16) { accept }"
 add chain=BGP-OUT rule=reject
 /routing ospf interface-template
-add area=backbone auth=md5 auth-id=1 interfaces=ether3,ether4
+add area=backbone auth=md5 auth-id=1 auth-key=__OSPF_MD5_KEY__ interfaces=ether3,ether4
 add area=backbone interfaces=lo passive
+/snmp
+set contact=grupo5 enabled=yes location=GNS3-lab
 /system identity
 set name=EDGE
 /system logging
 add topics=bgp
+add action=estadored topics=interface,info
+add action=estadored topics=ospf
+add action=estadored topics=bgp
+/tool mac-server
+set allowed-interface-list=none
+/tool mac-server mac-winbox
+set allowed-interface-list=none
+/tool mac-server ping
+set enabled=no
+/user
+add name=netadmin group=full password=__NETADMIN_PASSWORD__
+add name=monitor group=monitor-ro password=__MONITOR_PASSWORD__
+# Paso manual posterior (tras verificar login con netadmin): /user remove [find name=admin]
 ```
 
 ### 3.4 Router CORE-1
 
 - **Rol:** Núcleo de tránsito puro A (OSPF Área 0).
-- **Script asociado:** `backups/F3/core-1-f3.rsc`
+- **Script asociado:** `configs/CORE-1.rsc` (base: `backups/F4/CORE-1-F4.rsc`)
 - **Parámetros clave:** Loopback `4.4.4.4/32`, enlace inter-Core `10.20.1.1/30` con OSPF MD5, uplinks a EDGE y downlinks a Distribución.
 
 ```routeros
-# 2026-10-26 03:18:24 by RouterOS 7.24.1
-#
+# configs/CORE-1.rsc — definitivo (cierre F4 / F5) · RouterOS 7.24.1
+# Base: backups/F4/CORE-1-F4.rsc + baseline de hardening de F1 (memoria §2.3).
+# Cambios respecto del export F4: ver configs/README.md.
+# Secretos: los tokens __NOMBRE__ se sustituyen con configs/render.sh.
+# NO importar este archivo sin renderizar y NO versionar el resultado.
 /interface ethernet
 set [ find default-name=ether1 ] disable-running-check=no
 set [ find default-name=ether2 ] disable-running-check=no
@@ -650,48 +705,69 @@ set [ find default-name=ether4 ] disable-running-check=no
 add name=ospf1 router-id=4.4.4.4
 /routing ospf area
 add instance=ospf1 name=backbone
+/snmp community
+set [ find default=yes ] addresses=192.168.10.0/24,192.168.20.0/24 name=__SNMP_COMMUNITY__
+/system logging action
+add disk-file-name=estadored disk-lines-per-file=500 name=estadored target=disk
 /user group
-add name=superadmin policy="local,telnet,ssh,ftp,reboot,read,write,policy,test\
-    ,winbox,password,web,sniff,sensitive,api,romon,rest-api"
+add name=monitor-ro policy=local,ssh,winbox,read
+add name=superadmin policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,sniff,sensitive,api,romon,rest-api
 /ip neighbor discovery-settings
 set discover-interface-list=none
 /ip address
-add address=4.4.4.4 comment="Loopback / Router-ID" interface=lo network=\
-    4.4.4.4
-add address=10.10.1.2/30 comment=EDGE-CORE-1 interface=ether1 network=\
-    10.10.1.0
+add address=4.4.4.4 comment="Loopback / Router-ID" interface=lo network=4.4.4.4
+add address=10.10.1.2/30 comment=EDGE-CORE-1 interface=ether1 network=10.10.1.0
 add address=10.20.1.1/30 comment=Core-Core interface=ether2 network=10.20.1.0
-add address=10.30.1.1/30 comment=CORE-1-DIST-1 interface=ether3 network=\
-    10.30.1.0
-add address=10.30.2.1/30 comment=CORE-1-DIST-2 interface=ether4 network=\
-    10.30.2.0
+add address=10.30.1.1/30 comment=CORE-1-DIST-1 interface=ether3 network=10.30.1.0
+add address=10.30.2.1/30 comment=CORE-1-DIST-2 interface=ether4 network=10.30.2.0
 /ip dhcp-client
-add interface=ether1 name=client1
+add disabled=yes interface=ether1 name=client1
 /ip service
 set ftp disabled=yes
+set ssh available-from=10.0.0.0/8,192.168.0.0/16
 set telnet disabled=yes
 set www disabled=yes
+set reverse-proxy disabled=yes
+set winbox available-from=10.0.0.0/8,192.168.0.0/16
 set api disabled=yes
 set api-ssl disabled=yes
 /routing ospf interface-template
-add area=backbone auth=md5 auth-id=1 interfaces=ether1,ether2,ether3,ether4
+add area=backbone auth=md5 auth-id=1 auth-key=__OSPF_MD5_KEY__ interfaces=ether1,ether2,ether3,ether4
 add area=backbone interfaces=lo passive
+/snmp
+set contact=grupo5 enabled=yes location=GNS3-lab
 /system identity
 set name=CORE-1
+/system logging
+add action=estadored topics=interface,info
+add action=estadored topics=ospf
+add action=estadored topics=bgp
 /system note
-set note="ACCESO RESTRINGIDO - Solo personal autorizado. Toda actividad es reg\
-    istrada y auditada."
+set note="ACCESO RESTRINGIDO - Solo personal autorizado. Toda actividad es registrada y auditada."
+/tool mac-server
+set allowed-interface-list=none
+/tool mac-server mac-winbox
+set allowed-interface-list=none
+/tool mac-server ping
+set enabled=no
+/user
+add name=netadmin group=full password=__NETADMIN_PASSWORD__
+add name=monitor group=monitor-ro password=__MONITOR_PASSWORD__
+# Paso manual posterior (tras verificar login con netadmin): /user remove [find name=admin]
 ```
 
 ### 3.5 Router CORE-2
 
 - **Rol:** Núcleo de tránsito puro B (OSPF Área 0).
-- **Script asociado:** `backups/F3/core-2-f3.rsc`
+- **Script asociado:** `configs/CORE-2.rsc` (base: `backups/F4/CORE-2-F4.rsc`)
 - **Parámetros clave:** Loopback `5.5.5.5/32`, enlace inter-Core `10.20.1.2/30` con OSPF MD5, uplinks a EDGE y downlinks a Distribución.
 
 ```routeros
-# 2026-10-26 03:19:28 by RouterOS 7.24.1
-#
+# configs/CORE-2.rsc — definitivo (cierre F4 / F5) · RouterOS 7.24.1
+# Base: backups/F4/CORE-2-F4.rsc + baseline de hardening de F1 (memoria §2.3).
+# Cambios respecto del export F4: ver configs/README.md.
+# Secretos: los tokens __NOMBRE__ se sustituyen con configs/render.sh.
+# NO importar este archivo sin renderizar y NO versionar el resultado.
 /interface ethernet
 set [ find default-name=ether1 ] disable-running-check=no
 set [ find default-name=ether2 ] disable-running-check=no
@@ -701,48 +777,69 @@ set [ find default-name=ether4 ] disable-running-check=no
 add name=ospf1 router-id=5.5.5.5
 /routing ospf area
 add instance=ospf1 name=backbone
+/snmp community
+set [ find default=yes ] addresses=192.168.10.0/24,192.168.20.0/24 name=__SNMP_COMMUNITY__
+/system logging action
+add disk-file-name=estadored disk-lines-per-file=500 name=estadored target=disk
 /user group
-add name=superadmin policy="local,telnet,ssh,ftp,reboot,read,write,policy,test\
-    ,winbox,password,web,sniff,sensitive,api,romon,rest-api"
+add name=monitor-ro policy=local,ssh,winbox,read
+add name=superadmin policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,sniff,sensitive,api,romon,rest-api
 /ip neighbor discovery-settings
 set discover-interface-list=none
 /ip address
-add address=5.5.5.5 comment="Loopback / Router-ID" interface=lo network=\
-    5.5.5.5
-add address=10.10.2.2/30 comment=EDGE-CORE-2 interface=ether1 network=\
-    10.10.2.0
+add address=5.5.5.5 comment="Loopback / Router-ID" interface=lo network=5.5.5.5
+add address=10.10.2.2/30 comment=EDGE-CORE-2 interface=ether1 network=10.10.2.0
 add address=10.20.1.2/30 comment=Core-Core interface=ether2 network=10.20.1.0
-add address=10.30.3.1/30 comment=CORE-2-DIST-1 interface=ether3 network=\
-    10.30.3.0
-add address=10.30.4.1/30 comment=CORE-2-DIST-2 interface=ether4 network=\
-    10.30.4.0
+add address=10.30.3.1/30 comment=CORE-2-DIST-1 interface=ether3 network=10.30.3.0
+add address=10.30.4.1/30 comment=CORE-2-DIST-2 interface=ether4 network=10.30.4.0
 /ip dhcp-client
-add interface=ether1 name=client1
+add disabled=yes interface=ether1 name=client1
 /ip service
 set ftp disabled=yes
+set ssh available-from=10.0.0.0/8,192.168.0.0/16
 set telnet disabled=yes
 set www disabled=yes
+set reverse-proxy disabled=yes
+set winbox available-from=10.0.0.0/8,192.168.0.0/16
 set api disabled=yes
 set api-ssl disabled=yes
 /routing ospf interface-template
-add area=backbone auth=md5 auth-id=1 interfaces=ether1,ether2,ether3,ether4
+add area=backbone auth=md5 auth-id=1 auth-key=__OSPF_MD5_KEY__ interfaces=ether1,ether2,ether3,ether4
 add area=backbone interfaces=lo passive
+/snmp
+set contact=grupo5 enabled=yes location=GNS3-lab
 /system identity
 set name=CORE-2
+/system logging
+add action=estadored topics=interface,info
+add action=estadored topics=ospf
+add action=estadored topics=bgp
 /system note
-set note="ACCESO RESTRINGIDO - Solo personal autorizado. Toda actividad es reg\
-    istrada y auditada."
+set note="ACCESO RESTRINGIDO - Solo personal autorizado. Toda actividad es registrada y auditada."
+/tool mac-server
+set allowed-interface-list=none
+/tool mac-server mac-winbox
+set allowed-interface-list=none
+/tool mac-server ping
+set enabled=no
+/user
+add name=netadmin group=full password=__NETADMIN_PASSWORD__
+add name=monitor group=monitor-ro password=__MONITOR_PASSWORD__
+# Paso manual posterior (tras verificar login con netadmin): /user remove [find name=admin]
 ```
 
 ### 3.6 Router DIST-1
 
 - **Rol:** Distribución y Gateway de primer salto.
-- **Script asociado:** `backups/F3/dist-1-f3.rsc`
+- **Script asociado:** `configs/DIST-1.rsc` (base: `backups/F4/DIST-1-F4.rsc`)
 - **Parámetros clave:** Loopback `6.6.6.6/32`, VRRP Master en VLAN 10 (Prio 150), VRRP Backup en VLAN 20 (Prio 100), OSPF pasivo en LANs.
 
 ```routeros
-# 2026-10-26 03:19:51 by RouterOS 7.24.1
-#
+# configs/DIST-1.rsc — definitivo (cierre F4 / F5) · RouterOS 7.24.1
+# Base: backups/F4/DIST-1-F4.rsc + baseline de hardening de F1 (memoria §2.3).
+# Cambios respecto del export F4: ver configs/README.md.
+# Secretos: los tokens __NOMBRE__ se sustituyen con configs/render.sh.
+# NO importar este archivo sin renderizar y NO versionar el resultado.
 /interface ethernet
 set [ find default-name=ether1 ] disable-running-check=no
 set [ find default-name=ether2 ] disable-running-check=no
@@ -752,58 +849,76 @@ set [ find default-name=ether4 ] disable-running-check=no
 add interface=ether3 name=vlan10 vlan-id=10
 add interface=ether4 name=vlan20 vlan-id=20
 /interface vrrp
-add authentication=simple interface=vlan10 name=vrrp10 priority=150 version=2 \
-    vrid=10
-add authentication=simple interface=vlan20 name=vrrp20 version=2 vrid=20
+add authentication=simple password=__VRRP_KEY__ interface=vlan10 name=vrrp10 priority=150 version=2 vrid=10
+add authentication=simple password=__VRRP_KEY__ interface=vlan20 name=vrrp20 version=2 vrid=20
 /routing ospf instance
 add name=ospf1 router-id=6.6.6.6
 /routing ospf area
 add instance=ospf1 name=backbone
+/snmp community
+set [ find default=yes ] addresses=192.168.10.0/24,192.168.20.0/24 name=__SNMP_COMMUNITY__
+/system logging action
+add disk-file-name=estadored disk-lines-per-file=500 name=estadored target=disk
 /user group
-add name=superadmin policy="local,telnet,ssh,ftp,reboot,read,write,policy,test\
-    ,winbox,password,web,sniff,sensitive,api,romon,rest-api"
+add name=monitor-ro policy=local,ssh,winbox,read
+add name=superadmin policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,sniff,sensitive,api,romon,rest-api
 /ip neighbor discovery-settings
 set discover-interface-list=none
 /ip address
-add address=6.6.6.6 comment="Loopback / Router-ID" interface=lo network=\
-    6.6.6.6
-add address=10.30.1.2/30 comment=DIST-1-CORE-1 interface=ether1 network=\
-    10.30.1.0
-add address=10.30.3.2/30 comment=DIST-1-CORE-2 interface=ether2 network=\
-    10.30.3.0
+add address=6.6.6.6 comment="Loopback / Router-ID" interface=lo network=6.6.6.6
+add address=10.30.1.2/30 comment=DIST-1-CORE-1 interface=ether1 network=10.30.1.0
+add address=10.30.3.2/30 comment=DIST-1-CORE-2 interface=ether2 network=10.30.3.0
 add address=192.168.10.2/24 interface=vlan10 network=192.168.10.0
 add address=192.168.20.2/24 interface=vlan20 network=192.168.20.0
-add address=192.168.10.1 comment="VIP VLAN10 USERS" interface=vrrp10 network=\
-    192.168.10.1
-add address=192.168.20.1 comment="VIP VLAN20 SERVERS" interface=vrrp20 \
-    network=192.168.20.1
+add address=192.168.10.1 comment="VIP VLAN10 USERS" interface=vrrp10 network=192.168.10.1
+add address=192.168.20.1 comment="VIP VLAN20 SERVERS" interface=vrrp20 network=192.168.20.1
 /ip dhcp-client
-add interface=ether1 name=client1
+add disabled=yes interface=ether1 name=client1
 /ip service
 set ftp disabled=yes
 set ssh available-from=10.0.0.0/8,192.168.0.0/16
 set telnet disabled=yes
 set www disabled=yes
+set reverse-proxy disabled=yes
 set winbox available-from=10.0.0.0/8,192.168.0.0/16
 set api disabled=yes
 set api-ssl disabled=yes
 /routing ospf interface-template
-add area=backbone auth=md5 auth-id=1 interfaces=ether1,ether2
+add area=backbone auth=md5 auth-id=1 auth-key=__OSPF_MD5_KEY__ interfaces=ether1,ether2
 add area=backbone interfaces=vlan10,vlan20 passive
 add area=backbone interfaces=lo passive
+/snmp
+set contact=grupo5 enabled=yes location=GNS3-lab
 /system identity
 set name=DIST-1
+/system logging
+add action=estadored topics=interface,info
+add action=estadored topics=ospf
+add action=estadored topics=bgp
+/tool mac-server
+set allowed-interface-list=none
+/tool mac-server mac-winbox
+set allowed-interface-list=none
+/tool mac-server ping
+set enabled=no
+/user
+add name=netadmin group=full password=__NETADMIN_PASSWORD__
+add name=monitor group=monitor-ro password=__MONITOR_PASSWORD__
+# Paso manual posterior (tras verificar login con netadmin): /user remove [find name=admin]
 ```
 
 ### 3.7 Router DIST-2
 
 - **Rol:** Distribución y Gateway de primer salto.
-- **Script asociado:** `backups/F3/dist-2-f3.rsc`
+- **Script asociado:** `configs/DIST-2.rsc` (base: `backups/F4/DIST-2-F4.rsc`)
 - **Parámetros clave:** Loopback `7.7.7.7/32`, VRRP Master en VLAN 20 (Prio 150), VRRP Backup en VLAN 10 (Prio 100), OSPF pasivo en LANs.
 
 ```routeros
-# 2026-10-26 03:20:07 by RouterOS 7.24.1
-#
+# configs/DIST-2.rsc — definitivo (cierre F4 / F5) · RouterOS 7.24.1
+# Base: backups/F4/DIST-2-F4.rsc + baseline de hardening de F1 (memoria §2.3).
+# Cambios respecto del export F4: ver configs/README.md.
+# Secretos: los tokens __NOMBRE__ se sustituyen con configs/render.sh.
+# NO importar este archivo sin renderizar y NO versionar el resultado.
 /interface ethernet
 set [ find default-name=ether1 ] disable-running-check=no
 set [ find default-name=ether2 ] disable-running-check=no
@@ -813,47 +928,62 @@ set [ find default-name=ether4 ] disable-running-check=no
 add interface=ether4 name=vlan10 vlan-id=10
 add interface=ether3 name=vlan20 vlan-id=20
 /interface vrrp
-add authentication=simple interface=vlan10 name=vrrp10 version=2 vrid=10
-add authentication=simple interface=vlan20 name=vrrp20 priority=150 version=2 \
-    vrid=20
+add authentication=simple password=__VRRP_KEY__ interface=vlan10 name=vrrp10 version=2 vrid=10
+add authentication=simple password=__VRRP_KEY__ interface=vlan20 name=vrrp20 priority=150 version=2 vrid=20
 /routing ospf instance
 add name=ospf1 router-id=7.7.7.7
 /routing ospf area
 add instance=ospf1 name=backbone
+/snmp community
+set [ find default=yes ] addresses=192.168.10.0/24,192.168.20.0/24 name=__SNMP_COMMUNITY__
+/system logging action
+add disk-file-name=estadored disk-lines-per-file=500 name=estadored target=disk
 /user group
-add name=superadmin policy="local,telnet,ssh,ftp,reboot,read,write,policy,test\
-    ,winbox,password,web,sniff,sensitive,api,romon,rest-api"
+add name=monitor-ro policy=local,ssh,winbox,read
+add name=superadmin policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,sniff,sensitive,api,romon,rest-api
 /ip neighbor discovery-settings
 set discover-interface-list=none
 /ip address
-add address=7.7.7.7 comment="Loopback / Router-ID" interface=lo network=\
-    7.7.7.7
-add address=10.30.2.2/30 comment=DIST-2-CORE-1 interface=ether1 network=\
-    10.30.2.0
-add address=10.30.4.2/30 comment=DIST-2-CORE-2 interface=ether2 network=\
-    10.30.4.0
+add address=7.7.7.7 comment="Loopback / Router-ID" interface=lo network=7.7.7.7
+add address=10.30.2.2/30 comment=DIST-2-CORE-1 interface=ether1 network=10.30.2.0
+add address=10.30.4.2/30 comment=DIST-2-CORE-2 interface=ether2 network=10.30.4.0
 add address=192.168.10.3/24 interface=vlan10 network=192.168.10.0
 add address=192.168.20.3/24 interface=vlan20 network=192.168.20.0
-add address=192.168.10.1 comment="VIP VLAN10 USERS" interface=vrrp10 network=\
-    192.168.10.1
-add address=192.168.20.1 comment="VIP VLAN20 SERVERS" interface=vrrp20 \
-    network=192.168.20.1
+add address=192.168.10.1 comment="VIP VLAN10 USERS" interface=vrrp10 network=192.168.10.1
+add address=192.168.20.1 comment="VIP VLAN20 SERVERS" interface=vrrp20 network=192.168.20.1
 /ip dhcp-client
-add interface=ether1 name=client1
+add disabled=yes interface=ether1 name=client1
 /ip service
 set ftp disabled=yes
 set ssh available-from=10.0.0.0/8,192.168.0.0/16
 set telnet disabled=yes
 set www disabled=yes
+set reverse-proxy disabled=yes
 set winbox available-from=10.0.0.0/8,192.168.0.0/16
 set api disabled=yes
 set api-ssl disabled=yes
 /routing ospf interface-template
-add area=backbone auth=md5 auth-id=1 interfaces=ether1,ether2
+add area=backbone auth=md5 auth-id=1 auth-key=__OSPF_MD5_KEY__ interfaces=ether1,ether2
 add area=backbone interfaces=vlan10,vlan20 passive
 add area=backbone interfaces=lo passive
+/snmp
+set contact=grupo5 enabled=yes location=GNS3-lab
 /system identity
 set name=DIST-2
+/system logging
+add action=estadored topics=interface,info
+add action=estadored topics=ospf
+add action=estadored topics=bgp
+/tool mac-server
+set allowed-interface-list=none
+/tool mac-server mac-winbox
+set allowed-interface-list=none
+/tool mac-server ping
+set enabled=no
+/user
+add name=netadmin group=full password=__NETADMIN_PASSWORD__
+add name=monitor group=monitor-ro password=__MONITOR_PASSWORD__
+# Paso manual posterior (tras verificar login con netadmin): /user remove [find name=admin]
 ```
 
 ### 3.8 Configuración de Hosts Terminales (PC-USER y SRV)
@@ -1007,43 +1137,56 @@ Cada drill se ejecuta siguiendo la metodología de ingeniería de resiliencia: *
 - **Responsable:** Juan Ignacio Atencio (R4)
 - **Procedimiento:** Ejecutar ping sostenido desde `PC-USER` a `192.168.10.1`. Deshabilitar la interfaz `vlan10` en `DIST-1` (`/interface vlan disable vlan10`).
 - **Comportamiento Esperado:** Al dejar de recibir tramas VRRP Advertisement tras 3 intervalos consecutivos (3s), `DIST-2` conmuta de estado Backup (`B`) a Master (`RM`).
-- **Runbook:** Documentado en `runbooks/drill-1.md`.
+- **Ejecutado el 06/11/2026.** Con `vlan10` deshabilitada en DIST-1, DIST-2 pasó a Master de VRID 10 (`RM`); en el fragmento de ping conservado (`icmp_seq` 73–79, RTT ≈ 1,1–2,0 ms) no hay pérdidas. Al restaurar la interfaz, DIST-1 recuperó `vrrp10` Master y `vrrp20` Backup. Los ejecutores informan cumplimiento de los umbrales (< 3 s de interrupción, ≤ 2 paquetes perdidos); **los valores medidos no quedaron registrados en el repositorio**, por lo que el cumplimiento es declarado y no reproducible desde las evidencias.
+- **Runbook y capturas:** `runbooks/drill-1.md`; `capturas/f4/drills/drill-1-estados-vrrp.png` y `drill-1-ping-gateway-vrrp.png`.
 
 #### Drill 2 — OSPF: Corte de Enlace Interno de Tránsito
 
 - **Responsable:** Ian Vidmar (R3)
 - **Procedimiento:** Iniciar transferencia de datos entre hosts y deshabilitar el enlace `EDGE` ↔ `CORE-1` (`10.10.1.0/30`).
 - **Comportamiento Esperado:** OSPF detecta la pérdida de adyacencia, inunda un nuevo Router LSA por el enlace horizontal Core-Core (`10.20.1.0/30`), recalculando el árbol SPF. El tráfico fluye por `CORE-2` sin interrupción de las sesiones de los hosts.
-- **Runbook:** Documentado en `runbooks/drill-2.md`.
+- **Ejecutado el 06/11/2026.** Al deshabilitar `ether3` en EDGE desapareció la adyacencia con CORE-1, la de CORE-2 permaneció `Full` y el ping a `2.2.2.2` siguió respondiendo (`icmp_seq` 1286–1314, RTT mayormente de 6 a 10 ms, un pico aislado de 41,550 ms). Al restaurar el enlace, ambas adyacencias volvieron a `Full`. El runbook afirma convergencia < 5 s, pero el valor medido no está registrado y el fragmento de ping no lleva marca de tiempo del corte: el criterio es declarado, no demostrado numéricamente. Para revalidarlo, repetir con `ping -D -i 0.2 2.2.2.2` y guardar la salida completa.
+- **Runbook y capturas:** `runbooks/drill-2.md`; `capturas/f4/drills/drill-2-ospf-antes-del-corte.png`, `drill-2-ospf-durante-el-corte.png` y `drill-2-ospf-enlace-restaurado.png`.
 
 #### Drill 3 — BGP: Caída de Proveedor WAN Primario (ejecutado el 07/11/2026)
 
 - **Responsable:** Juan Ignacio Atencio (R1, también R4).
-- **Procedimiento:** se deshabilitó `ether1` de EDGE, enlace al ISP-1 (`10.100.1.1`, AS 65001), y se verificaron `/routing bgp session print` y `/ip route print detail where dst-address=0.0.0.0/0`. Se guardó una prueba de ping desde PC-USER a `2.2.2.2` y una captura posterior a restaurar la WAN primaria.
+- **Procedimiento:** se deshabilitó `ether1` de EDGE, enlace al ISP-1 (`10.100.1.1`, AS 65001), y se verificaron `/routing bgp session print` y `/ip route print detail where dst-address=0.0.0.0/0`. Se ejecutó un ping desde PC-USER a `2.2.2.2` durante el ensayo (su captura no se conservó en el repositorio) y se guardó una captura posterior a restaurar la WAN primaria.
 - **Resultado comprobado:** con `ether1` deshabilitada, la default vía ISP-1 apareció `DIb` (inactiva); la default vía ISP-2 (`10.200.1.1`) pasó a `DAb` (activa), con `immediate-gw=10.200.1.1%ether2`. La selección automática del respaldo funcionó sin editar rutas manualmente.
 - **Observación:** la captura inmediata todavía mostraba ambas sesiones BGP como `E` (`ESTABLISHED`) y un `hold-time=3m`; esto no permite afirmar que la sesión primaria hubiera pasado a estado caído al instante. El ping a la loopback `2.2.2.2` es evidencia complementaria, no prueba aislada de la conmutación default (existen prefijos específicos).
 - **Medición:** no se conservó un tiempo de recuperación cuantificado ni un total de paquetes perdidos validado; no se afirma el umbral de 10 s de la matriz general.
 - **Estado:** **COMPLETADO funcionalmente, con limitación de medición cuantitativa**.
 - **Runbook:** `runbooks/drill-3.md`.
-- **Capturas:** `capturas/f4/drills/drill-3-bgp-failover-isp2.png`, `drill-3-ping-isp2.png` y `drill-3-bgp-restaurado.png`.
+- **Capturas:** `capturas/f4/drills/drill-3-bgp-failover-isp2.png` y `drill-3-bgp-restaurado.png`.
 
 #### Drill 4 — check-gateway: Failover Estático Recursivo
 
 - **Responsable:** Alesandro Patricio Borda (R2)
 - **Procedimiento:** Simular una ruta estática alternativa con el parámetro `check-gateway=ping` y forzar la falta de respuesta ICMP del próximo salto.
 - **Comportamiento Esperado:** Tras 3 sondas fallidas espaciadas por 10 segundos (30s en total), RouterOS marca la ruta como inalcanzable y activa la ruta estática secundaria con mayor distancia administrativa.
-- **Runbook:** Documentado en `runbooks/drill-4.md`.
+- **Ejecutado el 08/11/2026 (R2).** Se instalaron dos rutas estáticas a `2.2.2.2/32` (primaria vía `10.100.1.1`, `distance=1`; respaldo vía `10.200.1.1`, `distance=2`, ambas con `check-gateway=ping`). Al deshabilitar `ether1`, la primaria pasó a `Is` y el respaldo a `As` tras ≈ 30 s (3 sondeos fallidos de 10 s); al rehabilitar el enlace la primaria recuperó `As` por menor distancia y las rutas de prueba se eliminaron sin residuos. Conclusión de diseño: sobre prefijos con eBGP activo, un `check-gateway` estático debe usar distancia menor a 20 o limitarse a prefijos específicos.
+- **Runbook y capturas:** `runbooks/drill-4.md`; `capturas/f4/drills/drill-4-*.png` (cuatro capturas).
 
 #### Drill 5 — Load-Sharing VRRP: Ambos Routers de Distribución Activos (ejecutado el 07/11/2026)
 
 - **Responsable:** Juan Ignacio Atencio (R4, también R1).
-- **Procedimiento:** se comprobaron los estados VRRP en DIST-1 y DIST-2, los traceroutes cruzados PC-USER ↔ SRV y tráfico de prueba desde PC-USER a `2.2.2.2` y desde SRV a `1.1.1.1`. Se generaron capturas de Torch en los dos routers de distribución.
+- **Procedimiento:** se comprobaron los estados VRRP en DIST-1 y DIST-2, los traceroutes cruzados PC-USER ↔ SRV y tráfico de prueba desde PC-USER a `2.2.2.2` y desde SRV a `1.1.1.1`. Se generó una captura de Torch en DIST-1 (la de DIST-2 no se conservó en el repositorio).
 - **Resultado documentado:** DIST-1 mantiene `vrrp10` como Master (prioridad 150) y `vrrp20` como Backup (100); DIST-2 mantiene `vrrp10` como Backup (100) y `vrrp20` como Master (150). La VLAN 10 usa VIP `192.168.10.1` y la VLAN 20 VIP `192.168.20.1`. Los primeros saltos documentados desde F2 son `192.168.10.2` (DIST-1) y `192.168.20.3` (DIST-2), con nuevas capturas de traceroute y Torch en F4.
 - **Interpretación correcta:** el esquema es **activo/activo por VLAN**, no balanceo de tráfico flujo a flujo ni 50/50 de bytes; no se afirma una tasa de transferencia no medida.
 - **Restauración:** no se modificaron enlaces ni prioridades durante este drill, por lo que no requirió rollback.
-- **Estado:** **COMPLETADO**.
+- **Estado:** **COMPLETADO** (Torch documentado solo en DIST-1).
 - **Runbook:** `runbooks/drill-5.md`.
-- **Capturas:** `capturas/f4/drills/drill-5-roles-vrrp.png`, `drill-5-trace-pc-user.png`, `drill-5-trace-srv.png`, `drill-5-torch-dist1.png` y `drill-5-torch-dist2.png`.
+- **Capturas:** `capturas/f4/drills/drill-5-roles-vrrp.png`, `drill-5-trace-pc-user.png`, `drill-5-trace-srv.png` y `drill-5-torch-dist1.png`.
+
+### 4.3 Resumen de resultados de los drills
+
+| Drill | Fecha | Resultado verificado con evidencia | Medición cuantitativa | Limitación |
+| :-- | :-- | :-- | :-- | :-- |
+| 1 — VRRP | 06/11 | DIST-2 asume Master de VRID 10; roles restaurados | Umbral declarado cumplido (< 3 s, ≤ 2 pérdidas); valores no registrados | Cumplimiento no reproducible desde las capturas |
+| 2 — OSPF | 06/11 | EDGE–CORE-2 `Full` durante el corte; ping continuo; adyacencias restauradas | Umbral declarado cumplido (< 5 s); valor no registrado | Ping sin marca de tiempo del corte |
+| 3 — BGP | 07/11 | Default por ISP-1 `DIb`, por ISP-2 `DAb`; restauración verificada | **No cuantificada** | Sin tiempo ni pérdida; sesión BGP aún `E` en la captura inmediata; sin captura del ping |
+| 4 — check-gateway | 08/11 | Primaria `Is`, respaldo `As`; restauración y limpieza | ≈ 30 s (3 × 10 s) | Prefijo `/32` de prueba, no la default |
+| 5 — VRRP activo/activo | 07/11 | Master cruzado por VLAN; traceroutes; Torch en DIST-1 | No aplica (no se mide balanceo 50/50) | Torch de DIST-2 no conservado |
 
 
 ---
@@ -1052,10 +1195,10 @@ Cada drill se ejecuta siguiendo la metodología de ingeniería de resiliencia: *
 
 | Mecanismo de Seguridad        | Dispositivos Aplicados               | Criterio de Verificación / Prueba Negativa                                                                                                                                                                 |
 | :---------------------------- | :----------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Hardening de Servicios**    | Los 7 routers CHR                    | Escaneo nmap perimetral confirma que puertos Telnet (23), HTTP (80) y API (8728) se encuentran estrictamente cerrados o filtrados.                                                                         |
-| **Autenticación OSPF MD5**    | EDGE, CORE-1, CORE-2, DIST-1, DIST-2 | **Prueba Negativa:** Se altera la clave MD5 en un extremo del enlace. La adyacencia cae inmediatamente a estado `Down` o queda bloqueada en `ExStart`, registrando error de autenticación en `/log print`. |
+| **Hardening de Servicios**    | Los 7 routers CHR                    | **Ejecutada (F1):** Telnet y HTTP desde CORE-1 hacia DIST-1 rechazados (`Connection refused`); el usuario `monitor` es rechazado (`not enough permissions (9)`) al intentar modificar la configuración, comprobado en los siete routers (`capturas/f1/hardening/`). No se ejecutó un escaneo `nmap` perimetral. |
+| **Autenticación OSPF MD5**    | EDGE, CORE-1, CORE-2, DIST-1, DIST-2 | **Prueba negativa ejecutada (12/11/2026):** con clave discordante, CORE-1 registró `authentication failed` / `md5 mismatch` y las adyacencias afectadas no alcanzaron `Full` (se observaron `Init`, `Exchange` y `Loading`). Al restaurar la clave, las cuatro adyacencias de CORE-1 volvieron a `Full` (`capturas/f4/seguridad/ospf-md5/`, `runbooks/seguridad-monitoreo-f4.md`). |
 | **Autenticación BGP TCP-MD5** | EDGE, ISP-1, ISP-2                   | **Protección del Plano de Control WAN (RFC 2385):** Protege los sockets BGP (TCP 179) contra inyección de rutas espurias, secuestro de prefijos (*BGP hijacking*) y ataques de denegación por desincronización con paquetes TCP RST fraudulentos. **Prueba Negativa Ejecutada:** Se indujo discrepancia de firma en ISP-2 configurando `CLAVE_INCORRECTA`; el kernel descartó los paquetes BGP por falla de firma MD5 y la sesión `to-ISP2-1` degradó inmediatamente a estados cíclicos `connect`/`active` sin alcanzar `ESTABLISHED`, reanudándose de inmediato al reponer la clave correcta `CLAVE_BGP_ISP2` (`capturas/f3/bgp/bgp-clave-incorrecta.png`). |
-| **Autenticación VRRP**        | DIST-1, DIST-2                       | Se inyecta una trama de anuncio con contraseña errónea; el nodo la descarta y no altera su estado Master/Backup.                                                                                           |
+| **Autenticación VRRP**        | DIST-1, DIST-2                       | **Prueba negativa no ejecutada.** La autenticación `simple` está configurada y visible en `/interface vrrp print detail` (`capturas/f2/vrrp/dist-1-vrrp.png`, `dist-2-vrrp.png`). Nota: la autenticación simple viaja en texto claro; solo protege frente a anuncios de hosts que no conocen la clave, no frente a un atacante que capture tráfico del segmento. |
 | **Firewall / ACL en EDGE**    | Router EDGE                          | **Protección Perimetral y Anti-Spoofing:** Inspección con estado en cadenas `input` y `forward`. En `input`: política de mínimo privilegio que solo acepta BGP desde vecinos autorizados, OSPF por uplinks internos, ICMP y gestión SSH/Winbox exclusivamente desde la lista `MGMT` por interfaces internas `!WAN`, aplicando drop al resto desde WAN (verificado mediante timeout en SSH desde ISP-1). En `forward`: filtrado anti-spoofing estricto para direcciones privadas RFC 1918 provenientes de WAN (`SPOOF`) y descarte absoluto de intentos de conexión nueva (`new`) desde WAN hacia las LANs internas (`capturas/f3/firewall/edge-firewall.png`). |
 
 ---
@@ -1103,12 +1246,15 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 | 08/11/2026 | Patricio Borda (R2 + R5) | `feat(f4): completar drill 4 de failover estatico y consolidar backups f4` | Ejecutar y documentar Drill 4 (check-gateway=ping hacia 2.2.2.2/32), incorporar evidencias gráficas, consolidar los 7 exports finales de RouterOS en backups/F4/ y actualizar memoria y backlog. | `git revert HEAD` |
 
 
+> **Conciliación pendiente con `git log`.** El Change Log llega hasta el 08/11/2026. Faltan registrar los commits del cierre de F4 (12/11/2026: OSPF MD5 negativo, logging, SNMP, exports regenerados) y los de F5 (`configs/`, memoria, defensa). Los hashes salen del historial real, no se redactan a mano: `git log --reverse --date=format:'%d/%m/%Y' --pretty='| %ad | %an | `%h` — `%s` |'`. La última fila existente referencia `git revert HEAD`, que no identifica un commit; debe reemplazarse por su hash.
+
 ### 6.2 Política de Respaldo y Evidencia de Restauración
 
 - **Exports de F1:** los siete archivos `.rsc` se versionan en `backups/f1/exports/`. Se generaron sin `show-sensitive` y se revisaron para confirmar la ausencia de secretos y metadatos de hardware de simulación (`system id`).
 - **Exports de F2 (25/10/2026):** los siete archivos `.rsc` están versionados en `backups/f2/exports/`: `isp-1-f2.rsc`, `isp-2-f2.rsc`, `edge-f2.rsc`, `core-1-f2.rsc`, `core-2-f2.rsc`, `dist-1-f2.rsc` y `dist-2-f2.rsc`. Se generaron mediante `/export` sin `show-sensitive` y se incorporaron en el commit `44875a8` (`ops(backup): agregar exports saneados de F2`). Los exports documentan los parámetros no sensibles que RouterOS muestra por defecto; las claves ocultas deben conservarse por separado fuera del repositorio público.
 - **Exports de F3 (25/10/2026):** los siete archivos de configuración `.rsc` correspondientes a la capa de borde y proveedores WAN están versionados en `backups/F3/`: `EDGE-F3.rsc`, `ISP-1-F3.rsc`, `ISP-2-F3.rsc`, `core-1-f3.rsc`, `core-2-f3.rsc`, `dist-1-f3.rsc` y `dist-2-f3.rsc`. Se generaron sin `show-sensitive` y se depuraron metadatos de hardware de simulación (`system id`), verificando la protección de secretos conforme a las normas de seguridad del laboratorio.
-- **Exports F4 (al 08/11/2026):** los siete archivos de configuración `.rsc` de RouterOS están consolidados en `backups/F4/`: `EDGE-F4.rsc`, `ISP-1-F4.rsc`, `ISP-2-F4.rsc`, `CORE-1-F4.rsc`, `CORE-2-F4.rsc`, `DIST-1-F4.rsc` y `DIST-2-F4.rsc`. Fueron generados y saneados por Patricio Borda (R2 + R5), protegiendo secretos (claves OSPF/BGP `REDACTED`) y validando la consistencia de nombres con el manifiesto `backups/F4/README.md`.
+- **Exports F4 (consolidados el 08/11/2026 y regenerados el 12/11/2026):** los siete `.rsc` de RouterOS están en `backups/F4/` (`EDGE-F4.rsc`, `ISP-1-F4.rsc`, `ISP-2-F4.rsc`, `CORE-1-F4.rsc`, `CORE-2-F4.rsc`, `DIST-1-F4.rsc`, `DIST-2-F4.rsc`) e incluyen SNMP y logging. Se generaron sin `show-sensitive`; la comunidad SNMP figura como `REDACTED`. **Observaciones de auditoría (F5):** (1) los siete archivos conservan la línea `# system id = …`, que en F1–F3 se había depurado; (2) el export de EDGE muestra `ether2` con `disabled=yes`; (3) frente a F1, los exports F2–F4 ya no muestran `client1` deshabilitado ni las líneas de `mac-server`, y no incluyen usuarios. Los exports F4 se dejan intactos como registro histórico; las correcciones están en `configs/`.
+- **Scripts definitivos (F5):** `configs/<ROUTER>.rsc`, con tokens `__NOMBRE__` para secretos y utilidades `render.sh` y `validate.py`. Validados de forma estática (direccionamiento, pares BGP/OSPF/VRRP, tokens); **todavía no se importaron en un CHR limpio**. Detalle en `configs/README.md`.
 - **Backups binarios:** los siete archivos `*-F1-post-hardening.backup` fueron generados en cada uno de los routers y almacenados en un repositorio offline privado cifrado, fuera del alcance del control de versiones público para resguardar credenciales y configuraciones sensibles del plano de gestión.
 - **Validación de Restauración en Nodo de Test (R2 - Patricio Borda):** para dar estricto cumplimiento al criterio de aceptación de F1, se desplegó una instancia MikroTik CHR aislada (`TEST-RESTORE-CHR`) conectada únicamente a una red host-only de gestión. Se procedió a cargar el archivo binario `isp-1-F1-post-hardening.backup` mediante SFTP/WinBox y se ejecutó:
   ```routeros
@@ -1124,18 +1270,28 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 
 ### 6.3 Monitoreo y Telemetría
 
-- **SNMP v2c:** su configuración y validación están previstas para F4; no se declara como habilitado ni probado durante F1.
-- **Métricas previstas:**
-  - Estado operacional de interfaces físicas y de enlace (MIB-II `ifOperStatus`).
-  - Vecindad y cambios de estado en OSPF (OSPF MIB `ospfNbrState`).
-  - Estado de las sesiones eBGP (BGP4 MIB `bgpPeerState`).
-  - Cambios de rol VRRP registrados mediante Syslog.
+Estado real al cierre de F4 (12/11/2026):
+
+| Mecanismo | Estado | Alcance y evidencia |
+| :-- | :-- | :-- |
+| SNMP v2c | Configurado en los 7 routers | Comunidad de solo lectura (`write-access=no`), limitada a `192.168.10.0/24` y `192.168.20.0/24`; contacto `grupo5`, ubicación `GNS3-lab`. Verificado con `/snmp print` y `/snmp community print` (`capturas/f4/monitoreo/snmp/`). |
+| Consulta SNMP desde un host | **No realizada** | VPCS 0.8.4 no incluye `snmpwalk` y no se pudo alcanzar la red de GNS3 desde el PC personal. La lectura MIB-II extremo a extremo queda sin validar. |
+| Logging local | Configurado en los 7 routers | Acción `estadored` (destino disco, 500 líneas por archivo) con reglas para `interface,info`, `ospf` y `bgp` (`capturas/f4/monitoreo/logging/`). |
+
+Alcance de la telemetría disponible:
+
+- Cambios de estado de interfaces, adyacencias OSPF y sesiones BGP quedan en el log de cada router.
+- Los cambios de rol VRRP **no** se registran: no existe una regla de logging para ese tema. Se observan consultando `/interface vrrp print`, como se hizo en los Drills 1 y 5.
+- Los logs son locales a cada router; no hay syslog remoto ni recolector central.
+- La comunidad SNMP v2c viaja en texto claro; por eso se restringe por origen y se mantiene de solo lectura.
+
+Métricas SNMP previstas para una fase de operación (no consultadas en este laboratorio): `ifOperStatus` (MIB-II), `ospfNbrState` (OSPF MIB) y `bgpPeerState` (BGP4 MIB).
 
 ---
 
 ## 7. Repositorio de Evidencias Gráficas y Capturas
 
-Las evidencias visuales se organizan en la carpeta `capturas/`, separadas por etapa del proyecto y tipo de verificación. Las capturas de F1 y F2 enumeradas abajo están incorporadas al repositorio, al igual que las de F3 correspondientes al avance de BGP. Las demás referencias de F3 y las de F4 son ubicaciones previstas y se sumarán después de realizar las pruebas.
+Las evidencias visuales se organizan en la carpeta `capturas/`, separadas por fase y tipo de verificación (137 capturas PNG al cierre de F4). Las rutas listadas abajo existen en el repositorio, salvo las excepciones señaladas en la subsección "Evidencias citadas que no están en el repositorio".
 
 ### F1 — Topología, conectividad y hardening
 
@@ -1144,7 +1300,7 @@ Las evidencias visuales se organizan en la carpeta `capturas/`, separadas por et
 - `capturas/f1/conectividad/<router>-ip-address.png`: direcciones IP configuradas en cada router.
 - `capturas/f1/conectividad/<router>-ping-vecinos.png`: resultados de las pruebas de conectividad con vecinos directos.
 - `capturas/f1/hardening/`: banner legal (`core-1-banner-legal.png`), restricción de acceso (`dist-2-restriccion-ssh-winbox.png`), servicios y discovery (`isp-1-servicios-discovery-admin.png`) y pruebas negativas (`core-2-monitor-solo-lectura.png`, `dist-1-telnet-http-rechazados.png`, `dist-1-http-rechazado.png`).
-- `capturas/f1/hardening/<router>-hardening.png` y `capturas/f1/hardening/auditoria-<router>.png`: catorce capturas incorporadas, una de configuración de hardening y otra de auditoría por router. La evidencia del banner legal de CORE-2 todavía debe confirmarse.
+- `capturas/f1/hardening/<router>-hardening.png` y `capturas/f1/hardening/auditoria-<router>.png`: catorce capturas incorporadas, una de configuración de hardening y otra de auditoría por router. Del banner legal de CORE-2 no hay captura dedicada (la configuración sí figura en el export F4).
 - `capturas/f1/topologia/snapshot-base-f1.png`: evidencia del administrador de snapshots, con ambos nombres y fechas visibles.
 
 En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: `isp-1`, `isp-2`, `edge`, `core-1`, `core-2`, `dist-1` o `dist-2`.
@@ -1165,7 +1321,7 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 - `capturas/f2/ospf/core-1-rutas-lan.png`: propagación de `192.168.10.0/24` y `192.168.20.0/24` por OSPF en CORE-1.
 - `capturas/f2/ospf/core-2-rutas-lan.png`: propagación de las dos LAN por OSPF en CORE-2.
 - `capturas/f2/ospf/edge-rutas-lan.png`: rutas a las dos LAN en EDGE por CORE-1 y CORE-2.
-- `capturas/f2/vrrp/quick-failover-pc-user-ping.png` y `quick-failover-dist2-master.png`: evidencia de la prueba rápida VRRP, con respuesta del gateway virtual y transición de DIST-2 a Master al perderse el enlace de DIST-1.
+- Prueba rápida de failover VRRP de F2: se ejecutó (véase `backlog.md`), pero sus capturas no están en el repositorio. La evidencia de failover VRRP vigente es la de los Drills 1 y 5 de F4.
 
 ### F3 — Enrutamiento externo
 
@@ -1184,7 +1340,7 @@ En las rutas que contienen `<router>`, se utilizará el nombre correspondiente: 
 
 ### F4 — Cierre ejecutado al 12/11/2026
 
-La preparación y **los cinco drills de failover** se encuentran documentados: Drill 1 (VRRP), Drill 2 (OSPF), Drill 3 (BGP; R1), Drill 4 (check-gateway; R2) y Drill 5 (VRRP activo/activo; R4). Asimismo, se encuentran consolidados los siete backups finales en `backups/F4/`. Restan abiertos exclusivamente los controles de seguridad y monitoreo de R3 (OSPF MD5 negativo, SNMP y logging).
+La preparación, **los cinco drills de failover**, la prueba negativa OSPF MD5, el logging, SNMP y los siete exports finales están documentados y versionados. La única comprobación no realizada es `snmpwalk` desde un host (limitación del entorno).
 
 **Preparación (06/11/2026):** EDGE tenía sesiones eBGP con ISP-1 e ISP-2 `ESTABLISHED`, adyacencias OSPF hacia CORE-1 y CORE-2 `Full`, y se registraron los roles VRRP previstos en DIST-1/DIST-2. Véase `runbooks/preparacion-f4.md`.
 
@@ -1215,16 +1371,69 @@ Todas las capturas de los drills se agrupan en `capturas/f4/drills/`:
 - **Preparación:** `preparacion-edge-bgp-ospf.png` (sesiones BGP y vecinos OSPF previos a las pruebas).
 - **Drill 1:** `drill-1-estados-vrrp.png` y `drill-1-ping-gateway-vrrp.png`.
 - **Drill 2:** `drill-2-ospf-antes-del-corte.png`, `drill-2-ospf-durante-el-corte.png` y `drill-2-ospf-enlace-restaurado.png`.
-- **Drill 3:** `drill-3-bgp-failover-isp2.png`, `drill-3-ping-isp2.png` y `drill-3-bgp-restaurado.png`.
+- **Drill 3:** `drill-3-bgp-failover-isp2.png` y `drill-3-bgp-restaurado.png`.
 - **Drill 4:** `drill-4-rutas-antes-del-corte.png`, `drill-4-failover-check-gateway.png`, `drill-4-enlace-restaurado.png` y `drill-4-rutas-limpias.png`.
-- **Drill 5:** `drill-5-roles-vrrp.png`, `drill-5-trace-pc-user.png`, `drill-5-trace-srv.png`, `drill-5-torch-dist1.png` y `drill-5-torch-dist2.png`.
+- **Drill 5:** `drill-5-roles-vrrp.png`, `drill-5-trace-pc-user.png`, `drill-5-trace-srv.png` y `drill-5-torch-dist1.png`.
 
-Las capturas de los cinco drills se encuentran persistidas en `capturas/f4/drills/`. Las evidencias adicionales de cierre están en `capturas/f4/seguridad/ospf-md5/` y `capturas/f4/monitoreo/` (logging, SNMP y exports). La consulta `snmpwalk` quedó sin ejecutar por las limitaciones documentadas; no se presenta como validada.
+Las capturas de los cinco drills se encuentran persistidas en `capturas/f4/drills/` (con las excepciones indicadas abajo). Las evidencias adicionales de cierre están en `capturas/f4/seguridad/ospf-md5/` y `capturas/f4/monitoreo/` (logging, SNMP y exports). La consulta `snmpwalk` quedó sin ejecutar por las limitaciones documentadas; no se presenta como validada.
+
+
+### F4 — Seguridad y monitoreo (carpetas con marca temporal)
+
+Estas capturas conservan el nombre original `Pasted image <AAAAMMDDhhmmss>.png`, que coincide con el registro de trabajo del 12/11/2026 (véase `capturas/f4/README.md`). Se citan por carpeta:
+
+| Carpeta | Capturas | Qué documenta |
+| :-- | :-: | :-- |
+| `capturas/f4/seguridad/ospf-md5/` | 5 | Prueba negativa OSPF MD5: mensajes de autenticación fallida y recuperación de las cuatro adyacencias de CORE-1. |
+| `capturas/f4/monitoreo/logging/` | 8 | Acción `estadored`, reglas `interface`/`ospf`/`bgp` y eventos registrados. |
+| `capturas/f4/monitoreo/snmp/` | 7 | `/snmp print` y `/snmp community print` en los siete routers. |
+| `capturas/f4/monitoreo/exports/` | 7 | Re-exportación de los siete routers al cierre. |
+
+### Evidencias citadas que no están en el repositorio
+
+Estas referencias aparecían en la documentación de fases anteriores y se verificó que los archivos no existen. Se retiraron de los listados vigentes; si se recuperan, deben agregarse a la carpeta indicada.
+
+| Archivo citado | Carpeta | Dónde se citaba |
+| :-- | :-- | :-- |
+| `quick-failover-pc-user-ping.png` | `capturas/f2/vrrp/` | Memoria §7 y backlog (prueba rápida de F2) |
+| `quick-failover-dist2-master.png` | `capturas/f2/vrrp/` | Memoria §7 |
+| `drill-3-ping-isp2.png` | `capturas/f4/drills/` | Runbook del Drill 3 y memoria |
+| `drill-5-torch-dist2.png` | `capturas/f4/drills/` | Runbook del Drill 5 y memoria |
 
 
 ---
 
 ## 8. Conclusiones y lecciones aprendidas
+
+### 8.1 Resultado técnico
+
+La arquitectura de cinco capas se implementó y verificó en GNS3 con siete routers MikroTik CHR (RouterOS 7.24.1). Cada capa de failover tiene evidencia propia: VRRP activo/activo por VLAN en distribución (Drills 1 y 5), reconvergencia OSPF sobre la malla Core con el enlace Core-Core (Drill 2), conmutación eBGP entre dos proveedores con `local-pref` 200/100 (Drill 3) y conmutación estática por `check-gateway=ping` en ≈ 30 s (Drill 4). Los planos de control se protegen con OSPF MD5, BGP TCP-MD5 y VRRP con autenticación simple. El borde aplica firewall con estado, anti-spoofing y gestión restringida a redes internas. Dos pruebas negativas se ejecutaron con evidencia: clave BGP incorrecta (F3) y clave OSPF MD5 discordante (F4).
+
+### 8.2 Decisiones de diseño que se sostuvieron
+
+- **VRRP en Distribución y Core como tránsito puro:** corrigió el defecto de FHRP mal ubicado del diagrama original y mantuvo el Core sin SVIs ni ARP de acceso.
+- **Enlace Core-Core dedicado:** evitó rutas asimétricas (*trombone routing*) y dio un camino alternativo directo cuando cae un uplink de EDGE, como mostró el Drill 2.
+- **Dual-homing eBGP con `local-pref`:** ISP-1 es el camino preferido y ISP-2 el respaldo automático, sin editar rutas manualmente (Drill 3).
+- **Activo/activo por VLAN:** reparte los roles Master entre DIST-1 y DIST-2; no es un balanceo flujo a flujo ni 50/50 de bytes, y el laboratorio no lo afirma.
+
+### 8.3 Limitaciones reconocidas
+
+- **Mediciones sin registro numérico.** Los Drills 1 y 2 declaran cumplir sus umbrales (< 3 s y < 5 s), pero los valores medidos no quedaron guardados; el Drill 3 no se cuantificó. Son resultados funcionales comprobados, no cronometrados de forma reproducible.
+- **SNMP sin validación extremo a extremo.** Está configurado y verificado en los siete routers, pero nunca se consultó con `snmpwalk` desde un host.
+- **Autenticación VRRP simple.** Viaja en texto claro; protege ante anuncios de hosts que no conocen la clave, no ante un atacante que capture tráfico en la LAN.
+- **Telemetría acotada.** Logging local por router, sin syslog remoto y sin registro de cambios de rol VRRP.
+- **Pruebas previstas no ejecutadas.** Inyección de anuncio VRRP con clave errónea y escaneo `nmap` perimetral figuraban en el diseño y no se realizaron.
+- **Scripts de `configs/` validados solo de forma estática.** Falta importarlos en un CHR limpio para confirmar el reprovisionamiento desde cero.
+- **Evidencias ausentes.** Cuatro capturas citadas en fases previas no están en el repositorio (§7).
+
+### 8.4 Lecciones aprendidas
+
+1. **Registrar la medición en el momento del drill.** Una cifra y la salida completa del ping con marca de tiempo valen más que la afirmación posterior de que se cumplió el umbral.
+2. **Los exports derivan si se editan a mano.** Entre F1 y F4 reaparecieron metadatos de simulación y se perdieron líneas de hardening en los exports. Conviene generar los exports con un procedimiento fijo y comparar cada fase contra la anterior (`diff`), como se hizo en la auditoría de F5.
+3. **Probar la restauración, no solo el respaldo.** La validación de F1 con un nodo aislado fue la única prueba real de recuperación; falta repetirla para los scripts de `configs/`.
+4. **Estados temporales de los drills.** Un enlace deshabilitado para una prueba debe quedar verificado como restaurado antes de exportar: el export de EDGE al cierre de F4 muestra `ether2` deshabilitada sin que ningún drill lo explique.
+5. **Reparto de roles ante bajas.** La salida de la integrante R1 obligó a reasignar roles a mitad del proyecto; mantener la matriz de responsabilidades y el Change Log al día facilitó la continuidad.
+6. **Ruta estática con `check-gateway` frente a BGP.** Con eBGP activo (distancia 20), una ruta estática solo debería usarse sobre prefijos específicos o con distancia menor, para evitar colisiones en la tabla de ruteo (post-mortem del Drill 4).
 
 ---
 
@@ -1233,8 +1442,11 @@ Las capturas de los cinco drills se encuentran persistidas en `capturas/f4/drill
 1. **MikroTik RouterOS v7 Documentation:** _Routing Protocols (BGP, OSPF, VRRP)_ — [help.mikrotik.com](https://help.mikrotik.com/docs/)
 2. **RFC 2385:** _Protection of BGP Sessions via the TCP MD5 Signature Option_.
 3. **RFC 2328:** _OSPF Version 2 Specification_.
-4. **RFC 5798:** _Virtual Router Redundancy Protocol (VRRP) Version 3 for IPv4 and IPv6_.
-5. **Cisco Validated Design (CVD):** _High Availability Campus Network Design_.
+4. **RFC 5798:** _Virtual Router Redundancy Protocol (VRRP) Version 3 for IPv4 and IPv6_ (el laboratorio usa VRRP versión 2, con autenticación simple, y las MACs virtuales `00:00:5E:00:01:<VRID>`).
+5. **RFC 3768:** _Virtual Router Redundancy Protocol (VRRP)_, versión 2.
+6. **RFC 4271:** _A Border Gateway Protocol 4 (BGP-4)_.
+7. **RFC 1213:** _Management Information Base for Network Management of TCP/IP-based internets: MIB-II_.
+8. **Cisco Validated Design (CVD):** _High Availability Campus Network Design_.
 
 ---
 
@@ -1252,3 +1464,20 @@ Las capturas de los cinco drills se encuentran persistidas en `capturas/f4/drill
 - [x] **Estructura del repositorio:** Creación física de carpetas `configs/`, `backups/`, `capturas/`, `runbooks/`, `docs/diagramas/` con `.gitkeep`.
 - [x] **Backlog desglosado:** Tareas F0 a F5 detalladas con responsables explícitos y criterios de aceptación verificables.
 - [x] **Saneamiento documental:** Depuración de notas de plantilla, comentarios auxiliares y validación de referencias técnicas.
+
+### Implementación (F1–F4)
+
+- [x] **F1:** topología de 7 routers en GNS3, direccionamiento, hardening base, exports, snapshot y validación de restauración de backup.
+- [x] **F2:** OSPF Área 0 con MD5, VRRP activo/activo, conectividad L3 de extremo a extremo, ECMP y propagación de las LAN.
+- [x] **F3:** eBGP multi-homing con TCP-MD5, `local-pref`, default hacia OSPF, firewall perimetral y prueba negativa de clave BGP.
+- [x] **F4:** cinco drills ejecutados y documentados con runbook; prueba negativa OSPF MD5; logging y SNMP v2c en los siete routers; exports finales.
+- [ ] **F4 (parcial):** consulta `snmpwalk` desde un host. No realizada por limitación del entorno.
+- [ ] **F4 (parcial):** medición numérica reproducible de los Drills 1, 2 y 3.
+
+### Cierre (F5)
+
+- [x] **Memoria técnica:** sin secciones vacías ni textos de plantilla; contradicciones internas resueltas; limitaciones declaradas (§8.3).
+- [~] **Scripts definitivos:** `configs/` con los siete routers, `render.sh` y `validate.py`; validados de forma estática, falta importarlos en un CHR limpio.
+- [~] **Evidencias enlazadas:** enlaces de la memoria verificados; cuatro capturas citadas no existen en el repositorio (§7).
+- [ ] **Change Log contra `git log`:** conciliar los commits del 12/11/2026 en adelante (§6.1).
+- [ ] **Defensa oral:** simulación grupal y defensa por rol (guía en `docs/defensa.md`).
