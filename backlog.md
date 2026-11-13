@@ -107,7 +107,7 @@
 > 4. **VRRP activo/activo:** VRID 10 con DIST-1 Master (prioridad 150) y DIST-2 Backup (100); VRID 20 con DIST-2 Master (150) y DIST-1 Backup (100). Autenticación `simple`, `version=2` e `interval=1s`. Evidencias en `capturas/f2/vrrp/`.
 > 5. **Conectividad L3:** PC-USER y SRV alcanzan sus gateways virtuales y se comunican de manera bidireccional. El load-sharing fue verificado mediante ARP y traceroutes. Evidencias en `capturas/f2/conectividad/`.
 > 6. **Backups:** los siete exports saneados de F2 están versionados en `backups/f2/exports/`.
-> **Pendiente para el cierre:** ejecutar y documentar la prueba rápida de failover de VRRP de este plan; el drill formal de contingencia corresponde a F4.
+> **Cierre funcional:** el failover VRRP y la restauración están evidenciados en el Drill 1 de F4. Las capturas de la prueba rápida de F2 citadas originalmente no están en el repositorio; no se atribuyen al ensayo de F2 las evidencias de F4.
 
 ### VRRP (2 Grupos, Load-Sharing Activo/Activo, Auth)
 
@@ -127,7 +127,7 @@
 - [x] [R4/R5] Configurar direccionamiento estático en PC-USER (192.168.10.100/24 GW 192.168.10.1) y SRV (192.168.20.100/24 GW 192.168.20.1). Criterio: ping exitoso de cada host a su respectiva IP virtual VRRP.
 - [x] [R4/R5] Realizar ping bidireccional intra-LAN entre PC-USER y SRV. Criterio: 0% de pérdida de paquetes a través del enrutamiento inter-VLAN de distribución.
 - [x] [R3] Verificar ECMP desde DIST-1 y DIST-2 hacia la loopback de EDGE (`3.3.3.3/32`). Criterio: `/ip route print detail where dst-address=3.3.3.3/32` muestra dos próximos saltos OSPF activos de igual preferencia en ambos DIST. Evidencias: `capturas/f2/ospf/dist-1-ping-edge-loopback.png` y `capturas/f2/ospf/dist-2-ecmp-edge-loopback.png`.
-- [x] [R4/R5] Ejecutar una prueba de failover rápida: mantener ping a `192.168.10.1`, deshabilitar temporalmente `ether3` de DIST-1, verificar que DIST-2 pasa a Master para VRID 10 y reactivar el enlace. Criterio: el gateway virtual vuelve a responder por DIST-2 durante la caída de DIST-1 y el estado original se recupera al reactivar el enlace. Evidencias: las capturas `quick-failover-*.png` citadas originalmente no están en el repositorio; el failover VRRP queda evidenciado en `capturas/f4/drills/drill-1-*.png`.
+- [x] [R4/R5] Verificar el failover VRRP con ping a `192.168.10.1`, asunción de Master para VRID 10 por DIST-2 y restauración del estado original. Criterio funcional cubierto por el Drill 1 de F4, que deshabilitó `vlan10` en DIST-1. La variante rápida prevista para F2 con corte de `ether3` no tiene evidencias propias conservadas: las capturas `quick-failover-*.png` citadas originalmente no están en el repositorio. Evidencias disponibles: `capturas/f4/drills/drill-1-*.png`.
 
 ---
 
@@ -164,12 +164,15 @@
 
 ---
 
-## Epic F4 — Drills + Monitoreo · _objetivo propuesto: lun 26/10/2026_ · [x]
+## Epic F4 — Drills + Monitoreo · _objetivo propuesto: lun 26/10/2026_ · [x] Cerrada con limitaciones
+
+> Cierre funcional y documental; las mediciones cuantitativas de los Drills 1–3 y la consulta SNMP desde un host siguen sin validar.
+
 ### Preparación y los 5 Drills de Failover (Runbook + Medición + Post-Mortem)
 
 - [x] [R3/R4/R5] Preparar F4: verificar ambas sesiones BGP y adyacencias OSPF en EDGE, y roles VRRP iniciales en DIST-1/DIST-2. Criterio: peers BGP `ESTABLISHED`, vecinos OSPF `Full` y roles VRRP coincidentes con el diseño. Evidencia: `runbooks/preparacion-f4.md`.
-- [x] [R4] Ejecutar Drill 1 (VRRP: caída de gateway Master DIST-1): deshabilitar `vlan10` en DIST-1 durante ping continuo desde PC-USER. **Completado:** DIST-2 asumió Master de VRID 10 y DIST-1 recuperó sus roles al restaurarse. Se midieron los tiempos y la pérdida de paquetes; los resultados cumplieron los criterios (< 3s de interrupción y <= 2 paquetes ICMP perdidos). Runbook y evidencias: `runbooks/drill-1.md` y `capturas/f4/drills/`.
-- [x] [R3] Ejecutar Drill 2 (OSPF: corte EDGE–CORE-1, `10.10.1.0/30`): deshabilitar `ether3` en EDGE durante ping sostenido. **Completado:** la adyacencia EDGE–CORE-1 cayó, EDGE–CORE-2 permaneció `Full`, se mantuvo la conectividad hacia `2.2.2.2` y ambas adyacencias se recuperaron al restaurar. Se midió el tiempo de convergencia y cumplió el criterio (< 5s). Runbook y evidencias: `runbooks/drill-2.md` y `capturas/f4/drills/`.
+- [x] [R4] Ejecutar Drill 1 (VRRP: caída de gateway Master DIST-1): deshabilitar `vlan10` en DIST-1 durante ping continuo desde PC-USER. **Completado funcionalmente:** DIST-2 asumió Master de VRID 10 y DIST-1 recuperó sus roles al restaurarse; las capturas muestran respuestas ICMP durante la prueba. La evidencia conservada no permite demostrar una interrupción inferior a 3 segundos ni una pérdida máxima de 2 paquetes ICMP. Runbook y evidencias: `runbooks/drill-1.md` y `capturas/f4/drills/`.
+- [x] [R3] Ejecutar Drill 2 (OSPF: corte EDGE–CORE-1, `10.10.1.0/30`): deshabilitar `ether3` en EDGE durante ping sostenido. **Completado funcionalmente:** la adyacencia EDGE–CORE-1 cayó, EDGE–CORE-2 permaneció `Full`, hubo respuestas ICMP desde `2.2.2.2` en el intervalo observado y ambas adyacencias se recuperaron al restaurar. El tiempo exacto de reconvergencia y el cumplimiento del umbral inferior a 5 segundos no están demostrados por las evidencias conservadas. Runbook y evidencias: `runbooks/drill-2.md` y `capturas/f4/drills/`.
 - [x] [R1] Ejecutar Drill 3 (BGP: caída de ISP-1): se deshabilitó `ether1` de EDGE, la default por ISP-1 (`10.100.1.1`) quedó `DIb` y la de ISP-2 (`10.200.1.1%ether2`) pasó a `DAb`, sin modificar rutas manualmente. Capturas del failover, ping y restauración: `capturas/f4/drills/drill-3-*.png`; informe y post-mortem: `runbooks/drill-3.md`. **Resultado: conmutación funcional verificada; tiempo exacto y pérdida ICMP no cuantificados.**
 - [x] [R2] Ejecutar Drill 4 (check-gateway: failover estático de enlace): configurar ruta estática con `check-gateway=ping` y forzar inalcanzabilidad. **Completado:** se configuraron las rutas primaria y de backup para `2.2.2.2/32`, se deshabilitó `ether1`, la primaria pasó a inactiva (`Is`) a los 30s exactos (3 pings fallidos de 10s) y se activó automáticamente la ruta alternativa (`As`), restaurándose la preferencia al rehabilitar el enlace y verificándose la posterior limpieza de rutas. Evidencias: `capturas/f4/drills/drill-4-*.png`; informe y post-mortem: `runbooks/drill-4.md`. Criterio cumplido.
 - [x] [R4] Ejecutar Drill 5 (VRRP activo/activo por VLAN): DIST-1 Master de VRID 10 y DIST-2 Master de VRID 20, traceroutes cruzados y tráfico observado con Torch en ambos DIST. Evidencias: `capturas/f4/drills/drill-5-*.png`; informe y post-mortem: `runbooks/drill-5.md`. **Criterio validado: gateways activos por VLAN; no se exige balanceo 50/50 del ancho de banda.**
@@ -186,15 +189,24 @@
 
 ---
 
-## Epic F5 — Memoria + Defensa · _objetivo propuesto: mar 27/10/2026_ · [~]
+## Epic F5 — Memoria + Repositorio Final · _objetivo propuesto: mar 27/10/2026_ · [x] Completada documentalmente
+
+> Memoria técnica, evidencias disponibles, configuraciones definitivas y Change Log incorporados. Este cierre documental no declara exitosas las validaciones técnicas pendientes ni la defensa oral.
+
 ### Consolidación Documental y Repositorio Final
 
-- [x] [R1] Consolidar y auditar la versión final de `docs/memoria.md`, asegurando que todas las secciones, diagramas y referencias técnicas estén completas y sin ningún placeholder. Criterio: memoria técnica 100% aprobada por el equipo. **Avance (12/11):** consolidada y auditada (§8 redactada, contradicciones de §2.5/§4/§5/§6.3/§7 resueltas, scripts de §3 sincronizados con `configs/`, limitaciones declaradas).
-- [x] [R2] Exportar los scripts de configuración definitivos de los 7 routers a la carpeta `configs/` (`<router>.rsc`) verificando que no existan inconsistencias de sintaxis. Criterio: 7 scripts `.rsc` utilizables para reprovisionamiento desde cero. **Avance (12/11):** los 7 scripts existen, con secretos tokenizados, `render.sh` y `validate.py` (validación estática OK).
-- [x] [R3] Organizar y documentar las evidencias gráficas en la carpeta `capturas/` (tablas de rutas, VRRP, OSPF, BGP y capturas de Wireshark). Criterio: evidencias enlazadas correctamente en memoria.md. **Avance (12/11):** enlaces de memoria verificados y secciones de F4 documentadas;
-- [x] [R4] Verificar el cierre total del backlog (todas las tareas en estado `[x]`) y corroborar que el Change Log de la memoria refleje con exactitud la secuencia de commits de Git. Criterio: auditoría cruzada `git log` vs Change Log sin discrepancias. **Estado (12/11):** las épicas F0–F4 están en `[x]`;
+- [x] [R1] Consolidar y auditar la versión final de `docs/memoria.md`, asegurando que todas las secciones, diagramas y referencias técnicas estén completas y sin ningún placeholder. Criterio: memoria técnica 100% aprobada por el equipo. **Estado documental:** consolidación y auditoría conservadas; afirmaciones de los Drills 1 y 2 corregidas y limitaciones explícitas (§4.3 y §8.3).
+- [x] [R2] Incorporar los scripts de configuración definitivos de los 7 routers a la carpeta `configs/` (`<router>.rsc`) y documentar su validación estática. Criterio documental: 7 scripts presentes con secretos tokenizados, `render.sh`, `validate.py` y alcance de validación explicado en `configs/README.md`. **Resultado:** validación estática documentada; importación en CHR limpio no realizada y conservada como tarea pendiente abajo.
+- [x] [R3] Organizar y documentar las evidencias gráficas disponibles en `capturas/` (tablas de rutas, VRRP, OSPF y BGP). Criterio: evidencias disponibles enlazadas correctamente en `docs/memoria.md` y ausencias identificadas. **Resultado:** secciones de F1–F4 documentadas; las cuatro capturas citadas que no existen se detallan en §7, sin presentarlas como evidencias disponibles. Las capturas de Wireshark previstas no están incorporadas.
+- [x] [R4] Auditar todas las tareas F0–F5 y sus criterios de aceptación, distinguir el cierre documental de las validaciones técnicas y la defensa pendientes, y conciliar el Change Log con Git. Criterio: estados respaldados por la documentación disponible y auditoría cruzada `git log` vs Change Log sin discrepancias. **Resultado:** F0–F3 completadas, F4 cerrada con limitaciones, F5 completada documentalmente; §6.1 conciliada con los 62 commits hasta `fa2d55a` (HEAD).
 
-### Preparación para la Defensa Oral
+## Validaciones técnicas pendientes — limitaciones conservadas
+
+- [ ] [R2] Validar los 7 scripts de `configs/` mediante importación en CHR limpio. Criterio técnico original: 7 scripts `.rsc` utilizables para reprovisionamiento desde cero. **No realizada:** la validación estática no demuestra este criterio.
+- [ ] [R1/R3/R4] Registrar mediciones numéricas reproducibles de tiempo y pérdida de los Drills 1–3. **No demostrado:** Drill 1, interrupción inferior a 3 segundos y pérdida máxima de 2 paquetes; Drill 2, reconvergencia inferior a 5 segundos; Drill 3, tiempo exacto y pérdida ICMP.
+- [ ] [R3] Ejecutar consulta `snmpwalk` desde un host con conectividad a la topología. Criterio: lectura MIB-II de extremo a extremo. **No realizada:** limitación del entorno descrita en `runbooks/seguridad-monitoreo-f4.md`.
+
+## Defensa oral — posterior a la entrega
 
 - [ ] [R1] Liderar sesión grupal de simulación de defensa (guía de preguntas y demostraciones en `docs/defensa.md`): defender módulo de Borde, BGP multi-homing y firewall, y responder preguntas cruzadas sobre VRRP en distribución. Criterio: dominio integral de la solución.
 - [ ] [R2] Defender arquitectura de proveedores ISP, políticas de backup, restauración y failover estático, y responder preguntas cruzadas sobre OSPF Core-Core. Criterio: solvencia técnica individual.

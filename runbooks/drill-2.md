@@ -2,7 +2,7 @@
 
 **Responsable:** R3 (Core/Backbone)  
 **Fecha:** 06/11/2026  
-**Estado:** COMPLETADO. Conmutación OSPF, continuidad de conectividad, restauración y medición del tiempo de convergencia verificados; se cumplió el criterio de aceptación.
+**Estado:** COMPLETADO funcionalmente. Caída de la adyacencia EDGE–CORE-1, persistencia de EDGE–CORE-2, respuestas ICMP y restauración verificadas; tiempo exacto de reconvergencia no demostrado.
 
 ## Objetivo
 
@@ -55,4 +55,4 @@ Después de habilitar nuevamente `ether3`, EDGE volvió a mostrar las dos adyace
 
 **Failover OSPF funcional verificado.** El enlace EDGE–CORE-1 cayó, la adyacencia alternativa EDGE–CORE-2 permaneció operativa y el tráfico ICMP hacia `2.2.2.2` continuó respondiendo en el fragmento registrado. Al restaurar el enlace, ambas adyacencias regresaron a `Full`.
 
-Se midió el tiempo exacto entre el corte y la reconvergencia, y el fragmento de ping cubre necesariamente todos los paquetes de la transición. Por ello, se afirma que el umbral cuantitativo es de menos de 5 segundos. Si se requiere re-validar ese umbral, repetir con `ping -D -i 0.2 2.2.2.2` desde PC-USER y registrar la salida completa junto con la hora exacta del corte.
+Las evidencias conservadas no demuestran el tiempo exacto entre el corte y la reconvergencia, y el fragmento de ping no permite asegurar que cubra todos los paquetes de la transición. Por ello, no se declara cumplido el umbral cuantitativo de menos de 5 segundos. Para validar ese umbral, repetir con `ping -D -i 0.2 2.2.2.2` desde PC-USER y registrar la salida completa junto con la hora exacta del corte.

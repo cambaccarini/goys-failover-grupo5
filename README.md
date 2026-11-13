@@ -53,7 +53,7 @@ El presente laboratorio aborda el diseño, aprovisionamiento, hardening, operaci
 5. **Operación DevOps y Verificación Empírica (Drills):**
    - Trazabilidad estricta de cambios bajo la convención **Conventional Commits**.
    - Procedimiento formal de salvaguarda y recuperación ante desastres mediante `/export` (scripts versionables) y backups binarios.
-   - Batería de 5 simulaciones de falla destructivas (*Failover Drills*) cronometradas, con registro de telemetría y análisis *post-mortem*.
+   - Batería de 5 simulaciones de falla destructivas (*Failover Drills*), con evidencias, análisis *post-mortem* y limitaciones de medición documentadas.
 
 ---
 
@@ -160,28 +160,28 @@ Para asegurar una auditoría cristalina y cumplir con la política de gestión o
 
 | Fase / Hito | Alcance Principal | Fecha de Entrega | Estado |
 | :--- | :--- | :---: | :---: |
-| **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Aprobado con observaciones** |
+| **F0** | Diseño arquitectónico, corrección de defectos, IPAM, seguridad y operación | Vie 02/10/2026 | **Completada** (aprobada con observaciones) |
 | **F1** | Despliegue de topología física en GNS3, hardening base y backup inicial | Vie 09/10/2026 | **Completado** (topología, direccionamiento, hardening, exports saneados, snapshot y validación de restauración de backups por R2) |
 | **F2** | Configuración de VRRP (load-sharing) y OSPF Área 0 con autenticación MD5 | Mié 21/10/2026 (propuesta) | **Completada** (OSPF, VRRP activo/activo, conectividad L3, propagación LAN, ECMP, prueba rápida de failover y exports versionados) |
 | **F3** | eBGP multi-homing, TCP-MD5, rutas por defecto, distribución OSPF y firewall | Jue 22/10/2026 (propuesta) | **Completada** (sesiones ISP-1/ISP-2, rutas LAN y default, firewall y 7 exports saneados documentados) |
-| **F4** | Ejecución de 5 drills de failover, monitoreo y telemetría | Lun 26/10/2026 (propuesta) | **Cerrada**: 5 drills, OSPF MD5 negativo, logging y SNMP configurados; `snmpwalk` no ejecutado por limitación del entorno. |
-| **F5** | Memoria técnica final, cierre del backlog, repositorio y defensa oral | Mar 27/10/2026 (propuesta) | **En curso**: memoria consolidada y scripts definitivos en `configs/` (validación estática); pendientes la conciliación del Change Log con `git log`, la importación de `configs/` en un CHR limpio y la defensa oral |
+| **F4** | Ejecución de 5 drills de failover, monitoreo y telemetría | Lun 26/10/2026 (propuesta) | **Cerrada con limitaciones**: drills funcionales, OSPF MD5 negativo, logging y SNMP configurados; mediciones de los Drills 1–3 insuficientes y `snmpwalk` no ejecutado. |
+| **F5** | Memoria técnica final, cierre documental del backlog y repositorio; defensa oral posterior a la entrega | Mar 27/10/2026 (propuesta) | **Completada documentalmente**: memoria, evidencias disponibles y configuraciones definitivas incorporadas; Change Log conciliado hasta `fa2d55a`. Configuraciones validadas estáticamente; importación en CHR limpio no realizada. Defensa oral pendiente. |
 
 > **Replanificación solicitada:** las fechas objetivo de F2–F5 fueron propuestas al docente debido al retraso acumulado. Permanecen pendientes de aprobación y se actualizarán si el profesor propone otro cronograma.
 
 ## 8. Estado operativo de F4 — 12/11/2026
 
-La fase F4 cuenta con los **5 drills de failover completados y documentados**, y los 7 backups consolidados:
+La fase F4 cuenta con los **5 drills de failover completados funcionalmente y documentados**, con limitaciones de medición y los 7 backups consolidados:
 
 | Drill | Protocolo / prueba | Responsable | Estado | Runbook |
 |---|---|---|---|---|
-| 1 | Failover de gateway VRRP VLAN 10 | Juan / Ian (R4) | Completado (06/11) | [`runbooks/drill-1.md`](runbooks/drill-1.md) |
-| 2 | Reconvergencia OSPF EDGE–CORE-1 | Ian (R3) | Completado (06/11) | [`runbooks/drill-2.md`](runbooks/drill-2.md) |
+| 1 | Failover de gateway VRRP VLAN 10 | Juan / Ian (R4) | Completado funcionalmente (06/11; umbrales de tiempo/pérdida no demostrados) | [`runbooks/drill-1.md`](runbooks/drill-1.md) |
+| 2 | Reconvergencia OSPF EDGE–CORE-1 | Ian (R3) | Completado funcionalmente (06/11; tiempo exacto no demostrado) | [`runbooks/drill-2.md`](runbooks/drill-2.md) |
 | 3 | Caída ISP-1 / failover BGP a ISP-2 | Juan (R1) | Completado funcionalmente (07/11; sin medición numérica de tiempo/pérdida) | [`runbooks/drill-3.md`](runbooks/drill-3.md) |
 | 4 | Selección de ruta estática con `check-gateway=ping` | Patricio (R2) | Completado (08/11; conmutación en 30s exactos y restauración) | [`runbooks/drill-4.md`](runbooks/drill-4.md) |
 | 5 | VRRP activo/activo por VLAN + Torch | Juan / Ian (R4) | Completado (07/11) | [`runbooks/drill-5.md`](runbooks/drill-5.md) |
 
-> Los Drills 1 y 2 declaran cumplidos sus umbrales (< 3 s y < 5 s) sin valores medidos registrados, y el Drill 3 no se cuantificó. Detalle y limitaciones en `docs/memoria.md` §4.3 y §8.3.
+> Las evidencias de los Drills 1 y 2 verifican el failover funcional y muestran respuestas ICMP durante los intervalos observados, pero no demuestran los umbrales de < 3 s y pérdida máxima de 2 paquetes (Drill 1) ni < 5 s (Drill 2). El Drill 3 no se cuantificó. Detalle y limitaciones en `docs/memoria.md` §4.3 y §8.3.
 
 **Detalle de las pruebas de Juan y Patricio:** en Drill 3, deshabilitar `ether1` de EDGE dejó inactiva (`DIb`) la default por ISP-1 y activó (`DAb`) la default por ISP-2 (`10.200.1.1%ether2`). En Drill 4, Patricio (R2) validó la conmutación de ruta estática por `check-gateway=ping` hacia `2.2.2.2/32`, registrando la caída de la ruta primaria a los 30 segundos exactos (3 pings fallidos), la activación de la alternativa de backup y la posterior restauración y limpieza. En Drill 5 se registraron los estados VRRP (Master de VLAN 10 en DIST-1 y de VLAN 20 en DIST-2), traceroutes desde los hosts y Torch en DIST-1.
 
@@ -191,6 +191,6 @@ La fase F4 cuenta con los **5 drills de failover completados y documentados**, y
 
 **Backups F4 actualizados:** los siete exports se regeneraron desde las configuraciones de cierre e incluyen SNMP y logging. El nombre de la comunidad SNMP fue reemplazado por `REDACTED` en los archivos versionados. Véase [`backups/F4/README.md`](backups/F4/README.md).
 
-**Cierre de F4:** los cinco drills, la prueba negativa OSPF MD5, la configuración de SNMP y logging, las evidencias y los exports están incorporados. La única validación no realizada es la consulta SNMP desde un host (`snmpwalk`); se deja explícita como limitación del entorno, no como resultado exitoso.
+**Cierre de F4:** los cinco drills, la prueba negativa OSPF MD5, la configuración de SNMP y logging, las evidencias disponibles y los exports están incorporados. Permanecen documentadas las limitaciones cuantitativas de los Drills 1–3 y la consulta SNMP desde un host (`snmpwalk`) no realizada; no se presentan como validaciones exitosas.
 
 **Evidencias:** `capturas/f4/drills/`, `capturas/f4/seguridad/` y `capturas/f4/monitoreo/`; procedimiento: [`runbooks/seguridad-monitoreo-f4.md`](runbooks/seguridad-monitoreo-f4.md); memoria: [`docs/memoria.md`](docs/memoria.md).

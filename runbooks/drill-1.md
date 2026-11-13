@@ -2,7 +2,7 @@
 
 **Responsable:** R4 (Distribución)  
 **Fecha:** 06/11/2026  
-**Estado:** COMPLETADO. Failover, restauración y mediciones de tiempo/pérdida verificados; se cumplieron los criterios de aceptación.
+**Estado:** COMPLETADO funcionalmente. Failover VRRP y restauración verificados, con limitación de medición cuantitativa de tiempo y pérdida.
 
 ## Objetivo
 
@@ -45,6 +45,6 @@ Después de reactivar `vlan10`, DIST-1 volvió a mostrar `vrrp10` Master y `vrrp
 
 ## Medición y conclusión
 
-**Drill 1 completado con resultado satisfactorio.** Además de verificar el cambio de estado VRRP y la restauración de los roles originales, se midieron los tiempos de recuperación y la pérdida de paquetes durante la prueba. Las mediciones realizadas cumplieron los criterios de aceptación establecidos: interrupción inferior a 3 segundos y pérdida de no más de 2 paquetes ICMP.
+**Drill 1 completado funcionalmente.** Se verificaron el cambio de estado VRRP y la restauración de los roles originales; las capturas muestran respuestas ICMP durante la prueba. No se dispone de evidencia suficiente para afirmar cuantitativamente una interrupción inferior a 3 segundos ni una pérdida máxima de 2 paquetes ICMP.
 
-La prueba confirma que DIST-2 asumió correctamente el gateway virtual `192.168.10.1` cuando DIST-1 dejó de prestar servicio en VLAN 10, y que DIST-1 recuperó su rol Master al restaurar la interfaz. No se incorporó en el material recibido el valor numérico puntual de cada medición; por eso se documenta el cumplimiento verificado sin inventar cifras.
+La prueba confirma que DIST-2 asumió correctamente el rol Master de VLAN 10 y el gateway virtual `192.168.10.1` cuando DIST-1 dejó de prestar servicio, y que DIST-1 recuperó su rol Master al restaurar la interfaz. Los valores numéricos completos de tiempo y pérdida no quedaron conservados; el cumplimiento de esos umbrales no está demostrado.

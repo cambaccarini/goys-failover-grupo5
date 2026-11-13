@@ -4,7 +4,7 @@
 **Comisión:** 2026  
 **Grupo:** 5  
 **Fecha de Entrega Final (F5):** replanificada (la fecha original del 23/10/2026 venció; el cronograma vigente figura en el README, sección 7)
-**Versión:** cierre documental de F4 y consolidación de F5, 12/11/2026. Pendiente de F5: defensa oral y conciliación del Change Log contra `git log` (ver §6.1 y §10).
+**Versión:** cierre de F4 con limitaciones y F5 completada documentalmente, 13/11/2026. Memoria, evidencias disponibles y configuraciones definitivas incorporadas; Change Log conciliado hasta `fa2d55a`. Configuraciones validadas estáticamente; importación en CHR limpio no realizada. Defensa oral pendiente, posterior a la entrega (ver §6.1 y §10).
 **Entorno de Simulación:** GNS3 · MikroTik CHR (RouterOS v7)
 
 ---
@@ -1137,7 +1137,7 @@ Cada drill se ejecuta siguiendo la metodología de ingeniería de resiliencia: *
 - **Responsable:** Juan Ignacio Atencio (R4)
 - **Procedimiento:** Ejecutar ping sostenido desde `PC-USER` a `192.168.10.1`. Deshabilitar la interfaz `vlan10` en `DIST-1` (`/interface vlan disable vlan10`).
 - **Comportamiento Esperado:** Al dejar de recibir tramas VRRP Advertisement tras 3 intervalos consecutivos (3s), `DIST-2` conmuta de estado Backup (`B`) a Master (`RM`).
-- **Ejecutado el 06/11/2026.** Con `vlan10` deshabilitada en DIST-1, DIST-2 pasó a Master de VRID 10 (`RM`); en el fragmento de ping conservado (`icmp_seq` 73–79, RTT ≈ 1,1–2,0 ms) no hay pérdidas. Al restaurar la interfaz, DIST-1 recuperó `vrrp10` Master y `vrrp20` Backup. Los ejecutores informan cumplimiento de los umbrales (< 3 s de interrupción, ≤ 2 paquetes perdidos); **los valores medidos no quedaron registrados en el repositorio**, por lo que el cumplimiento es declarado y no reproducible desde las evidencias.
+- **Ejecutado el 06/11/2026.** Con `vlan10` deshabilitada en DIST-1, DIST-2 pasó a Master de VRID 10 (`RM`); en el fragmento de ping conservado (`icmp_seq` 73–79, RTT ≈ 1,1–2,0 ms) no hay pérdidas. Al restaurar la interfaz, DIST-1 recuperó `vrrp10` Master y `vrrp20` Backup. **COMPLETADO funcionalmente, con limitación de medición cuantitativa:** las capturas muestran respuestas ICMP durante la prueba, pero no hay evidencia suficiente para afirmar una interrupción < 3 s ni una pérdida máxima de 2 paquetes.
 - **Runbook y capturas:** `runbooks/drill-1.md`; `capturas/f4/drills/drill-1-estados-vrrp.png` y `drill-1-ping-gateway-vrrp.png`.
 
 #### Drill 2 — OSPF: Corte de Enlace Interno de Tránsito
@@ -1145,7 +1145,7 @@ Cada drill se ejecuta siguiendo la metodología de ingeniería de resiliencia: *
 - **Responsable:** Ian Vidmar (R3)
 - **Procedimiento:** Iniciar transferencia de datos entre hosts y deshabilitar el enlace `EDGE` ↔ `CORE-1` (`10.10.1.0/30`).
 - **Comportamiento Esperado:** OSPF detecta la pérdida de adyacencia, inunda un nuevo Router LSA por el enlace horizontal Core-Core (`10.20.1.0/30`), recalculando el árbol SPF. El tráfico fluye por `CORE-2` sin interrupción de las sesiones de los hosts.
-- **Ejecutado el 06/11/2026.** Al deshabilitar `ether3` en EDGE desapareció la adyacencia con CORE-1, la de CORE-2 permaneció `Full` y el ping a `2.2.2.2` siguió respondiendo (`icmp_seq` 1286–1314, RTT mayormente de 6 a 10 ms, un pico aislado de 41,550 ms). Al restaurar el enlace, ambas adyacencias volvieron a `Full`. El runbook afirma convergencia < 5 s, pero el valor medido no está registrado y el fragmento de ping no lleva marca de tiempo del corte: el criterio es declarado, no demostrado numéricamente. Para revalidarlo, repetir con `ping -D -i 0.2 2.2.2.2` y guardar la salida completa.
+- **Ejecutado el 06/11/2026.** Al deshabilitar `ether3` en EDGE desapareció la adyacencia con CORE-1, la de CORE-2 permaneció `Full` y el ping a `2.2.2.2` siguió respondiendo en el fragmento conservado (`icmp_seq` 1286–1314, RTT mayormente de 6 a 10 ms, un pico aislado de 41,550 ms). Al restaurar el enlace, ambas adyacencias volvieron a `Full`. **COMPLETADO funcionalmente, con limitación de medición cuantitativa:** las evidencias no demuestran el tiempo exacto de reconvergencia ni el cumplimiento del umbral < 5 s; el fragmento de ping no lleva marca de tiempo del corte. Para validarlo, repetir con `ping -D -i 0.2 2.2.2.2` y guardar la salida completa.
 - **Runbook y capturas:** `runbooks/drill-2.md`; `capturas/f4/drills/drill-2-ospf-antes-del-corte.png`, `drill-2-ospf-durante-el-corte.png` y `drill-2-ospf-enlace-restaurado.png`.
 
 #### Drill 3 — BGP: Caída de Proveedor WAN Primario (ejecutado el 07/11/2026)
@@ -1182,8 +1182,8 @@ Cada drill se ejecuta siguiendo la metodología de ingeniería de resiliencia: *
 
 | Drill | Fecha | Resultado verificado con evidencia | Medición cuantitativa | Limitación |
 | :-- | :-- | :-- | :-- | :-- |
-| 1 — VRRP | 06/11 | DIST-2 asume Master de VRID 10; roles restaurados | Umbral declarado cumplido (< 3 s, ≤ 2 pérdidas); valores no registrados | Cumplimiento no reproducible desde las capturas |
-| 2 — OSPF | 06/11 | EDGE–CORE-2 `Full` durante el corte; ping continuo; adyacencias restauradas | Umbral declarado cumplido (< 5 s); valor no registrado | Ping sin marca de tiempo del corte |
+| 1 — VRRP | 06/11 | DIST-2 asume Master de VRID 10; DIST-1 recupera su rol; respuestas ICMP en el fragmento observado | No se demuestra < 3 s ni pérdida máxima de 2 paquetes | Registro numérico completo de tiempo/pérdida no conservado |
+| 2 — OSPF | 06/11 | Cae EDGE–CORE-1; EDGE–CORE-2 sigue `Full`; respuestas ICMP en el fragmento observado; ambas adyacencias restauradas | Tiempo exacto no demostrado; no se declara cumplido < 5 s | Ping sin marca de tiempo del corte |
 | 3 — BGP | 07/11 | Default por ISP-1 `DIb`, por ISP-2 `DAb`; restauración verificada | **No cuantificada** | Sin tiempo ni pérdida; sesión BGP aún `E` en la captura inmediata; sin captura del ping |
 | 4 — check-gateway | 08/11 | Primaria `Is`, respaldo `As`; restauración y limpieza | ≈ 30 s (3 × 10 s) | Prefijo `/32` de prueba, no la default |
 | 5 — VRRP activo/activo | 07/11 | Master cruzado por VLAN; traceroutes; Torch en DIST-1 | No aplica (no se mide balanceo 50/50) | Torch de DIST-2 no conservado |
@@ -1207,15 +1207,29 @@ Cada drill se ejecuta siguiendo la metodología de ingeniería de resiliencia: *
 
 ### 6.1 Change Log del Proyecto
 
-El Change Log registra cada modificación arquitectónica y se concilia de manera unívoca con el historial de Git:
+El Change Log está conciliado con los 62 commits del historial de Git hasta HEAD (`fa2d55a`), con sus fechas de autor, autores, hashes y mensajes originales:
 
 |   Fecha    |        Responsable        | Hash / Commit                                                                                       | Motivo Técnico                                                                                                                                                                                              | Procedimiento de Reversión |
 | :--------: | :-----------------------: | :-------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------- |
-| 10/10/2026 |    Patricio Borda (R2)    | `chore(repo): crear estructura fisica de carpetas faltantes con gitkeep`                            | Crear directorios faltantes configs/, backups/, capturas/, runbooks/ y docs/diagramas/ con persistencia .gitkeep.                                                                                           | `git revert 4cc2e71`       |
-| 10/10/2026 |    Patricio Borda (R2)    | `fix(roles): formalizar equipo de 4 integrantes, suprimir R5 y actualizar README`                   | Decisión documental tomada en ese commit y rectificada en esta versión: R5 se conserva como función operativa transversal, sin constituir un quinto integrante; responsable pendiente de acuerdo del grupo. | `git revert d1ffc48`       |
-| 10/10/2026 | Juan Ignacio Atencio (R4) | `docs(backlog): desglosar epics F0-F5 asignando roles, estados de tareas y criterios de aprobación` | Desglose exhaustivo de tareas técnicas y criterios de aceptación verificables para F0-F5.                                                                                                                   | `git revert 1424251`       |
-| 10/10/2026 |      Ian Vidmar (R3)      | `feat(ipam): cerrar plan de direccionamiento, loopbacks y router-ids 1.1.1.1 a 7.7.7.7`             | Cerrar al 100% el plan IPAM, asignar Router-IDs unívocos a los 7 routers y fundamentar rigurosamente los 4 defectos corregidos.                                                                             | `git revert d11a0af`       |
-| 10/10/2026 |      Ian Vidmar (R3)      | `docs(backlog): marcar tareas R3 de F0 como hechas`                                                 | Marcar tareas asignadas a R3 de la fase F0 como completadas en backlog.md.                                                                                                                                  | `git revert 6bb2ac9`       |
+| 01/10/2026 | Camila | `545b16b` — `Initial commit` | Iniciar el repositorio. | `git revert 545b16b` |
+| 01/10/2026 | Camila | `c7a8226` — `docs(f0): estructura inicial del repo, backlog y memoria` | Incorporar la estructura inicial del repositorio, el backlog y la memoria. | `git revert c7a8226` |
+| 01/10/2026 | Camila Baccarini | `8e53a56` — `Update table formatting in README.md` | Ajustar el formato de la tabla del README. | `git revert 8e53a56` |
+| 10/10/2026 |    Patricio Borda (R2)    | `4cc2e71` — `chore(repo): crear estructura fisica de carpetas faltantes con gitkeep` | Crear directorios faltantes configs/, backups/, capturas/, runbooks/ y docs/diagramas/ con persistencia .gitkeep.                                                                                           | `git revert 4cc2e71`       |
+| 10/10/2026 |    Patricio Borda (R2)    | `d1ffc48` — `fix(roles): formalizar equipo de 4 integrantes, suprimir R5 y actualizar README` | Decisión documental tomada en ese commit y rectificada en esta versión: R5 se conserva como función operativa transversal, sin constituir un quinto integrante; responsabilidad asignada a R2 (función R5). | `git revert d1ffc48`       |
+| 10/10/2026 | Juan Ignacio Atencio (R4) | `1424251` — `docs(backlog): desglosar epics F0-F5 asignando roles, estados de tareas y criterios de apobación` | Desglose exhaustivo de tareas técnicas y criterios de aceptación verificables para F0-F5.                                                                                                                   | `git revert 1424251`       |
+| 10/10/2026 |      Ian Vidmar (R3)      | `d11a0af` — `feat(ipam): cerrar plan de direccionamiento, loopbacks y router-ids 1.1.1.1 a 7.7.7.7` | Cerrar al 100% el plan IPAM, asignar Router-IDs unívocos a los 7 routers y fundamentar rigurosamente los 4 defectos corregidos.                                                                             | `git revert d11a0af`       |
+| 10/10/2026 |      Ian Vidmar (R3)      | `6bb2ac9` — `docs(backlog): marcar tareas R3 de F0 como hechas` | Marcar tareas asignadas a R3 de la fase F0 como completadas en backlog.md.                                                                                                                                  | `git revert 6bb2ac9`       |
+| 11/10/2026 | Patricio Borda | `6b081af` — `docs(f0): conciliar change log con historial git, cerrar epic F0 y actualizar estado del proyecto` | Conciliar el Change Log con Git y documentar el cierre de F0. | `git revert 6b081af` |
+| 17/10/2026 | Juan Ignacio Atencio | `d7570c1` — `chore(f1): crear estructura de evidencias` | Crear la estructura de carpetas para las evidencias de F1. | `git revert d7570c1` |
+| 17/10/2026 | Juan Ignacio Atencio | `a10afc7` — `docs(backlog): actualizar avance y validaciones de F1` | Actualizar el avance y las validaciones de F1 en el backlog. | `git revert a10afc7` |
+| 17/10/2026 | Juan Ignacio Atencio | `f3f86ac` — `docs(f1): unificar rutas de evidencias y normalizar f1` | Unificar las rutas documentales de evidencias y normalizar F1. | `git revert f3f86ac` |
+| 18/10/2026 | Juan Ignacio Atencio | `635d042` — `docs(f1): agregar evidencias de direccionamiento y conectividad` | Incorporar evidencias de direccionamiento y conectividad de F1. | `git revert 635d042` |
+| 18/10/2026 | Juan Ignacio Atencio | `c9f0e10` — `docs(f1): agregar captura de topologia completa` | Incorporar la captura completa de la topología. | `git revert c9f0e10` |
+| 18/10/2026 | Juan Ignacio Atencio | `72dbb74` — `docs(f1): conciliar IPAM y estado de tareas` | Conciliar el IPAM con el estado de las tareas de F1. | `git revert 72dbb74` |
+| 18/10/2026 | Juan Ignacio Atencio | `ad1e137` — `docs(f1): actualizar estados del backlog tras verificar IPAM` | Actualizar los estados del backlog tras verificar el IPAM. | `git revert ad1e137` |
+| 18/10/2026 | Juan Ignacio Atencio | `d0f971f` — `docs(f1): corregir roles, credenciales y topologia` | Corregir las referencias documentales de roles, credenciales y topología. | `git revert d0f971f` |
+| 18/10/2026 | Juan Ignacio Atencio | `aa66a72` — `docs(f1): corregir bloques markdown y claves de ejemplo` | Corregir los bloques Markdown y las claves de ejemplo. | `git revert aa66a72` |
+| 18/10/2026 | Juan Ignacio Atencio | `14f69db` — `docs(f1): corregir formato de comandos de hosts` | Corregir el formato documental de los comandos de hosts. | `git revert 14f69db` |
 | 19/10/2026 | Ian Vidmar (R3) | `672d0cc` — `Hardening, pings y checks de seguridad` | Registrar configuración de hardening y verificaciones de conectividad y seguridad. | `git revert 672d0cc` |
 | 19/10/2026 | Juan Ignacio Atencio (R4) | `393517c` — `chore(f1): agregar exports de configuracion RouterOS` | Versionar los siete exports base de F1. | `git revert 393517c` |
 | 19/10/2026 | Juan Ignacio Atencio (R4) | `b71c0e4` — `docs(f1): alinear estado y política de backups` | Alinear el estado de F1 y la política de respaldos con lo verificado. | `git revert b71c0e4` |
@@ -1225,14 +1239,20 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 | 19/10/2026 | Juan Ignacio Atencio (R4) | `a824231` — `docs(f1): actualizar evidencia del snapshot base` | Actualizar la evidencia del administrador de snapshots. | `git revert a824231` |
 | 19/10/2026 | Juan Ignacio Atencio (R4) | `dba8776` — `chore(f1): limpiar metadatos de exports` | Retirar metadatos innecesarios de los exports públicos. | `git revert dba8776` |
 | 19/10/2026 | Juan Ignacio Atencio (R4) | `58d7324` — `docs(f1): agregar evidencias de hardening y auditoria` | Incorporar las catorce capturas de hardening y auditoría. | `git revert 58d7324` |
+| 19/10/2026 | Juan Ignacio Atencio | `6a75112` — `docs(f1): sincronizar memoria y estado de auditoria` | Sincronizar la memoria con el estado de la auditoría de F1. | `git revert 6a75112` |
+| 19/10/2026 | Juan Ignacio Atencio | `03de6aa` — `docs(f1): asignar R5 y proponer replanificacion` | Asignar la función operativa R5 y registrar la propuesta de replanificación. | `git revert 03de6aa` |
+| 19/10/2026 | Juan Ignacio Atencio | `4ae6499` — `Merge pull request #1 from cambaccarini/ian-f1` | Integrar la rama ian-f1 mediante el PR #1. | `git revert -m 1 4ae6499` |
 | 21/10/2026 | Patricio Borda (R2) | `f1b3fc3` — `Revert "chore(f1): limpiar metadatos de exports"` | Revertir saneamiento previo para conciliar autoría y trazabilidad del módulo de backups asignado a R2. | `git revert f1b3fc3` |
 | 21/10/2026 | Patricio Borda (R2) | `64e6f56` — `chore(f1): depurar metadatos en exports base de configuracion RouterOS` | Depurar metadatos de hardware de simulación (system id) en exports .rsc de los 7 routers preservando configuración base. | `git revert 64e6f56` |
-| 21/10/2026 | Patricio Borda (R2 + R5) | `7f009f2` — `docs(f1): registrar validacion de restauracion de backups por R2 y cerrar hito F1` | Documentar validación de restauración en nodo de test, conciliar Change Log y formalizar cierre de F1 y R5. | `git revert 7f009f2` |
+| 21/10/2026 | Patricio Borda (R2 + R5) | `106fabc` — `docs(f1): registrar validacion de restauracion de backups por R2 y cerrar hito F1` | Documentar validación de restauración en nodo de test, conciliar Change Log y formalizar cierre de F1 y R5. | `git revert 106fabc` |
+| 25/10/2026 | Ian Vidmar | `5a6eb63` — `R3 OSPF en CORE-1/CORE-2` | Registrar OSPF en CORE-1 y CORE-2. | `git revert 5a6eb63` |
 | 25/10/2026 | Juan Ignacio Atencio (R4) | `b7b5c0d` — `docs(f2): agregar evidencias de VRRP, OSPF y conectividad` | Incorporar configuraciones OSPF Área 0 con MD5, grupos VRRP activo/activo y adyacencias OSPF iniciales. | `git revert b7b5c0d` |
-| 25/10/2026 | Patricio Borda (R2 + R5) | `80e400b` — `feat(f2): validar conectividad L3, resolucion ARP VRRP y balanceo de carga activo/activo` | Incorporar evidencias completas de Paso 3 de F2 (pings bidireccionales, resolución ARP a MACs virtuales VRRP y traceroutes cruzados demostrando load-sharing inter-VLAN vía DIST-1 y DIST-2), actualizar memoria técnica y backlog. | `git revert 80e400b` |
+| 25/10/2026 | Patricio Borda (R2 + R5) | `3b0adc3` — `feat(f2): validar conectividad L3, resolucion ARP VRRP y balanceo de carga activo/activo` | Incorporar evidencias completas de Paso 3 de F2 (pings bidireccionales, resolución ARP a MACs virtuales VRRP y traceroutes cruzados demostrando load-sharing inter-VLAN vía DIST-1 y DIST-2), actualizar memoria técnica y backlog. | `git revert 3b0adc3` |
 | 25/10/2026 | Juan Ignacio Atencio (R4) | `44875a8` — `ops(backup): agregar exports saneados de F2` | Versionar los siete exports de RouterOS de F2 en `backups/f2/exports/`, sin incluir las claves sensibles ocultas por el export normal. | `git revert 44875a8` |
 | 25/10/2026 | Juan Ignacio Atencio (R4) | `cf16484` — `docs(f2): sincronizar memoria, backlog y README` | Actualizar el estado de F2, el árbol de directorios y las referencias documentales de evidencias y backups. | `git revert cf16484` |
 | 25/10/2026 | Juan Ignacio Atencio (R4) | `ec10e32` — `chore(backup): depurar metadatos de exports F2` | Retirar las líneas de `system id` de los siete exports de F2. | `git revert ec10e32` |
+| 25/10/2026 | Juan Ignacio Atencio | `a4e4529` — `docs(f2): agregar evidencias de ECMP y rutas LAN` | Incorporar las evidencias de ECMP y propagación de rutas LAN. | `git revert a4e4529` |
+| 25/10/2026 | Juan Ignacio Atencio | `cc84d75` — `docs(f2): cerrar evidencias y documentación de F2` | Cerrar las evidencias y la documentación de F2. | `git revert cc84d75` |
 | 25/10/2026 | Ian Vidmar (R3) | `3020adf` — `docs(f3): agrego evidencias de eBGP multi-homing y actualizo memoria y backlog` | Incorporar evidencias iniciales de BGP y actualizar la documentación de F3. | `git revert 3020adf` |
 | 25/10/2026 | Patricio Borda (R2 + R5) | `3137f02` — `feat(bgp): agrego eBGP con TCP-MD5 en ISP-1` | Configurar eBGP entre ISP-1 y EDGE con autenticación TCP-MD5. | `git revert 3137f02` |
 | 25/10/2026 | Patricio Borda (R2 + R5) | `c5987ad` — `feat(bgp): agrego eBGP con TCP-MD5 en ISP-2` | Configurar eBGP entre ISP-2 y EDGE con autenticación TCP-MD5. | `git revert c5987ad` |
@@ -1242,11 +1262,17 @@ El Change Log registra cada modificación arquitectónica y se concilia de maner
 | 26/10/2026 | Juan Ignacio Atencio (R4) | `c4c0ec6` — `docs(f3): agregar capturas del firewall de EDGE` | Incorporar capturas de la configuración y los contadores del firewall en EDGE. | `git revert c4c0ec6` |
 | 26/10/2026 | Juan Ignacio Atencio (R4) | `ba97757` — `ops(backup): completar exports F3 de CORE y distribución` | Completar los exports de CORE-1, CORE-2, DIST-1 y DIST-2 en `backups/F3/`. | `git revert ba97757` |
 | 26/10/2026 | Juan Ignacio Atencio (R4) | `4017e2b` — `docs(f3): cerrar memoria y backlog de F3` | Sincronizar el estado documental de F3 con las evidencias y backups incorporados. | `git revert 4017e2b` |
+| 26/10/2026 | Juan Ignacio Atencio | `fa3a85b` — `docs(f3): actualizar change log y backlog` | Actualizar el Change Log y el backlog de F3. | `git revert fa3a85b` |
+| 26/10/2026 | Juan Ignacio Atencio | `f5c78be` — `docs(roles): reasignar responsabilidades y revisar cierre F3` | Reasignar responsabilidades y revisar el cierre de F3. | `git revert f5c78be` |
+| 06/11/2026 | Ian Vidmar | `1f95407` — `docs(f4): Preparacion, caida y restauracion` | Documentar la preparación, la caída y la restauración de las pruebas de F4. | `git revert 1f95407` |
+| 07/11/2026 | Juan Ignacio Atencio | `dfcc1ca` — `docs(f4): completar drill 3 de failover BGP` | Incorporar la documentación y las evidencias del Drill 3 de failover BGP. | `git revert dfcc1ca` |
+| 07/11/2026 | Juan Ignacio Atencio | `d9d98af` — `docs(f4): completar drill 5 de VRRP activo-activo` | Incorporar la documentación y las evidencias del Drill 5 de VRRP activo/activo. | `git revert d9d98af` |
 | 07/11/2026 | Juan Ignacio Atencio (R1 + R4) | `7e5e91a` — `docs(f4): consolidar avance de R1 y R4` | Incorporar runbooks y evidencias de Drill 1, 2, 3 y 5, actualizar memoria técnica y preparar manifiesto de backups F4. | `git revert 7e5e91a` |
-| 08/11/2026 | Patricio Borda (R2 + R5) | `feat(f4): completar drill 4 de failover estatico y consolidar backups f4` | Ejecutar y documentar Drill 4 (check-gateway=ping hacia 2.2.2.2/32), incorporar evidencias gráficas, consolidar los 7 exports finales de RouterOS en backups/F4/ y actualizar memoria y backlog. | `git revert HEAD` |
-
-
-> **Conciliación pendiente con `git log`.** El Change Log llega hasta el 08/11/2026. Faltan registrar los commits del cierre de F4 (12/11/2026: OSPF MD5 negativo, logging, SNMP, exports regenerados) y los de F5 (`configs/`, memoria, defensa). Los hashes salen del historial real, no se redactan a mano: `git log --reverse --date=format:'%d/%m/%Y' --pretty='| %ad | %an | `%h` — `%s` |'`. La última fila existente referencia `git revert HEAD`, que no identifica un commit; debe reemplazarse por su hash.
+| 08/11/2026 | Patricio Borda (R2 + R5) | `fbb1d69` — `feat(f4): completar drill 4 de failover estatico y consolidar backups f4` | Ejecutar y documentar Drill 4 (check-gateway=ping hacia 2.2.2.2/32), incorporar evidencias gráficas, consolidar los 7 exports finales de RouterOS en backups/F4/ y actualizar memoria y backlog. | `git revert fbb1d69` |
+| 12/11/2026 | Ian Vidmar | `2ba2210` — `(cierre de f4) logging local, SNMP y backups` | Incorporar el cierre de F4: prueba negativa OSPF MD5, logging local, configuración SNMP y exports regenerados; snmpwalk no ejecutado. | `git revert 2ba2210` |
+| 12/11/2026 | Juan Ignacio Atencio | `ca55221` — `chore(f5): integrar configuraciones finales de los routers` | Incorporar las configuraciones definitivas de los siete routers, los tokens de secretos y las utilidades de renderizado y validación estática. | `git revert ca55221` |
+| 13/11/2026 | Patricio Borda | `c8b7f07` — `docs(f5): consolidar memoria tecnica final y guia de defensa oral` | Consolidar la memoria técnica final y la guía de preparación de la defensa oral. | `git revert c8b7f07` |
+| 13/11/2026 | Ian Vidmar | `fa2d55a` — `(f5) backlog y drills` | Actualizar el backlog, el README y los runbooks de los Drills 3 y 5. | `git revert fa2d55a` |
 
 ### 6.2 Política de Respaldo y Evidencia de Restauración
 
@@ -1344,9 +1370,9 @@ La preparación, **los cinco drills de failover**, la prueba negativa OSPF MD5, 
 
 **Preparación (06/11/2026):** EDGE tenía sesiones eBGP con ISP-1 e ISP-2 `ESTABLISHED`, adyacencias OSPF hacia CORE-1 y CORE-2 `Full`, y se registraron los roles VRRP previstos en DIST-1/DIST-2. Véase `runbooks/preparacion-f4.md`.
 
-**Drill 1 — VRRP (06/11/2026):** tras deshabilitar `vlan10` en DIST-1, DIST-2 asumió Master de VRID 10; al restaurar la interfaz se recuperaron los roles de origen. El runbook informa cumplimiento de umbrales de tiempo y pérdida, aunque no consigna cifras puntuales reproducibles. Véase `runbooks/drill-1.md`.
+**Drill 1 — VRRP (06/11/2026):** tras deshabilitar `vlan10` en DIST-1, DIST-2 asumió Master de VRID 10; al restaurar la interfaz, DIST-1 recuperó su rol Master. Las capturas muestran respuestas ICMP durante la prueba. El failover está completado funcionalmente, pero no hay evidencia suficiente para demostrar < 3 s ni una pérdida máxima de 2 paquetes. Véase `runbooks/drill-1.md`.
 
-**Drill 2 — OSPF (06/11/2026):** se interrumpió `ether3` de EDGE hacia CORE-1; la adyacencia EDGE–CORE-2 permaneció `Full` y ambas adyacencias se recuperaron al restaurar el enlace. Se documentó ICMP hacia `2.2.2.2`, con RTT principalmente de 6 a 10 ms y un pico de 41,550 ms, sin pérdida visible en el fragmento conservado. Véase `runbooks/drill-2.md`.
+**Drill 2 — OSPF (06/11/2026):** se interrumpió `ether3` de EDGE hacia CORE-1; cayó esa adyacencia, EDGE–CORE-2 permaneció `Full` y ambas adyacencias se recuperaron al restaurar el enlace. Se documentó ICMP hacia `2.2.2.2`, con RTT principalmente de 6 a 10 ms y un pico de 41,550 ms, sin pérdida visible en el fragmento conservado. Está completado funcionalmente; las evidencias no demuestran el tiempo exacto de reconvergencia ni el umbral < 5 s. Véase `runbooks/drill-2.md`.
 
 **Drill 3 — BGP (07/11/2026, Juan R1):** se deshabilitó `ether1` de EDGE. La default via ISP-1 (`10.100.1.1`) pasó a `DIb` y la default via ISP-2 (`10.200.1.1`) a `DAb`, con salida efectiva por `ether2`. Se registraron capturas de la conmutación, ping a `2.2.2.2` y restauración. La consulta inmediata seguía mostrando la sesión ISP-1 como `E`; el cambio de ruta no debe confundirse con la caída instantánea de la sesión. No hay cifras completas de convergencia ni pérdida de ICMP para afirmar el objetivo cuantitativo. Véase `runbooks/drill-3.md`.
 
@@ -1362,7 +1388,7 @@ Se habilitó SNMP v2c en los siete routers con acceso de solo lectura (`read-acc
 
 Los siete exports F4 se regeneraron incorporando SNMP y logging. La comunidad operativa fue saneada como `REDACTED` antes de versionar. Los archivos están en `backups/F4/`; las evidencias de exports están en `capturas/f4/monitoreo/exports/`. Procedimiento completo: `runbooks/seguridad-monitoreo-f4.md`.
 
-**Estado final:** los cinco drills, la prueba negativa OSPF MD5, la configuración de logging, la configuración SNMP en los siete routers, los exports saneados y la documentación quedaron completados. La única comprobación pendiente por limitación del entorno es ejecutar `snmpwalk` desde un host con conectividad a la topología; no se registra como exitosa.
+**Estado final:** F4 cerrada con limitaciones: los cinco drills quedaron completados funcionalmente y documentados, junto con la prueba negativa OSPF MD5, logging, configuración SNMP en los siete routers y exports saneados. Las evidencias no demuestran los umbrales cuantitativos de los Drills 1 y 2, el Drill 3 no se cuantificó y `snmpwalk` desde un host con conectividad a la topología no se ejecutó; esas validaciones no se registran como exitosas.
 
 ### F4 — Evidencias de contingencia
 
@@ -1418,7 +1444,7 @@ La arquitectura de cinco capas se implementó y verificó en GNS3 con siete rout
 
 ### 8.3 Limitaciones reconocidas
 
-- **Mediciones sin registro numérico.** Los Drills 1 y 2 declaran cumplir sus umbrales (< 3 s y < 5 s), pero los valores medidos no quedaron guardados; el Drill 3 no se cuantificó. Son resultados funcionales comprobados, no cronometrados de forma reproducible.
+- **Mediciones insuficientes.** Las evidencias de los Drills 1 y 2 no demuestran < 3 s ni pérdida máxima de 2 paquetes (Drill 1), ni el tiempo exacto de reconvergencia o el umbral < 5 s (Drill 2); el Drill 3 no se cuantificó. Son resultados funcionales comprobados, sin validación de esos umbrales cuantitativos.
 - **SNMP sin validación extremo a extremo.** Está configurado y verificado en los siete routers, pero nunca se consultó con `snmpwalk` desde un host.
 - **Autenticación VRRP simple.** Viaja en texto claro; protege ante anuncios de hosts que no conocen la clave, no ante un atacante que capture tráfico en la LAN.
 - **Telemetría acotada.** Logging local por router, sin syslog remoto y sin registro de cambios de rol VRRP.
@@ -1470,14 +1496,21 @@ La arquitectura de cinco capas se implementó y verificó en GNS3 con siete rout
 - [x] **F1:** topología de 7 routers en GNS3, direccionamiento, hardening base, exports, snapshot y validación de restauración de backup.
 - [x] **F2:** OSPF Área 0 con MD5, VRRP activo/activo, conectividad L3 de extremo a extremo, ECMP y propagación de las LAN.
 - [x] **F3:** eBGP multi-homing con TCP-MD5, `local-pref`, default hacia OSPF, firewall perimetral y prueba negativa de clave BGP.
-- [x] **F4:** cinco drills ejecutados y documentados con runbook; prueba negativa OSPF MD5; logging y SNMP v2c en los siete routers; exports finales.
+- [x] **F4 cerrada con limitaciones:** cinco drills ejecutados y documentados funcionalmente con runbook; prueba negativa OSPF MD5; logging y SNMP v2c en los siete routers; exports finales. Limitaciones de medición y consulta SNMP indicadas a continuación.
 - [ ] **F4 (parcial):** consulta `snmpwalk` desde un host. No realizada por limitación del entorno.
 - [ ] **F4 (parcial):** medición numérica reproducible de los Drills 1, 2 y 3.
 
-### Cierre (F5)
+### Cierre documental (F5) — completado
 
 - [x] **Memoria técnica:** sin secciones vacías ni textos de plantilla; contradicciones internas resueltas; limitaciones declaradas (§8.3).
-- [~] **Scripts definitivos:** `configs/` con los siete routers, `render.sh` y `validate.py`; validados de forma estática, falta importarlos en un CHR limpio.
-- [~] **Evidencias enlazadas:** enlaces de la memoria verificados; cuatro capturas citadas no existen en el repositorio (§7).
-- [ ] **Change Log contra `git log`:** conciliar los commits del 12/11/2026 en adelante (§6.1).
+- [x] **Configuraciones definitivas incorporadas:** `configs/` con los siete routers, `render.sh` y `validate.py`; validación estática documentada, sin importación en CHR limpio.
+- [x] **Evidencias disponibles enlazadas:** referencias verificadas; las cuatro capturas ausentes están identificadas como limitación (§7), sin presentarlas como archivos disponibles.
+- [x] **Change Log contra `git log`:** los 62 commits hasta HEAD `fa2d55a`, con fechas, autores, hashes y mensajes reales, conciliados (§6.1).
+
+### Validación técnica pendiente
+
+- [ ] **Reprovisionamiento desde cero:** importar las configuraciones definitivas en un CHR limpio y verificar operación. No realizado; la validación estática no satisface esa prueba.
+
+### Defensa oral — posterior a la entrega
+
 - [ ] **Defensa oral:** simulación grupal y defensa por rol (guía en `docs/defensa.md`).
